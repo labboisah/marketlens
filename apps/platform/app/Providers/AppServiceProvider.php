@@ -26,6 +26,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         RateLimiter::for('api', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
+        RateLimiter::for('login', fn (Request $request) => Limit::perMinute(5)->by(strtolower((string) $request->input('email')).'|'.$request->ip()));
+        RateLimiter::for('password-reset', fn (Request $request) => Limit::perMinute(3)->by(strtolower((string) $request->input('email')).'|'.$request->ip()));
         RateLimiter::for('device', fn (Request $request) => Limit::perMinute(30)->by($request->ip()));
         RateLimiter::for('sync', fn (Request $request) => Limit::perMinute((int) config('marketlens.sync_rate_limit', 120))->by($request->user()?->id ?: $request->ip()));
         RateLimiter::for('monitoring', fn (Request $request) => Limit::perMinute(90)->by($request->user()?->id ?: $request->ip()));

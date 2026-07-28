@@ -14,11 +14,20 @@ class StoreSyncBatchRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'protocol_version' => ['required', 'string', 'in:1.0'],
             'batch_uuid' => ['required', 'uuid'],
             'business_uuid' => ['required', 'uuid'],
             'branch_uuid' => ['required', 'uuid'],
             'device_uuid' => ['required', 'uuid'],
-            'records' => ['present', 'array'],
+            'created_at' => ['required', 'date'],
+            'records' => ['required', 'array', 'min:1'],
+            'records.*.entity' => ['required', 'string'],
+            'records.*.record_uuid' => ['required', 'uuid'],
+            'records.*.operation' => ['required', 'string'],
+            'records.*.version' => ['required', 'integer', 'min:1'],
+            'records.*.idempotency_key' => ['required', 'string', 'max:200'],
+            'records.*.occurred_at' => ['required', 'date'],
+            'records.*.payload' => ['required', 'array'],
         ];
     }
 }

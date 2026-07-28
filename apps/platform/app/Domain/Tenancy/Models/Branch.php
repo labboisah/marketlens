@@ -14,10 +14,25 @@ class Branch extends Model
     use HasUuid;
     use SoftDeletes;
 
-    protected $fillable = ['business_id', 'uuid', 'name', 'code', 'status'];
+    protected $fillable = [
+        'business_id',
+        'uuid',
+        'name',
+        'code',
+        'phone',
+        'email',
+        'address',
+        'state',
+        'local_government_area',
+        'is_head_office',
+        'status',
+    ];
 
     protected function casts(): array
     {
-        return ['status' => BranchStatus::class];
+        return [
+            'status' => BranchStatus::class,
+            'is_head_office' => 'boolean',
+        ];
     }
 }

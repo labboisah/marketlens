@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware(['api.version', 'throttle:api'])->group(function (): void {
     Route::prefix('auth')->name('api.v1.auth.')->group(function (): void {
-        Route::post('/login', [AuthController::class, 'login'])->name('login');
+        Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login')->name('login');
         Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum')->name('logout');
-        Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum')->name('user');
+        Route::get('/user', [AuthController::class, 'user'])->middleware(['auth:sanctum', 'account.active'])->name('user');
     });
 
     Route::prefix('device')->name('api.v1.device.')->middleware('throttle:device')->group(function (): void {
@@ -23,7 +23,7 @@ Route::prefix('v1')->middleware(['api.version', 'throttle:api'])->group(function
         Route::get('/batches/{batch}', [SyncController::class, 'show'])->name('batches.show');
     });
 
-    Route::prefix('monitoring')->name('api.v1.monitoring.')->middleware(['auth:sanctum', 'throttle:monitoring'])->group(function (): void {
+    Route::prefix('monitoring')->name('api.v1.monitoring.')->middleware(['auth:sanctum', 'account.active', 'throttle:monitoring'])->group(function (): void {
         Route::get('/dashboard', [MonitoringController::class, 'dashboard'])->name('dashboard');
         Route::get('/branches', [MonitoringController::class, 'branches'])->name('branches');
     });

@@ -33,12 +33,18 @@ cd apps/platform
 composer install
 cp .env.example .env
 php artisan key:generate
-pnpm install
-pnpm build
+npm install
+npm run build
 ```
 
 This app was generated on Windows. Horizon requires `pcntl` and `posix`, so run
 Horizon under Linux, WSL, or container PHP.
+
+Start local PostgreSQL, Redis, and Mailpit with:
+
+```bash
+docker compose up -d
+```
 
 ## PostgreSQL
 
@@ -50,7 +56,7 @@ DB_HOST=127.0.0.1
 DB_PORT=5432
 DB_DATABASE=marketlens_platform
 DB_USERNAME=marketlens
-DB_PASSWORD=
+DB_PASSWORD=marketlens
 ```
 
 Run migrations:
