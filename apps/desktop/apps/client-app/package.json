@@ -1,0 +1,38 @@
+{
+  "name": "@marketlens/client-app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rimraf dist coverage out .vite",
+    "dev": "vite --host 127.0.0.1",
+    "lint": "eslint .",
+    "make": "electron-forge make",
+    "package": "electron-forge package",
+    "test": "vitest run --passWithNoTests",
+    "test:e2e": "playwright test --pass-with-no-tests",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@marketlens/api-contracts": "workspace:*",
+    "@marketlens/permissions": "workspace:*",
+    "@marketlens/shared-types": "workspace:*",
+    "@marketlens/ui": "workspace:*",
+    "@marketlens/validation": "workspace:*",
+    "@tanstack/react-query": "latest",
+    "@tanstack/react-table": "latest",
+    "@tanstack/react-virtual": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-hook-form": "latest",
+    "socket.io-client": "latest",
+    "zod": "latest",
+    "zustand": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "latest",
+    "@types/react-dom": "latest"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "name": "@marketlens/shop-app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rimraf dist coverage out .vite",
+    "dev": "vite --host 127.0.0.1",
+    "lint": "eslint .",
+    "make": "electron-forge make",
+    "package": "electron-forge package",
+    "rebuild:native": "electron-forge import && electron-rebuild",
+    "test": "vitest run --passWithNoTests",
+    "test:e2e": "playwright test --pass-with-no-tests",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@marketlens/api-contracts": "workspace:*",
+    "@marketlens/calculations": "workspace:*",
+    "@marketlens/permissions": "workspace:*",
+    "@marketlens/shared-types": "workspace:*",
+    "@marketlens/sync-contracts": "workspace:*",
+    "@marketlens/ui": "workspace:*",
+    "@marketlens/validation": "workspace:*",
+    "better-sqlite3": "latest",
+    "drizzle-orm": "latest",
+    "fastify": "latest",
+    "pino": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "socket.io": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest"
+  }
+}

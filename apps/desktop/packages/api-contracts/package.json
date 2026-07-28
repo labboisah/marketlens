@@ -1,0 +1,22 @@
+{
+  "name": "@marketlens/api-contracts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./v1": "./src/v1.ts"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rimraf dist coverage",
+    "lint": "eslint .",
+    "test": "vitest run --passWithNoTests",
+    "test:e2e": "echo \"No e2e tests for api-contracts\"",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@marketlens/shared-types": "workspace:*",
+    "zod": "latest"
+  }
+}

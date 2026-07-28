@@ -1,0 +1,14 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/shared-types" },
+    { "path": "./packages/api-contracts" },
+    { "path": "./packages/validation" },
+    { "path": "./packages/permissions" },
+    { "path": "./packages/calculations" },
+    { "path": "./packages/sync-contracts" },
+    { "path": "./packages/ui" },
+    { "path": "./apps/shop-app" },
+    { "path": "./apps/client-app" }
+  ]
+}

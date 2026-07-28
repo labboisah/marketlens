@@ -1,0 +1,20 @@
+{
+  "name": "@marketlens/validation",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rimraf dist coverage",
+    "lint": "eslint .",
+    "test": "vitest run --passWithNoTests",
+    "test:e2e": "echo \"No e2e tests for validation\"",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "zod": "latest"
+  }
+}
