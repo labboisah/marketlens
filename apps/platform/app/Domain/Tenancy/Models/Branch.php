@@ -6,6 +6,7 @@ use App\Enums\BranchStatus;
 use App\Models\Concerns\BelongsToBusinessTenant;
 use App\Models\Concerns\HasUuid;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Branch extends Model
@@ -34,5 +35,10 @@ class Branch extends Model
             'status' => BranchStatus::class,
             'is_head_office' => 'boolean',
         ];
+    }
+
+    public function business(): BelongsTo
+    {
+        return $this->belongsTo(Business::class);
     }
 }

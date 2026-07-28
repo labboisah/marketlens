@@ -2,10 +2,14 @@
 
 namespace App\Domain\Tenancy\Models;
 
+use App\Domain\Billing\Models\Subscription;
 use App\Enums\BusinessStatus;
 use App\Models\Concerns\HasUuid;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Business extends Model
@@ -48,5 +52,22 @@ class Business extends Model
     public function branches(): HasMany
     {
         return $this->hasMany(Branch::class);
+    }
+
+    public function owners(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'business_owners')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    public function currentSubscription(): HasOne
+    {
+        return $this->hasOne(Subscription::class)->latestOfMany();
     }
 }

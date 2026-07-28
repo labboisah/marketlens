@@ -1,0 +1,14 @@
+<?php
+
+namespace App\Support\Platform;
+
+readonly class NavigationItem
+{
+    public function __construct(
+        public string $label,
+        public string $href,
+        public string $section,
+        public string $feature,
+        public bool $allowed,
+    ) {}
+}

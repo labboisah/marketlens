@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Domain\Tenancy\Models\Business;
 use App\Enums\AccountStatus;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -43,5 +45,12 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasDisabledAccount(): bool
     {
         return in_array($this->account_status, [AccountStatus::Suspended, AccountStatus::Disabled], true);
+    }
+
+    public function ownedBusinesses(): BelongsToMany
+    {
+        return $this->belongsToMany(Business::class, 'business_owners')
+            ->withPivot('role')
+            ->withTimestamps();
     }
 }

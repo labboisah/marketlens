@@ -48,7 +48,7 @@ return new class extends Migration
 
         Schema::create('plans', function (Blueprint $table): void {
             $table->id();
-            $table->uuid('uuid')->unique();
+            $table->uuid('uuid')->unique()->nullable();
             $table->string('name');
             $table->string('billing_interval');
             $table->unsignedBigInteger('price_minor')->default(0);

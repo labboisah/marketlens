@@ -9,11 +9,11 @@ class BusinessPolicy
 {
     public function view(User $user, Business $business): bool
     {
-        return true;
+        return $user->ownedBusinesses()->whereKey($business->id)->exists();
     }
 
     public function manage(User $user, Business $business): bool
     {
-        return true;
+        return $this->view($user, $business);
     }
 }

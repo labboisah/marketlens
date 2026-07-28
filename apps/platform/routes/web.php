@@ -9,8 +9,10 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\OnboardingCompletedController;
+use App\Http\Controllers\PlatformContextController;
 use App\Livewire\Onboarding\BusinessOnboardingWizard;
 use App\Livewire\Platform\Administration\Dashboard;
+use App\Livewire\Platform\PermissionDeniedPage;
 use App\Livewire\PublicSite\BusinessTypesPage;
 use App\Livewire\PublicSite\FeaturesPage;
 use App\Livewire\PublicSite\HowItWorksPage;
@@ -51,6 +53,8 @@ Route::middleware(['auth', 'verified', 'account.active'])->group(function (): vo
     Route::get('/onboarding/completed', OnboardingCompletedController::class)->name('onboarding.completed');
 });
 
-Route::get('/admin/dashboard', Dashboard::class)
-    ->middleware(['auth', 'verified', 'account.active', 'onboarding.complete'])
-    ->name('platform.dashboard');
+Route::middleware(['auth', 'verified', 'account.active', 'onboarding.complete', 'platform.context'])->group(function (): void {
+    Route::get('/admin/dashboard', Dashboard::class)->name('platform.dashboard');
+    Route::post('/platform/context', [PlatformContextController::class, 'update'])->name('platform.context.update');
+    Route::get('/platform/permission-denied', PermissionDeniedPage::class)->name('platform.permission-denied');
+});

@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\EnsureApiVersion;
 use App\Http\Middleware\EnsureOnboardingIsCompleted;
+use App\Http\Middleware\ResolvePlatformContext;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -20,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api.version' => EnsureApiVersion::class,
             'account.active' => EnsureAccountIsActive::class,
             'onboarding.complete' => EnsureOnboardingIsCompleted::class,
+            'platform.context' => ResolvePlatformContext::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
