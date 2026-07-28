@@ -5,13 +5,13 @@
   "type": "module",
   "main": "dist/main/index.js",
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc -b && vite build --config vite.renderer.config.ts",
     "clean": "rimraf dist coverage out .vite",
-    "dev": "vite --host 127.0.0.1",
+    "dev": "vite --config vite.renderer.config.ts --host 127.0.0.1",
     "lint": "eslint .",
     "make": "electron-forge make",
     "package": "electron-forge package",
-    "rebuild:native": "electron-forge import && electron-rebuild",
+    "rebuild:native": "electron-rebuild",
     "test": "vitest run --passWithNoTests",
     "test:e2e": "playwright test --pass-with-no-tests",
     "typecheck": "tsc -b --pretty false"
@@ -25,6 +25,7 @@
     "@marketlens/ui": "workspace:*",
     "@marketlens/validation": "workspace:*",
     "better-sqlite3": "latest",
+    "dotenv": "latest",
     "drizzle-orm": "latest",
     "fastify": "latest",
     "pino": "latest",
@@ -34,6 +35,9 @@
     "zod": "latest"
   },
   "devDependencies": {
+    "@electron-forge/plugin-vite": "latest",
+    "@electron-forge/shared-types": "latest",
+    "@electron/rebuild": "latest",
     "@types/better-sqlite3": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest"
