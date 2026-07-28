@@ -138,6 +138,7 @@ Versioned APIs begin under `/api/v1`:
 - `/api/v1/monitoring/*`
 
 Document endpoint contracts in `docs/api` before implementing full behavior.
+The OpenAPI foundation lives at `docs/openapi.yaml`.
 
 ## Deployment Overview
 
