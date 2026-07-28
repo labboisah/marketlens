@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --ml-background: 210 40% 98%;
+    --ml-foreground: 222 47% 11%;
+    --ml-surface: 0 0% 100%;
+    --ml-surface-muted: 210 40% 96%;
+    --ml-border: 214 32% 84%;
+    --ml-muted: 215 16% 47%;
+    --ml-primary: 215 68% 14%;
+    --ml-accent: 221 83% 53%;
+    --ml-teal: 175 84% 25%;
+    --ml-success: 160 84% 32%;
+    --ml-warning: 32 95% 44%;
+    --ml-danger: 0 72% 51%;
+    --ml-information: 199 89% 48%;
+
+    --ml-radius-sm: 0.25rem;
+    --ml-radius-md: 0.375rem;
+    --ml-radius-lg: 0.5rem;
+    --ml-shadow-sm: 0 1px 2px rgb(15 23 42 / 0.08);
+    --ml-shadow-md: 0 12px 28px rgb(15 23 42 / 0.14);
+  }
+
+  [data-theme='dark'] {
+    --ml-background: 216 59% 8%;
+    --ml-foreground: 210 40% 98%;
+    --ml-surface: 216 50% 12%;
+    --ml-surface-muted: 215 43% 16%;
+    --ml-border: 215 25% 27%;
+    --ml-muted: 213 27% 84%;
+    --ml-primary: 213 94% 80%;
+    --ml-accent: 199 89% 66%;
+    --ml-teal: 172 66% 50%;
+    --ml-success: 158 64% 52%;
+    --ml-warning: 43 96% 56%;
+    --ml-danger: 0 91% 71%;
+    --ml-information: 199 95% 74%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'tnum' 0;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-background;
+  }
+}
+
+@layer components {
+  .ml-page-shell {
+    @apply min-h-screen bg-background text-foreground;
+  }
+
+  .ml-sidebar {
+    @apply border-r border-border bg-surface;
+  }
+
+  .ml-top-nav {
+    @apply border-b border-border bg-surface;
+  }
+
+  .ml-card {
+    @apply rounded-lg border border-border bg-surface shadow-sm;
+  }
+
+  .ml-field {
+    @apply h-10 rounded-md border border-border bg-surface px-3 text-sm text-foreground;
+  }
+
+  .ml-table {
+    @apply w-full border-separate border-spacing-0 text-sm;
+  }
+
+  .ml-table th {
+    @apply border-b border-border px-3 py-2 text-left font-semibold text-muted;
+  }
+
+  .ml-table td {
+    @apply border-b border-border px-3 py-3;
+  }
+}
