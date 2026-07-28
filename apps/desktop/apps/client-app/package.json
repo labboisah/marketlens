@@ -5,9 +5,9 @@
   "type": "module",
   "main": "dist/main/index.js",
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc -b && vite build --config vite.renderer.config.ts",
     "clean": "rimraf dist coverage out .vite",
-    "dev": "vite --host 127.0.0.1",
+    "dev": "vite --config vite.renderer.config.ts --host 127.0.0.1",
     "lint": "eslint .",
     "make": "electron-forge make",
     "package": "electron-forge package",
@@ -24,6 +24,7 @@
     "@tanstack/react-query": "latest",
     "@tanstack/react-table": "latest",
     "@tanstack/react-virtual": "latest",
+    "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
     "react-hook-form": "latest",
@@ -32,6 +33,8 @@
     "zustand": "latest"
   },
   "devDependencies": {
+    "@electron-forge/plugin-vite": "latest",
+    "@electron-forge/shared-types": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest"
   }

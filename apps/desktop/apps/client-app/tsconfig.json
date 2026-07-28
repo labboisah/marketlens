@@ -3,10 +3,10 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": ".",
     "types": ["node", "vite/client"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "forge.config.ts", "vite.*.config.ts"],
   "references": [
     { "path": "../../packages/shared-types" },
     { "path": "../../packages/api-contracts" },
