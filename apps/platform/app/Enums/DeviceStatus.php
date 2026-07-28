@@ -1,0 +1,11 @@
+<?php
+
+namespace App\Enums;
+
+enum DeviceStatus: string
+{
+    case Pending = 'pending';
+    case Active = 'active';
+    case Suspended = 'suspended';
+    case Revoked = 'revoked';
+}

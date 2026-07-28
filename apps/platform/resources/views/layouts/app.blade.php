@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title ?? 'MarketLens Platform' }}</title>
-    @vite(['resources/css/marketlens.css', 'resources/js/app.js'])
+    @fluxAppearance
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
   </head>
   <body>
     <div class="ml-page-shell" x-data="marketlensShell">
@@ -22,5 +23,6 @@
         </main>
       </div>
     </div>
+    @fluxScripts
   </body>
 </html>

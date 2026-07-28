@@ -16,7 +16,7 @@ help:
 install: platform-install desktop-install monitoring-install
 
 platform-install:
-	@echo "Platform app is not scaffolded yet. When apps/platform/composer.json exists, run composer install in apps/platform."
+	cd apps/platform && composer install --ignore-platform-req=ext-pcntl --ignore-platform-req=ext-posix
 
 desktop-install:
 	@echo "Desktop workspace is not scaffolded yet. When package.json exists, run pnpm install from the desktop workspace."
@@ -25,16 +25,20 @@ monitoring-install:
 	@echo "Monitoring app is not scaffolded yet. When pubspec.yaml exists, run flutter pub get in apps/monitoring-app."
 
 test:
-	@echo "No application test suites are scaffolded yet."
+	cd apps/platform && php artisan test
+	@echo "Desktop and Monitoring test suites are not scaffolded yet."
 
 lint:
-	@echo "No application linters are scaffolded yet."
+	cd apps/platform && vendor/bin/phpstan analyse
+	@echo "Desktop and Monitoring linters are not scaffolded yet."
 
 format:
-	@echo "No application formatters are scaffolded yet."
+	cd apps/platform && vendor/bin/pint
+	@echo "Desktop and Monitoring formatters are not scaffolded yet."
 
 build:
-	@echo "No application build targets are scaffolded yet."
+	cd apps/platform && pnpm build
+	@echo "Desktop and Monitoring build targets are not scaffolded yet."
 
 clean:
 	@echo "No generated application artifacts are scaffolded yet."
