@@ -9,6 +9,7 @@ readonly class NavigationItem
         public string $href,
         public string $section,
         public string $feature,
+        public string $icon,
         public bool $allowed,
     ) {}
 }

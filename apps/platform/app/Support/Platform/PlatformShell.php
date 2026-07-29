@@ -76,34 +76,35 @@ class PlatformShell
                 href: $item['href'],
                 section: $item['section'],
                 feature: $item['feature'],
+                icon: $item['icon'],
                 allowed: $this->featureAllowed($item['feature'], $featureNames),
             ))
             ->all();
     }
 
     /**
-     * @return array<int, array{label: string, href: string, section: string, feature: string}>
+     * @return array<int, array{label: string, href: string, section: string, feature: string, icon: string}>
      */
     private function items(): array
     {
         return [
-            ['label' => 'Overview', 'href' => route('platform.dashboard'), 'section' => 'Business', 'feature' => 'base'],
-            ['label' => 'Monitoring', 'href' => '#monitoring', 'section' => 'Business', 'feature' => 'remote dashboard'],
-            ['label' => 'Sales', 'href' => '#sales', 'section' => 'Operations', 'feature' => 'sales'],
-            ['label' => 'Payments', 'href' => '#payments', 'section' => 'Operations', 'feature' => 'sales'],
-            ['label' => 'Inventory', 'href' => '#inventory', 'section' => 'Operations', 'feature' => 'inventory'],
-            ['label' => 'Expenses', 'href' => '#expenses', 'section' => 'Operations', 'feature' => 'expenses'],
-            ['label' => 'Customers', 'href' => '#customers', 'section' => 'Operations', 'feature' => 'customer debts'],
-            ['label' => 'Suppliers', 'href' => '#suppliers', 'section' => 'Operations', 'feature' => 'purchases and suppliers'],
-            ['label' => 'Cashiers', 'href' => '#cashiers', 'section' => 'Operations', 'feature' => 'cashier shifts'],
-            ['label' => 'Branches', 'href' => '#branches', 'section' => 'Control', 'feature' => 'multiple branches'],
-            ['label' => 'Devices', 'href' => '#devices', 'section' => 'Control', 'feature' => 'devices'],
-            ['label' => 'Synchronization', 'href' => '#synchronization', 'section' => 'Control', 'feature' => 'base'],
-            ['label' => 'Alerts', 'href' => '#alerts', 'section' => 'Control', 'feature' => 'security alerts'],
-            ['label' => 'Reports', 'href' => '#reports', 'section' => 'Insights', 'feature' => 'reports'],
-            ['label' => 'Subscription', 'href' => '#subscription', 'section' => 'Account', 'feature' => 'base'],
-            ['label' => 'Settings', 'href' => '#settings', 'section' => 'Account', 'feature' => 'base'],
-            ['label' => 'Support', 'href' => '#support', 'section' => 'Account', 'feature' => 'base'],
+            ['label' => 'Overview', 'href' => route('platform.dashboard'), 'section' => 'Business', 'feature' => 'base', 'icon' => 'layout-dashboard'],
+            ['label' => 'Monitoring', 'href' => '#monitoring', 'section' => 'Business', 'feature' => 'remote dashboard', 'icon' => 'monitor-smartphone'],
+            ['label' => 'Sales', 'href' => '#sales', 'section' => 'Operations', 'feature' => 'sales', 'icon' => 'receipt'],
+            ['label' => 'Payments', 'href' => '#payments', 'section' => 'Operations', 'feature' => 'sales', 'icon' => 'credit-card'],
+            ['label' => 'Inventory', 'href' => '#inventory', 'section' => 'Operations', 'feature' => 'inventory', 'icon' => 'package-check'],
+            ['label' => 'Expenses', 'href' => '#expenses', 'section' => 'Operations', 'feature' => 'expenses', 'icon' => 'wallet-cards'],
+            ['label' => 'Customers', 'href' => '#customers', 'section' => 'Operations', 'feature' => 'customer debts', 'icon' => 'users'],
+            ['label' => 'Suppliers', 'href' => '#suppliers', 'section' => 'Operations', 'feature' => 'purchases and suppliers', 'icon' => 'truck'],
+            ['label' => 'Cashiers', 'href' => '#cashiers', 'section' => 'Operations', 'feature' => 'cashier shifts', 'icon' => 'user-check'],
+            ['label' => 'Branches', 'href' => '#branches', 'section' => 'Control', 'feature' => 'multiple branches', 'icon' => 'building-2'],
+            ['label' => 'Devices', 'href' => '#devices', 'section' => 'Control', 'feature' => 'devices', 'icon' => 'monitor'],
+            ['label' => 'Synchronization', 'href' => '#synchronization', 'section' => 'Control', 'feature' => 'base', 'icon' => 'refresh-cw'],
+            ['label' => 'Alerts', 'href' => '#alerts', 'section' => 'Control', 'feature' => 'security alerts', 'icon' => 'bell-ring'],
+            ['label' => 'Reports', 'href' => '#reports', 'section' => 'Insights', 'feature' => 'reports', 'icon' => 'bar-chart-3'],
+            ['label' => 'Subscription', 'href' => '#subscription', 'section' => 'Account', 'feature' => 'base', 'icon' => 'badge-dollar-sign'],
+            ['label' => 'Settings', 'href' => '#settings', 'section' => 'Account', 'feature' => 'base', 'icon' => 'settings'],
+            ['label' => 'Support', 'href' => '#support', 'section' => 'Account', 'feature' => 'base', 'icon' => 'life-buoy'],
         ];
     }
 

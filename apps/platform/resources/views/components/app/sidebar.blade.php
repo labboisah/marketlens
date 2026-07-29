@@ -17,7 +17,7 @@
       <span>MarketLens</span>
     </a>
     <button type="button" class="rounded-md p-2 text-muted hover:bg-surface-muted lg:hidden" x-on:click="sidebarOpen = false" aria-label="Close navigation">
-      <span aria-hidden="true">×</span>
+      <x-app.icon name="x" class="h-5 w-5" />
     </button>
   </div>
 
@@ -28,10 +28,11 @@
         <div class="mt-2 flex flex-col gap-1">
           @foreach ($sectionItems as $item)
             <a
-              class="rounded-md px-3 py-2 text-sm font-medium {{ request()->url() === $item->href ? 'bg-primary text-white' : 'text-muted hover:bg-surface-muted hover:text-foreground' }} focus:outline-none focus:ring-2 focus:ring-primary"
+              class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium {{ request()->url() === $item->href ? 'bg-primary text-white' : 'text-muted hover:bg-surface-muted hover:text-foreground' }} focus:outline-none focus:ring-2 focus:ring-primary"
               href="{{ $item->href }}"
             >
-              {{ $item->label }}
+              <x-app.icon :name="$item->icon" class="h-4 w-4 shrink-0" />
+              <span class="truncate">{{ $item->label }}</span>
             </a>
           @endforeach
         </div>
@@ -40,6 +41,6 @@
   </nav>
 
   <div class="border-t border-border p-4">
-    <x-app.sync-indicator state="stale" last-synced-at="Awaiting first sync" />
+    <x-app.sync-indicator state="delayed" last-synced-at="Awaiting first sync" />
   </div>
 </aside>
