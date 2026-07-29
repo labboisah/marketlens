@@ -7,6 +7,7 @@ use App\Models\Concerns\BelongsToBranchTenant;
 use App\Models\Concerns\BelongsToBusinessTenant;
 use App\Models\Concerns\HasUuid;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Device extends Model
@@ -16,13 +17,41 @@ class Device extends Model
     use HasUuid;
     use SoftDeletes;
 
-    protected $fillable = ['business_id', 'branch_id', 'uuid', 'name', 'type', 'status', 'last_seen_at'];
+    protected $fillable = [
+        'business_id',
+        'branch_id',
+        'application_version_id',
+        'uuid',
+        'name',
+        'type',
+        'status',
+        'credential_hash',
+        'credential_preview',
+        'identity_hash',
+        'app_version',
+        'operating_system',
+        'synchronization_errors',
+        'last_seen_at',
+        'activated_at',
+        'last_synchronized_at',
+        'revoked_at',
+    ];
 
     protected function casts(): array
     {
         return [
             'status' => DeviceStatus::class,
+            'operating_system' => 'array',
+            'synchronization_errors' => 'array',
             'last_seen_at' => 'datetime',
+            'activated_at' => 'datetime',
+            'last_synchronized_at' => 'datetime',
+            'revoked_at' => 'datetime',
         ];
+    }
+
+    public function activations(): HasMany
+    {
+        return $this->hasMany(DeviceActivation::class);
     }
 }

@@ -4,6 +4,7 @@ use App\Domain\Audit\Models\AuditLog;
 use App\Domain\Billing\Models\Plan;
 use App\Domain\Billing\Models\Subscription;
 use App\Domain\Devices\Models\Device;
+use App\Domain\Devices\Services\ShopAppActivationService;
 use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Models\Business;
 use App\Domain\Tenancy\Services\BranchManagement;
@@ -201,22 +202,28 @@ it('suspends branches without deleting synchronized history', function (): void 
 
 it('blocks device activation for suspended branches', function (): void {
     $user = branchManagementUser();
-    $business = branchManagementBusiness($user);
+    $business = branchManagementBusiness($user, branchManagementPlan(['More Client App devices']));
     $branch = Branch::query()->create([
         'business_id' => $business->id,
         'name' => 'Suspended Branch',
         'code' => 'SUSP',
         'is_head_office' => true,
-        'status' => BranchStatus::Suspended,
+        'status' => BranchStatus::Active,
     ]);
+    $result = app(ShopAppActivationService::class)->createActivation($business, $branch, $user, [
+        'device_label' => 'Shop App',
+        'device_type' => 'shop_app',
+        'expires_at' => now()->addMinutes(30),
+        'application_version_id' => null,
+    ]);
+    $branch->forceFill(['status' => BranchStatus::Suspended])->save();
 
     $this
         ->withHeader('Accept', 'application/json')
-        ->withHeader('X-MarketLens-API-Version', '1')
         ->postJson(route('api.v1.device.activate'), [
-            'activation_code' => 'ACT-123',
-            'device_name' => 'Shop App',
-            'branch_uuid' => $branch->uuid,
+            'activation_code' => $result['code'],
+            'device_identity' => 'machine-guid-123',
+            'app_version' => '1.0.0',
         ])
-        ->assertForbidden();
+        ->assertUnprocessable();
 });

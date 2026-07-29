@@ -12,12 +12,24 @@ class DeviceActivation extends Model
     use HasUuid;
     use SoftDeletes;
 
-    protected $fillable = ['device_id', 'uuid', 'activation_code_hash', 'activated_at', 'expires_at'];
+    protected $fillable = [
+        'device_id',
+        'application_version_id',
+        'uuid',
+        'activation_code_hash',
+        'activated_at',
+        'used_at',
+        'revoked_at',
+        'failed_attempts',
+        'expires_at',
+    ];
 
     protected function casts(): array
     {
         return [
             'activated_at' => 'datetime',
+            'used_at' => 'datetime',
+            'revoked_at' => 'datetime',
             'expires_at' => 'datetime',
         ];
     }
