@@ -18,6 +18,7 @@ use App\Livewire\Platform\Customers\CustomerDebtMonitoringPage;
 use App\Livewire\Platform\Devices\DeviceActivationPage;
 use App\Livewire\Platform\Expenses\ExpenseMonitoringPage;
 use App\Livewire\Platform\Inventory\InventoryMonitoringPage;
+use App\Livewire\Platform\Notifications\NotificationCentrePage;
 use App\Livewire\Platform\Payments\PaymentMonitoringPage;
 use App\Livewire\Platform\PermissionDeniedPage;
 use App\Livewire\Platform\Purchases\PurchaseMonitoringPage;
@@ -77,6 +78,7 @@ Route::middleware(['auth', 'verified', 'account.active', 'onboarding.complete', 
     Route::get('/branches', BranchManagementPage::class)->name('platform.branches');
     Route::get('/devices', DeviceActivationPage::class)->name('platform.devices');
     Route::get('/synchronization', SynchronizationMonitoringPage::class)->name('platform.synchronization');
+    Route::get('/alerts', NotificationCentrePage::class)->name('platform.notifications');
     Route::post('/platform/context', [PlatformContextController::class, 'update'])->name('platform.context.update');
     Route::get('/platform/permission-denied', PermissionDeniedPage::class)->name('platform.permission-denied');
 });

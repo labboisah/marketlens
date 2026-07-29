@@ -62,9 +62,12 @@
       </form>
 
       <div class="flex items-center justify-between gap-2">
-        <button type="button" class="rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-primary">
+        <a href="{{ route('platform.notifications') }}" class="relative rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-primary">
           Notifications
-        </button>
+          @if (($shell['unreadNotifications'] ?? 0) > 0)
+            <span class="ml-2 rounded-full bg-danger px-2 py-0.5 text-xs font-bold text-white">{{ $shell['unreadNotifications'] }}</span>
+          @endif
+        </a>
         <div class="text-right text-xs text-muted">
           <p class="font-medium text-foreground">{{ auth()->user()?->name }}</p>
           <form method="POST" action="{{ route('logout') }}">

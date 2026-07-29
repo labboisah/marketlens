@@ -3,6 +3,7 @@
 namespace App\Support\Platform;
 
 use App\Domain\Billing\Models\Subscription;
+use App\Domain\Notifications\Models\PlatformNotification;
 use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Models\Business;
 use App\Domain\Tenancy\Services\BranchContext;
@@ -26,6 +27,7 @@ class PlatformShell
      *     subscription: ?Subscription,
      *     navigation: array<int, NavigationItem>,
      *     featureNames: array<int, string>,
+     *     unreadNotifications: int,
      * }
      */
     public function forUser(?User $user): array
@@ -39,6 +41,7 @@ class PlatformShell
                 'subscription' => null,
                 'navigation' => [],
                 'featureNames' => [],
+                'unreadNotifications' => 0,
             ];
         }
 
@@ -61,6 +64,7 @@ class PlatformShell
             'subscription' => $subscription,
             'navigation' => $this->navigation($featureNames),
             'featureNames' => $featureNames,
+            'unreadNotifications' => $business ? $this->unreadNotifications($business->id) : 0,
         ];
     }
 
@@ -101,7 +105,7 @@ class PlatformShell
             ['label' => 'Branches', 'href' => route('platform.branches'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'building-2'],
             ['label' => 'Devices', 'href' => route('platform.devices'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'monitor'],
             ['label' => 'Synchronization', 'href' => route('platform.synchronization'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'refresh-cw'],
-            ['label' => 'Alerts', 'href' => '#alerts', 'section' => 'Control', 'feature' => 'security alerts', 'icon' => 'bell-ring'],
+            ['label' => 'Alerts', 'href' => route('platform.notifications'), 'section' => 'Control', 'feature' => 'security alerts', 'icon' => 'bell-ring'],
             ['label' => 'Reports', 'href' => '#reports', 'section' => 'Insights', 'feature' => 'reports', 'icon' => 'bar-chart-3'],
             ['label' => 'Subscription', 'href' => '#subscription', 'section' => 'Account', 'feature' => 'base', 'icon' => 'badge-dollar-sign'],
             ['label' => 'Settings', 'href' => '#settings', 'section' => 'Account', 'feature' => 'base', 'icon' => 'settings'],
@@ -119,5 +123,13 @@ class PlatformShell
         }
 
         return collect($featureNames)->contains(fn (string $name): bool => str_contains($name, $feature));
+    }
+
+    private function unreadNotifications(int $businessId): int
+    {
+        return PlatformNotification::query()
+            ->where('business_id', $businessId)
+            ->whereNull('read_at')
+            ->count();
     }
 }
