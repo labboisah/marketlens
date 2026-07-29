@@ -100,7 +100,7 @@ class PlatformShell
             ['label' => 'Branch Performance', 'href' => route('platform.branch-monitoring'), 'section' => 'Monitoring', 'feature' => 'base', 'icon' => 'bar-chart-3'],
             ['label' => 'Branches', 'href' => route('platform.branches'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'building-2'],
             ['label' => 'Devices', 'href' => route('platform.devices'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'monitor'],
-            ['label' => 'Synchronization', 'href' => '#synchronization', 'section' => 'Control', 'feature' => 'base', 'icon' => 'refresh-cw'],
+            ['label' => 'Synchronization', 'href' => route('platform.synchronization'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'refresh-cw'],
             ['label' => 'Alerts', 'href' => '#alerts', 'section' => 'Control', 'feature' => 'security alerts', 'icon' => 'bell-ring'],
             ['label' => 'Reports', 'href' => '#reports', 'section' => 'Insights', 'feature' => 'reports', 'icon' => 'bar-chart-3'],
             ['label' => 'Subscription', 'href' => '#subscription', 'section' => 'Account', 'feature' => 'base', 'icon' => 'badge-dollar-sign'],

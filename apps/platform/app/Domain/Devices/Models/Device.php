@@ -38,6 +38,9 @@ class Device extends Model
         'activated_at',
         'last_synchronized_at',
         'revoked_at',
+        'requires_update_at',
+        'required_version',
+        'update_required_by',
     ];
 
     protected function casts(): array
@@ -50,6 +53,7 @@ class Device extends Model
             'activated_at' => 'datetime',
             'last_synchronized_at' => 'datetime',
             'revoked_at' => 'datetime',
+            'requires_update_at' => 'datetime',
         ];
     }
 
@@ -66,5 +70,10 @@ class Device extends Model
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
+    }
+
+    public function heartbeatLogs(): HasMany
+    {
+        return $this->hasMany(DeviceHeartbeatLog::class);
     }
 }

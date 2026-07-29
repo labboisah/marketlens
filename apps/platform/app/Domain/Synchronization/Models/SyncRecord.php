@@ -2,6 +2,7 @@
 
 namespace App\Domain\Synchronization\Models;
 
+use App\Domain\Devices\Models\Device;
 use App\Models\Concerns\BelongsToBranchTenant;
 use App\Models\Concerns\BelongsToBusinessTenant;
 use Illuminate\Database\Eloquent\Model;
@@ -30,6 +31,8 @@ class SyncRecord extends Model
         'payload',
         'occurred_at',
         'acknowledged_at',
+        'reviewed_at',
+        'reviewed_by',
     ];
 
     protected function casts(): array
@@ -39,11 +42,17 @@ class SyncRecord extends Model
             'retryable' => 'boolean',
             'occurred_at' => 'datetime',
             'acknowledged_at' => 'datetime',
+            'reviewed_at' => 'datetime',
         ];
     }
 
     public function batch(): BelongsTo
     {
         return $this->belongsTo(SyncBatch::class, 'sync_batch_id');
+    }
+
+    public function device(): BelongsTo
+    {
+        return $this->belongsTo(Device::class);
     }
 }

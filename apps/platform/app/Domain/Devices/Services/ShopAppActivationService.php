@@ -5,6 +5,7 @@ namespace App\Domain\Devices\Services;
 use App\Domain\Audit\Models\AuditLog;
 use App\Domain\Devices\Models\Device;
 use App\Domain\Devices\Models\DeviceActivation;
+use App\Domain\Devices\Models\DeviceHeartbeatLog;
 use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Models\Business;
 use App\Domain\Versions\Models\ApplicationVersion;
@@ -160,6 +161,19 @@ class ShopAppActivationService
             'synchronization_errors' => $payload['synchronization_errors'] ?? [],
         ])->save();
 
+        DeviceHeartbeatLog::query()->create([
+            'business_id' => $device->business_id,
+            'branch_id' => $device->branch_id,
+            'device_id' => $device->id,
+            'device_uuid' => $device->uuid,
+            'status' => $device->status->value,
+            'app_version' => $device->app_version,
+            'operating_system' => $device->operating_system ?? [],
+            'synchronization_errors' => $device->synchronization_errors ?? [],
+            'last_synchronized_at' => $device->last_synchronized_at,
+            'reported_at' => now(),
+        ]);
+
         return $this->deviceStatusPayload($device->refresh());
     }
 
@@ -301,6 +315,8 @@ class ShopAppActivationService
             'shop_app_version' => $device->app_version,
             'operating_system' => $device->operating_system ?? [],
             'synchronization_errors' => $device->synchronization_errors ?? [],
+            'requires_update' => $device->requires_update_at !== null,
+            'required_version' => $device->required_version,
         ];
     }
 

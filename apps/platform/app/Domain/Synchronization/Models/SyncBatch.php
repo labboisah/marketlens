@@ -3,6 +3,7 @@
 namespace App\Domain\Synchronization\Models;
 
 use App\Domain\Devices\Models\Device;
+use App\Domain\Tenancy\Models\Branch;
 use App\Enums\SyncBatchStatus;
 use App\Models\Concerns\BelongsToBranchTenant;
 use App\Models\Concerns\BelongsToBusinessTenant;
@@ -34,6 +35,8 @@ class SyncBatch extends Model
         'received_at',
         'processed_at',
         'last_acknowledged_at',
+        'retry_requested_at',
+        'retry_requested_by',
     ];
 
     protected function casts(): array
@@ -47,11 +50,17 @@ class SyncBatch extends Model
             'received_at' => 'datetime',
             'processed_at' => 'datetime',
             'last_acknowledged_at' => 'datetime',
+            'retry_requested_at' => 'datetime',
         ];
     }
 
     public function device(): BelongsTo
     {
         return $this->belongsTo(Device::class);
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
     }
 }
