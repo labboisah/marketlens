@@ -21,18 +21,32 @@ class SyncBatch extends Model
         'branch_id',
         'device_id',
         'uuid',
+        'protocol_version',
         'status',
         'records_count',
+        'trace_id',
+        'payload_hash',
+        'accepted_records',
+        'rejected_records',
+        'conflicting_records',
+        'processing_errors',
+        'invalid_payload_excerpt',
         'received_at',
         'processed_at',
+        'last_acknowledged_at',
     ];
 
     protected function casts(): array
     {
         return [
             'status' => SyncBatchStatus::class,
+            'accepted_records' => 'array',
+            'rejected_records' => 'array',
+            'conflicting_records' => 'array',
+            'processing_errors' => 'array',
             'received_at' => 'datetime',
             'processed_at' => 'datetime',
+            'last_acknowledged_at' => 'datetime',
         ];
     }
 

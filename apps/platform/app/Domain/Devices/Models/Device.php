@@ -7,6 +7,7 @@ use App\Models\Concerns\BelongsToBranchTenant;
 use App\Models\Concerns\BelongsToBusinessTenant;
 use App\Models\Concerns\HasUuid;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -53,5 +54,15 @@ class Device extends Model
     public function activations(): HasMany
     {
         return $this->hasMany(DeviceActivation::class);
+    }
+
+    public function business(): BelongsTo
+    {
+        return $this->belongsTo(\App\Domain\Tenancy\Models\Business::class);
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(\App\Domain\Tenancy\Models\Branch::class);
     }
 }

@@ -20,9 +20,11 @@ Route::prefix('v1')->middleware(['api.version', 'throttle:api'])->group(function
         Route::get('/versions', [DeviceController::class, 'versions'])->name('versions');
     });
 
-    Route::prefix('sync')->name('api.v1.sync.')->middleware(['auth:sanctum', 'throttle:sync'])->group(function (): void {
+    Route::prefix('sync')->name('api.v1.sync.')->middleware(['throttle:sync'])->group(function (): void {
         Route::post('/batches', [SyncController::class, 'store'])->name('batches.store');
-        Route::get('/batches/{batch}', [SyncController::class, 'show'])->name('batches.show');
+        Route::get('/batches/{batchUuid}', [SyncController::class, 'show'])->name('batches.show');
+        Route::post('/acknowledgements', [SyncController::class, 'acknowledge'])->name('acknowledgements.store');
+        Route::get('/checkpoint', [SyncController::class, 'checkpoint'])->name('checkpoint.show');
     });
 
     Route::prefix('monitoring')->name('api.v1.monitoring.')->middleware(['auth:sanctum', 'account.active', 'throttle:monitoring'])->group(function (): void {

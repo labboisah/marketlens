@@ -8,6 +8,7 @@ enum SyncBatchStatus: string
     case Queued = 'queued';
     case Processing = 'processing';
     case Accepted = 'accepted';
+    case Partial = 'partial';
     case Rejected = 'rejected';
     case Failed = 'failed';
 }
