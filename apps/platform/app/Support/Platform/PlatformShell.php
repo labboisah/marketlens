@@ -90,7 +90,7 @@ class PlatformShell
         return [
             ['label' => 'Overview', 'href' => route('platform.dashboard'), 'section' => 'Business', 'feature' => 'base', 'icon' => 'layout-dashboard'],
             ['label' => 'Monitoring', 'href' => '#monitoring', 'section' => 'Business', 'feature' => 'remote dashboard', 'icon' => 'monitor-smartphone'],
-            ['label' => 'Sales', 'href' => '#sales', 'section' => 'Operations', 'feature' => 'sales', 'icon' => 'receipt'],
+            ['label' => 'Sales', 'href' => route('platform.sales'), 'section' => 'Operations', 'feature' => 'sales', 'icon' => 'receipt'],
             ['label' => 'Payments', 'href' => '#payments', 'section' => 'Operations', 'feature' => 'sales', 'icon' => 'credit-card'],
             ['label' => 'Inventory', 'href' => '#inventory', 'section' => 'Operations', 'feature' => 'inventory', 'icon' => 'package-check'],
             ['label' => 'Expenses', 'href' => '#expenses', 'section' => 'Operations', 'feature' => 'expenses', 'icon' => 'wallet-cards'],

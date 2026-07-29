@@ -5,7 +5,10 @@ use App\Domain\Billing\Models\Plan;
 use App\Domain\Billing\Models\Subscription;
 use App\Domain\Devices\Models\Device;
 use App\Domain\Devices\Services\ShopAppActivationService;
+use App\Domain\Reporting\Models\DashboardCashierException;
+use App\Domain\Reporting\Models\StaffActivitySummary;
 use App\Domain\Synchronization\Jobs\ProcessSyncBatch;
+use App\Domain\Synchronization\Models\OperationalUserProfile;
 use App\Domain\Synchronization\Models\SyncBatch;
 use App\Domain\Synchronization\Models\SyncRecord;
 use App\Domain\Tenancy\Models\Branch;
@@ -15,6 +18,7 @@ use App\Enums\BusinessStatus;
 use App\Enums\DeviceStatus;
 use App\Enums\SubscriptionStatus;
 use App\Models\User;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
@@ -87,6 +91,33 @@ function syncEnvelope(Business $business, Branch $branch, Device $device, array 
 function syncRecord(string $entity, array $overrides = []): array
 {
     $recordUuid = (string) Str::uuid();
+    $defaultPayload = ['record_uuid' => $recordUuid, 'amount_minor' => 1000];
+
+    if ($entity === 'sale') {
+        $defaultPayload = [
+            'sale_number' => 'SYNC-SALE-'.$recordUuid,
+            'transaction_number' => 'SYNC-TXN-'.$recordUuid,
+            'cashier_name' => 'Sync Cashier',
+            'customer_name' => 'Walk In',
+            'sale_type' => 'retail',
+            'status' => 'completed',
+            'payment_status' => 'paid',
+            'sold_at' => now()->toISOString(),
+            'subtotal_minor' => 1000,
+            'discount_minor' => 0,
+            'tax_minor' => 0,
+            'total_minor' => 1000,
+            'cost_minor' => 600,
+            'gross_profit_minor' => 400,
+        ];
+    }
+
+    if ($entity === 'sale' && array_key_exists('payload', $overrides) && is_array($overrides['payload'])) {
+        $overrides['payload'] = [
+            ...$defaultPayload,
+            ...$overrides['payload'],
+        ];
+    }
 
     return [
         'entity' => $entity,
@@ -95,7 +126,7 @@ function syncRecord(string $entity, array $overrides = []): array
         'version' => 1,
         'idempotency_key' => 'idem-'.$recordUuid,
         'occurred_at' => now()->toISOString(),
-        'payload' => ['record_uuid' => $recordUuid, 'amount_minor' => 1000],
+        'payload' => $defaultPayload,
         ...$overrides,
     ];
 }
@@ -277,4 +308,128 @@ it('returns batch details acknowledgements and checkpoint for the device', funct
         ->assertOk()
         ->assertJsonPath('data.device_uuid', $device->uuid)
         ->assertJsonPath('data.accepted_records_count', 1);
+});
+
+it('replicates operational-user profiles with only safe monitoring fields', function (): void {
+    Queue::fake();
+    [$business, $branch, $device, $credential] = syncIntakeFixture();
+    $userUuid = (string) Str::uuid();
+
+    $body = json_encode(syncEnvelope($business, $branch, $device, [
+        syncRecord('operational_user_profile', [
+            'record_uuid' => $userUuid,
+            'payload' => [
+                'employee_number' => 'EMP-001',
+                'display_name' => 'Ada Cashier',
+                'username' => 'ada.cashier',
+                'staff_code' => 'CASH-01',
+                'role_name' => 'Cashier',
+                'role_code' => 'cashier',
+                'status' => 'active',
+                'created_at' => now()->subMonth()->toISOString(),
+                'updated_at' => now()->toISOString(),
+            ],
+        ]),
+    ]), JSON_THROW_ON_ERROR);
+
+    signedSyncRequest($this, 'POST', route('api.v1.sync.batches.store'), $credential, $body)
+        ->assertOk()
+        ->assertJsonPath('data.status', 'accepted');
+
+    $profile = OperationalUserProfile::query()->where('uuid', $userUuid)->firstOrFail();
+    $syncRecord = SyncRecord::query()->where('record_uuid', $userUuid)->firstOrFail();
+
+    expect($profile->business_id)->toBe($business->id)
+        ->and($profile->branch_id)->toBe($branch->id)
+        ->and($profile->employee_number)->toBe('EMP-001')
+        ->and($profile->display_name)->toBe('Ada Cashier')
+        ->and($profile->username)->toBe('ada.cashier')
+        ->and($profile->staff_code)->toBe('CASH-01')
+        ->and($profile->role_name)->toBe('Cashier')
+        ->and($profile->role_code)->toBe('cashier')
+        ->and($profile->status)->toBe('active')
+        ->and($profile->is_active)->toBeTrue()
+        ->and($profile->statusLabel())->toBe('Active')
+        ->and($profile)->not->toBeInstanceOf(Authenticatable::class)
+        ->and($profile->getAttributes())->not->toHaveKeys(['password', 'password_hash', 'pin', 'access_token', 'refresh_token'])
+        ->and($syncRecord->payload)->not->toHaveKeys(['password_hash', 'pin', 'access_token', 'refresh_token']);
+});
+
+it('rejects operational-user profiles that contain sensitive authentication fields', function (): void {
+    Queue::fake();
+    [$business, $branch, $device, $credential] = syncIntakeFixture();
+    $userUuid = (string) Str::uuid();
+
+    $body = json_encode(syncEnvelope($business, $branch, $device, [
+        syncRecord('operational_user_profile', [
+            'record_uuid' => $userUuid,
+            'payload' => [
+                'display_name' => 'Ada Cashier',
+                'role_name' => 'Cashier',
+                'role_code' => 'cashier',
+                'status' => 'active',
+                'created_at' => now()->subMonth()->toISOString(),
+                'updated_at' => now()->toISOString(),
+                'password_hash' => '$2y$unsafe',
+                'pin' => '1234',
+                'access_token' => 'local-access-token',
+                'refresh_token' => 'local-refresh-token',
+                'session_id' => 'local-session',
+            ],
+        ]),
+    ]), JSON_THROW_ON_ERROR);
+
+    signedSyncRequest($this, 'POST', route('api.v1.sync.batches.store'), $credential, $body)
+        ->assertOk()
+        ->assertJsonPath('data.status', 'rejected')
+        ->assertJsonPath('data.rejected.0.code', 'SENSITIVE_FIELD_REJECTED');
+
+    expect(OperationalUserProfile::query()->where('uuid', $userUuid)->exists())->toBeFalse()
+        ->and(SyncRecord::query()->where('record_uuid', $userUuid)->exists())->toBeFalse();
+});
+
+it('connects replicated staff profiles to cashier and staff reporting summaries', function (): void {
+    [$business, $branch] = syncIntakeFixture();
+    $userUuid = (string) Str::uuid();
+
+    $profile = OperationalUserProfile::query()->create([
+        'business_id' => $business->id,
+        'branch_id' => $branch->id,
+        'uuid' => $userUuid,
+        'display_name' => 'Musa Storekeeper',
+        'role_name' => 'Storekeeper',
+        'role_code' => 'storekeeper',
+        'status' => 'suspended',
+        'is_active' => false,
+        'replicated_created_at' => now()->subMonths(2),
+        'replicated_updated_at' => now(),
+    ]);
+
+    DashboardCashierException::query()->create([
+        'business_id' => $business->id,
+        'branch_id' => $branch->id,
+        'summary_date' => today(),
+        'cashier_uuid' => $userUuid,
+        'cashier_name' => 'Musa Storekeeper',
+        'variance_minor' => -500,
+        'status' => 'open',
+    ]);
+
+    StaffActivitySummary::query()->create([
+        'business_id' => $business->id,
+        'branch_id' => $branch->id,
+        'operational_user_uuid' => $userUuid,
+        'summary_date' => today(),
+        'display_name' => 'Musa Storekeeper',
+        'role_name' => 'Storekeeper',
+        'sales_count' => 3,
+        'gross_sales_minor' => 25000,
+        'last_activity_at' => now(),
+    ]);
+
+    expect($profile->statusLabel())->toBe('Suspended')
+        ->and($profile->cashierExceptions()->first()?->variance_minor)->toBe(-500)
+        ->and($profile->activitySummaries()->first()?->sales_count)->toBe(3)
+        ->and(DashboardCashierException::query()->first()?->operationalUserProfile?->uuid)->toBe($userUuid)
+        ->and(StaffActivitySummary::query()->first()?->operationalUserProfile?->uuid)->toBe($userUuid);
 });

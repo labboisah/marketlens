@@ -15,6 +15,7 @@ use App\Livewire\Platform\Administration\Dashboard;
 use App\Livewire\Platform\Branches\BranchManagementPage;
 use App\Livewire\Platform\Devices\DeviceActivationPage;
 use App\Livewire\Platform\PermissionDeniedPage;
+use App\Livewire\Platform\Sales\SalesMonitoringPage;
 use App\Livewire\PublicSite\BusinessTypesPage;
 use App\Livewire\PublicSite\FeaturesPage;
 use App\Livewire\PublicSite\HowItWorksPage;
@@ -57,6 +58,7 @@ Route::middleware(['auth', 'verified', 'account.active'])->group(function (): vo
 
 Route::middleware(['auth', 'verified', 'account.active', 'onboarding.complete', 'platform.context'])->group(function (): void {
     Route::get('/admin/dashboard', Dashboard::class)->name('platform.dashboard');
+    Route::get('/sales', SalesMonitoringPage::class)->name('platform.sales');
     Route::get('/branches', BranchManagementPage::class)->name('platform.branches');
     Route::get('/devices', DeviceActivationPage::class)->name('platform.devices');
     Route::post('/platform/context', [PlatformContextController::class, 'update'])->name('platform.context.update');

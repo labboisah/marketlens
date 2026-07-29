@@ -2,7 +2,9 @@
 
 namespace App\Domain\Reporting\Models;
 
+use App\Domain\Synchronization\Models\OperationalUserProfile;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DashboardCashierException extends Model
 {
@@ -21,5 +23,10 @@ class DashboardCashierException extends Model
         return [
             'summary_date' => 'date',
         ];
+    }
+
+    public function operationalUserProfile(): BelongsTo
+    {
+        return $this->belongsTo(OperationalUserProfile::class, 'cashier_uuid', 'uuid');
     }
 }
