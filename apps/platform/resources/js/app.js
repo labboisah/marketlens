@@ -62,6 +62,19 @@ Alpine.data('marketlensShell', () => ({
 Alpine.start();
 
 const actionSelector = 'button, a[role="button"]';
+const navigationSelector = 'a[href]:not([target]):not([download])';
+let pageProgressTimer;
+
+const startPageProgress = () => {
+  window.clearTimeout(pageProgressTimer);
+  window.dispatchEvent(new CustomEvent('marketlens:page-progress-start'));
+  pageProgressTimer = window.setTimeout(finishPageProgress, 8000);
+};
+
+const finishPageProgress = () => {
+  window.clearTimeout(pageProgressTimer);
+  window.dispatchEvent(new CustomEvent('marketlens:page-progress-finish'));
+};
 
 const hasLivewireAction = (element) => Array.from(element.attributes || []).some((attribute) => (
   attribute.name.startsWith('wire:click')
@@ -106,6 +119,22 @@ document.addEventListener('click', (event) => {
   }
 }, true);
 
+document.addEventListener('click', (event) => {
+  const link = event.target.closest(navigationSelector);
+
+  if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+    return;
+  }
+
+  const href = link.getAttribute('href') || '';
+
+  if (href === '' || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || link.dataset.mlSkipLoading === 'true') {
+    return;
+  }
+
+  startPageProgress();
+}, true);
+
 document.addEventListener('livewire:init', () => {
   Livewire.on('notify', (payload) => {
     window.dispatchEvent(new CustomEvent('marketlens:notify', {
@@ -120,3 +149,8 @@ document.addEventListener('livewire:init', () => {
 });
 
 document.addEventListener('livewire:navigated', clearActionLoaders);
+document.addEventListener('livewire:navigate', startPageProgress);
+document.addEventListener('livewire:navigated', finishPageProgress);
+document.addEventListener('livewire:navigate-cancelled', finishPageProgress);
+window.addEventListener('beforeunload', startPageProgress);
+window.addEventListener('pageshow', finishPageProgress);

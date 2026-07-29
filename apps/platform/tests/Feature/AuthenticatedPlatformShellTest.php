@@ -129,8 +129,8 @@ it('shows only subscription-allowed sidebar modules', function (): void {
         ->assertSee('Inventory')
         ->assertSee('Expenses')
         ->assertSee('Customers')
-        ->assertDontSee('Suppliers')
-        ->assertDontSee('Cashiers')
+        ->assertSee('Purchase &amp; Supplier', false)
+        ->assertSee('Cashier &amp; Staff', false)
         ->assertDontSee('Alerts');
 });
 
@@ -160,6 +160,8 @@ it('renders shared notifications and loading feedback in the authenticated shell
         ->get(route('platform.dashboard'))
         ->assertOk()
         ->assertSee('aria-live="polite"', false)
+        ->assertSee('aria-label="Loading page"', false)
+        ->assertSee('ml-linear-progress')
         ->assertSee('Loading MarketLens')
         ->assertSee('Working')
         ->assertSee('Saved successfully');

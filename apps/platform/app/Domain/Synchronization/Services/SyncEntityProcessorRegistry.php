@@ -9,13 +9,18 @@ use App\Domain\Synchronization\Services\EntityProcessors\CustomerDebtSummaryProc
 use App\Domain\Synchronization\Services\EntityProcessors\DailySalesSummaryProcessor;
 use App\Domain\Synchronization\Services\EntityProcessors\ExpenseProcessor;
 use App\Domain\Synchronization\Services\EntityProcessors\OperationalUserProfileProcessor;
+use App\Domain\Synchronization\Services\EntityProcessors\PurchaseItemProcessor;
+use App\Domain\Synchronization\Services\EntityProcessors\PurchasePaymentProcessor;
+use App\Domain\Synchronization\Services\EntityProcessors\PurchaseProcessor;
 use App\Domain\Synchronization\Services\EntityProcessors\SaleItemProcessor;
 use App\Domain\Synchronization\Services\EntityProcessors\SalePaymentProcessor;
 use App\Domain\Synchronization\Services\EntityProcessors\SaleProcessor;
 use App\Domain\Synchronization\Services\EntityProcessors\SecurityAlertProcessor;
+use App\Domain\Synchronization\Services\EntityProcessors\StaffActivitySummaryProcessor;
 use App\Domain\Synchronization\Services\EntityProcessors\StockAlertProcessor;
 use App\Domain\Synchronization\Services\EntityProcessors\StockMovementProcessor;
 use App\Domain\Synchronization\Services\EntityProcessors\StockSummaryProcessor;
+use App\Domain\Synchronization\Services\EntityProcessors\SupplierBalanceSummaryProcessor;
 use App\Domain\Synchronization\Services\EntityProcessors\SyncEntityProcessor;
 
 class SyncEntityProcessorRegistry
@@ -27,9 +32,14 @@ class SyncEntityProcessorRegistry
         'sale_item' => SaleItemProcessor::class,
         'sale_payment' => SalePaymentProcessor::class,
         'expense' => ExpenseProcessor::class,
+        'purchase' => PurchaseProcessor::class,
+        'purchase_item' => PurchaseItemProcessor::class,
+        'purchase_payment' => PurchasePaymentProcessor::class,
+        'supplier_balance_summary' => SupplierBalanceSummaryProcessor::class,
         'customer_debt_summary' => CustomerDebtSummaryProcessor::class,
         'cashier_shift' => CashierShiftProcessor::class,
         'cashier_settlement' => CashierSettlementProcessor::class,
+        'staff_activity_summary' => StaffActivitySummaryProcessor::class,
         'stock_summary' => StockSummaryProcessor::class,
         'stock_alert' => StockAlertProcessor::class,
         'stock_movement' => StockMovementProcessor::class,

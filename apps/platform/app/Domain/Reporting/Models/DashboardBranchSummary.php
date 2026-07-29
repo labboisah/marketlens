@@ -15,8 +15,17 @@ class DashboardBranchSummary extends Model
         'gross_sales_minor',
         'net_sales_minor',
         'completed_sales_count',
+        'gross_profit_minor',
+        'expenses_minor',
+        'estimated_net_profit_minor',
+        'stock_value_minor',
+        'customer_debt_minor',
+        'supplier_balance_minor',
         'cashier_variance_minor',
+        'low_stock_count',
+        'active_client_apps_count',
         'last_successful_sync_at',
+        'summarized_at',
     ];
 
     protected function casts(): array
@@ -24,6 +33,7 @@ class DashboardBranchSummary extends Model
         return [
             'summary_date' => 'date',
             'last_successful_sync_at' => 'datetime',
+            'summarized_at' => 'datetime',
         ];
     }
 

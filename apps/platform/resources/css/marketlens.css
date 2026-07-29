@@ -118,6 +118,32 @@
     animation: ml-spin 0.75s linear infinite;
   }
 
+  .ml-linear-progress {
+    width: 100%;
+    opacity: 1;
+    transform: scaleX(0.05);
+    transform-origin: left center;
+    background: linear-gradient(
+      90deg,
+      hsl(var(--ml-accent)),
+      hsl(var(--ml-teal)),
+      hsl(var(--ml-success))
+    );
+    box-shadow: 0 0 18px hsl(var(--ml-accent) / 0.36);
+  }
+
+  .ml-linear-progress.is-active {
+    animation: ml-linear-progress 1.1s cubic-bezier(0.22, 0.72, 0.22, 1) both;
+  }
+
+  .ml-linear-progress.is-complete {
+    transform: scaleX(1);
+    opacity: 0;
+    transition:
+      transform 180ms ease-out,
+      opacity 220ms ease-out;
+  }
+
   [data-ml-loading='true'] {
     @apply pointer-events-none inline-flex items-center justify-center gap-2 opacity-80;
   }
@@ -137,5 +163,19 @@
 @keyframes ml-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes ml-linear-progress {
+  0% {
+    transform: scaleX(0.05);
+  }
+
+  70% {
+    transform: scaleX(0.72);
+  }
+
+  100% {
+    transform: scaleX(0.86);
   }
 }

@@ -75,4 +75,5 @@
       </div>
     </div>
   </div>
+  <x-app.page-progress />
 </header>
