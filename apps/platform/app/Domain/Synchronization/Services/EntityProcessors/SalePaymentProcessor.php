@@ -30,8 +30,8 @@ class SalePaymentProcessor extends SyncEntityProcessor
 
         $validator = Validator::make($payload, [
             'sale_uuid' => ['required', 'uuid'],
-            'method' => ['required', 'string', 'max:80'],
-            'status' => ['required', 'string', 'in:pending,completed,failed,refunded,voided'],
+            'method' => ['required', 'string', 'in:cash,bank_transfer,transfer,pos_terminal,mobile_money,credit,mixed'],
+            'status' => ['required', 'string', 'in:pending,completed,failed,refunded,voided,unverified,reversed,mismatched'],
             'amount_minor' => ['required', 'integer', 'min:0'],
             'reference' => ['nullable', 'string', 'max:160'],
             'paid_at' => ['nullable', 'date'],
