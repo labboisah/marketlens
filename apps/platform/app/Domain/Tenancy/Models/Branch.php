@@ -2,11 +2,14 @@
 
 namespace App\Domain\Tenancy\Models;
 
+use App\Domain\Devices\Models\Device;
+use App\Domain\Synchronization\Models\SyncBatch;
 use App\Enums\BranchStatus;
 use App\Models\Concerns\BelongsToBusinessTenant;
 use App\Models\Concerns\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Branch extends Model
@@ -26,6 +29,8 @@ class Branch extends Model
         'state',
         'local_government_area',
         'is_head_office',
+        'last_synchronized_at',
+        'archived_at',
         'status',
     ];
 
@@ -34,11 +39,28 @@ class Branch extends Model
         return [
             'status' => BranchStatus::class,
             'is_head_office' => 'boolean',
+            'last_synchronized_at' => 'datetime',
+            'archived_at' => 'datetime',
         ];
     }
 
     public function business(): BelongsTo
     {
         return $this->belongsTo(Business::class);
+    }
+
+    public function devices(): HasMany
+    {
+        return $this->hasMany(Device::class);
+    }
+
+    public function syncBatches(): HasMany
+    {
+        return $this->hasMany(SyncBatch::class);
+    }
+
+    public function canActivateShopDevices(): bool
+    {
+        return $this->status === BranchStatus::Active;
     }
 }

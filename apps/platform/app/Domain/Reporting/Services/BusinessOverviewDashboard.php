@@ -59,13 +59,13 @@ class BusinessOverviewDashboard
             ],
             'salesTrend' => $this->salesTrend($summaries),
             'paymentBreakdown' => $this->paymentBreakdown($summaries),
-            'stockAlerts' => $this->productQuery($businessId, $branchId)->where('is_low_stock', true)->orderBy('stock_quantity')->limit(6)->get(),
-            'topProducts' => $this->productQuery($businessId, $branchId)->orderByDesc('quantity_sold')->limit(6)->get(),
-            'slowProducts' => $this->productQuery($businessId, $branchId)->where('days_without_sale', '>', 0)->orderByDesc('days_without_sale')->limit(6)->get(),
+            'stockAlerts' => $this->products($this->productQuery($businessId, $branchId)->where('is_low_stock', true)->orderBy('stock_quantity')->limit(6)->get()),
+            'topProducts' => $this->products($this->productQuery($businessId, $branchId)->orderByDesc('quantity_sold')->limit(6)->get()),
+            'slowProducts' => $this->products($this->productQuery($businessId, $branchId)->where('days_without_sale', '>', 0)->orderByDesc('days_without_sale')->limit(6)->get()),
             'branchPerformance' => $this->branchPerformance($businessId, $range),
-            'cashierExceptions' => $this->cashierQuery($businessId, $branchId)->orderByDesc('summary_date')->limit(6)->get(),
-            'securityAlerts' => $this->activityQuery($businessId, $branchId)->where('type', 'security_alert')->limit(6)->get(),
-            'recentActivity' => $this->activityQuery($businessId, $branchId)->limit(8)->get(),
+            'cashierExceptions' => $this->cashierExceptions($this->cashierQuery($businessId, $branchId)->orderByDesc('summary_date')->limit(6)->get()),
+            'securityAlerts' => $this->activities($this->activityQuery($businessId, $branchId)->where('type', 'security_alert')->limit(6)->get()),
+            'recentActivity' => $this->activities($this->activityQuery($businessId, $branchId)->limit(8)->get()),
         ];
     }
 
@@ -153,7 +153,7 @@ class BusinessOverviewDashboard
         ];
     }
 
-    private function branchPerformance(int $businessId, array $range): Collection
+    private function branchPerformance(int $businessId, array $range): array
     {
         return DashboardBranchSummary::query()
             ->with('branch')
@@ -162,7 +162,52 @@ class BusinessOverviewDashboard
             ->whereDate('summary_date', '<=', $range['end']->toDateString())
             ->orderByDesc('net_sales_minor')
             ->limit(8)
-            ->get();
+            ->get()
+            ->map(fn (DashboardBranchSummary $summary): array => [
+                'branch_name' => $summary->branch?->name ?? 'Branch',
+                'net_sales_minor' => (int) $summary->net_sales_minor,
+                'gross_sales_minor' => (int) $summary->gross_sales_minor,
+                'completed_sales_count' => (int) $summary->completed_sales_count,
+                'cashier_variance_minor' => (int) $summary->cashier_variance_minor,
+            ])
+            ->all();
+    }
+
+    private function products(Collection $products): array
+    {
+        return $products
+            ->map(fn (DashboardProductSummary $product): array => [
+                'product_name' => $product->product_name,
+                'sku' => $product->sku,
+                'quantity_sold' => (string) $product->quantity_sold,
+                'sales_minor' => (int) $product->sales_minor,
+                'days_without_sale' => (int) $product->days_without_sale,
+                'stock_quantity' => (string) $product->stock_quantity,
+            ])
+            ->all();
+    }
+
+    private function cashierExceptions(Collection $exceptions): array
+    {
+        return $exceptions
+            ->map(fn (DashboardCashierException $exception): array => [
+                'cashier_name' => $exception->cashier_name,
+                'variance_minor' => (int) $exception->variance_minor,
+                'status' => $exception->status,
+            ])
+            ->all();
+    }
+
+    private function activities(Collection $activities): array
+    {
+        return $activities
+            ->map(fn (DashboardBusinessActivity $activity): array => [
+                'type' => $activity->type,
+                'title' => $activity->title,
+                'description' => $activity->description,
+                'occurred_at' => $activity->occurred_at?->diffForHumans() ?? 'Recently',
+            ])
+            ->all();
     }
 
     private function forSummaryDateRange(mixed $query, CarbonImmutable $start, CarbonImmutable $end): mixed

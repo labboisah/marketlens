@@ -122,8 +122,8 @@
     <x-app.card title="Stock alerts" description="Low-stock products">
       @forelse ($dashboard['stockAlerts'] ?? [] as $product)
         <div class="flex justify-between gap-4 border-b border-border py-2 last:border-0">
-          <span class="text-sm font-medium">{{ $product->product_name }}</span>
-          <span class="font-mono text-sm text-warning">{{ $product->stock_quantity }}</span>
+          <span class="text-sm font-medium">{{ $product['product_name'] }}</span>
+          <span class="font-mono text-sm text-warning">{{ $product['stock_quantity'] }}</span>
         </div>
       @empty
         <x-app.empty-state title="No stock alerts" message="Low-stock summary records have not been synchronized." />
@@ -140,8 +140,8 @@
     <x-app.card title="Top-selling products" description="By quantity sold">
       @forelse ($dashboard['topProducts'] ?? [] as $product)
         <div class="flex justify-between gap-4 border-b border-border py-2 last:border-0">
-          <span class="text-sm font-medium">{{ $product->product_name }}</span>
-          <span class="font-mono text-sm">{{ $product->quantity_sold }}</span>
+          <span class="text-sm font-medium">{{ $product['product_name'] }}</span>
+          <span class="font-mono text-sm">{{ $product['quantity_sold'] }}</span>
         </div>
       @empty
         <x-app.empty-state title="No top products yet" message="Product summary records are not available for this date range." />
@@ -151,8 +151,8 @@
     <x-app.card title="Slow-moving products" description="Products with days without sale">
       @forelse ($dashboard['slowProducts'] ?? [] as $product)
         <div class="flex justify-between gap-4 border-b border-border py-2 last:border-0">
-          <span class="text-sm font-medium">{{ $product->product_name }}</span>
-          <span class="font-mono text-sm">{{ $product->days_without_sale }} days</span>
+          <span class="text-sm font-medium">{{ $product['product_name'] }}</span>
+          <span class="font-mono text-sm">{{ $product['days_without_sale'] }} days</span>
         </div>
       @empty
         <x-app.empty-state title="No slow-moving products yet" message="Slow-moving product summaries have not been synchronized." />
@@ -164,8 +164,8 @@
     <x-app.card title="Branch performance" description="Branch summary comparison">
       @forelse ($dashboard['branchPerformance'] ?? [] as $branchSummary)
         <div class="flex justify-between gap-4 border-b border-border py-2 last:border-0">
-          <span class="text-sm font-medium">{{ $branchSummary->branch?->name ?? 'Branch' }}</span>
-          <span class="font-mono text-sm">{{ $this->money($branchSummary->net_sales_minor) }}</span>
+          <span class="text-sm font-medium">{{ $branchSummary['branch_name'] }}</span>
+          <span class="font-mono text-sm">{{ $this->money($branchSummary['net_sales_minor']) }}</span>
         </div>
       @empty
         <x-app.empty-state title="No branch summaries yet" message="Branch performance requires synchronized branch summary rows." />
@@ -175,8 +175,8 @@
     <x-app.card title="Cashier exceptions" description="Shortage or surplus summaries">
       @forelse ($dashboard['cashierExceptions'] ?? [] as $exception)
         <div class="flex justify-between gap-4 border-b border-border py-2 last:border-0">
-          <span class="text-sm font-medium">{{ $exception->cashier_name }}</span>
-          <span class="font-mono text-sm">{{ $this->money($exception->variance_minor) }}</span>
+          <span class="text-sm font-medium">{{ $exception['cashier_name'] }}</span>
+          <span class="font-mono text-sm">{{ $this->money($exception['variance_minor']) }}</span>
         </div>
       @empty
         <x-app.empty-state title="No cashier exceptions" message="No cashier shortage or surplus summaries are available." />
@@ -188,8 +188,8 @@
     <x-app.card title="Recent security alerts" description="Synchronized alert activity">
       @forelse ($dashboard['securityAlerts'] ?? [] as $activity)
         <div class="border-b border-border py-2 last:border-0">
-          <p class="text-sm font-medium">{{ $activity->title }}</p>
-          <p class="text-xs text-muted">{{ $activity->occurred_at->diffForHumans() }}</p>
+          <p class="text-sm font-medium">{{ $activity['title'] }}</p>
+          <p class="text-xs text-muted">{{ $activity['occurred_at'] }}</p>
         </div>
       @empty
         <x-app.empty-state title="No security alerts" message="Security alert summaries have not been synchronized." />
@@ -199,8 +199,8 @@
     <x-app.card title="Recent business activity" description="Latest synchronized events">
       @forelse ($dashboard['recentActivity'] ?? [] as $activity)
         <div class="border-b border-border py-2 last:border-0">
-          <p class="text-sm font-medium">{{ $activity->title }}</p>
-          <p class="text-xs text-muted">{{ $activity->occurred_at->diffForHumans() }}</p>
+          <p class="text-sm font-medium">{{ $activity['title'] }}</p>
+          <p class="text-xs text-muted">{{ $activity['occurred_at'] }}</p>
         </div>
       @empty
         <x-app.empty-state title="No recent activity" message="Activity summaries will appear after synchronization." />

@@ -97,7 +97,7 @@ class PlatformShell
             ['label' => 'Customers', 'href' => '#customers', 'section' => 'Operations', 'feature' => 'customer debts', 'icon' => 'users'],
             ['label' => 'Suppliers', 'href' => '#suppliers', 'section' => 'Operations', 'feature' => 'purchases and suppliers', 'icon' => 'truck'],
             ['label' => 'Cashiers', 'href' => '#cashiers', 'section' => 'Operations', 'feature' => 'cashier shifts', 'icon' => 'user-check'],
-            ['label' => 'Branches', 'href' => '#branches', 'section' => 'Control', 'feature' => 'multiple branches', 'icon' => 'building-2'],
+            ['label' => 'Branches', 'href' => route('platform.branches'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'building-2'],
             ['label' => 'Devices', 'href' => '#devices', 'section' => 'Control', 'feature' => 'devices', 'icon' => 'monitor'],
             ['label' => 'Synchronization', 'href' => '#synchronization', 'section' => 'Control', 'feature' => 'base', 'icon' => 'refresh-cw'],
             ['label' => 'Alerts', 'href' => '#alerts', 'section' => 'Control', 'feature' => 'security alerts', 'icon' => 'bell-ring'],

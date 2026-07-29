@@ -2,13 +2,22 @@
 
 namespace App\Http\Requests\Api\V1\Device;
 
+use App\Domain\Tenancy\Models\Branch;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ActivateDeviceRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        if (! $this->filled('branch_uuid')) {
+            return true;
+        }
+
+        $branch = Branch::query()
+            ->where('uuid', $this->string('branch_uuid')->toString())
+            ->first();
+
+        return ! $branch || $branch->canActivateShopDevices();
     }
 
     public function rules(): array
