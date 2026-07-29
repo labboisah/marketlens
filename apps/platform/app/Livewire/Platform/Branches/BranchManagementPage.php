@@ -83,6 +83,7 @@ class BranchManagementPage extends Component
         $this->selectedBranchId = $branch->id;
         $this->resetForm();
         session()->flash('branch_status', 'Branch created successfully.');
+        $this->dispatch('notify', tone: 'success', title: 'Branch created', message: 'The branch is ready for cloud-side monitoring and device setup.');
     }
 
     public function editBranch(int $branchId): void
@@ -112,6 +113,7 @@ class BranchManagementPage extends Component
         $this->selectedBranchId = $branch->id;
         $this->resetForm();
         session()->flash('branch_status', 'Branch updated successfully.');
+        $this->dispatch('notify', tone: 'success', title: 'Branch updated', message: 'The branch details were saved successfully.');
     }
 
     public function activateBranch(int $branchId, BranchManagement $branchManagement): void
@@ -119,6 +121,7 @@ class BranchManagementPage extends Component
         $branch = Branch::query()->findOrFail($branchId);
         $this->authorize('manage', $branch);
         $branchManagement->activate($branch, auth()->user());
+        $this->dispatch('notify', tone: 'success', title: 'Branch activated', message: 'Shop App device activation can continue for this branch.');
     }
 
     public function suspendBranch(int $branchId, BranchManagement $branchManagement): void
@@ -126,6 +129,7 @@ class BranchManagementPage extends Component
         $branch = Branch::query()->findOrFail($branchId);
         $this->authorize('manage', $branch);
         $branchManagement->suspend($branch, auth()->user());
+        $this->dispatch('notify', tone: 'warning', title: 'Branch suspended', message: 'This branch cannot activate new Shop App devices while suspended.');
     }
 
     public function designateHeadOffice(int $branchId, BranchManagement $branchManagement): void
@@ -133,6 +137,7 @@ class BranchManagementPage extends Component
         $branch = Branch::query()->findOrFail($branchId);
         $this->authorize('manage', $branch);
         $branchManagement->designateHeadOffice($branch, auth()->user());
+        $this->dispatch('notify', tone: 'success', title: 'Head office updated', message: 'The selected branch is now the head office.');
     }
 
     public function archiveBranch(int $branchId, BranchManagement $branchManagement): void
@@ -140,6 +145,7 @@ class BranchManagementPage extends Component
         $branch = Branch::query()->findOrFail($branchId);
         $this->authorize('manage', $branch);
         $branchManagement->archive($branch, auth()->user());
+        $this->dispatch('notify', tone: 'danger', title: 'Branch archived', message: 'The branch is hidden from active operations, but synchronized history is preserved.');
     }
 
     public function cancelEdit(): void

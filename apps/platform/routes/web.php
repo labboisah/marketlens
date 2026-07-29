@@ -13,6 +13,7 @@ use App\Http\Controllers\PlatformContextController;
 use App\Livewire\Onboarding\BusinessOnboardingWizard;
 use App\Livewire\Platform\Administration\Dashboard;
 use App\Livewire\Platform\Branches\BranchManagementPage;
+use App\Livewire\Platform\Customers\CustomerDebtMonitoringPage;
 use App\Livewire\Platform\Devices\DeviceActivationPage;
 use App\Livewire\Platform\Expenses\ExpenseMonitoringPage;
 use App\Livewire\Platform\Inventory\InventoryMonitoringPage;
@@ -65,6 +66,7 @@ Route::middleware(['auth', 'verified', 'account.active', 'onboarding.complete', 
     Route::get('/payments', PaymentMonitoringPage::class)->name('platform.payments');
     Route::get('/inventory', InventoryMonitoringPage::class)->name('platform.inventory');
     Route::get('/expenses', ExpenseMonitoringPage::class)->name('platform.expenses');
+    Route::get('/customers/debts', CustomerDebtMonitoringPage::class)->name('platform.customer-debts');
     Route::get('/branches', BranchManagementPage::class)->name('platform.branches');
     Route::get('/devices', DeviceActivationPage::class)->name('platform.devices');
     Route::post('/platform/context', [PlatformContextController::class, 'update'])->name('platform.context.update');

@@ -11,6 +11,8 @@
     @php($platformShell = app(\App\Support\Platform\PlatformShell::class)->forUser(auth()->user()))
 
     <div class="ml-page-shell" x-data="marketlensShell">
+      <x-app.notification-center />
+      <x-app.loading-overlay />
       <x-app.sidebar :shell="$platformShell" />
 
       <div class="min-h-screen lg:pl-64">

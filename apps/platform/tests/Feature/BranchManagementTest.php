@@ -97,7 +97,8 @@ it('creates branches with unique codes and records audit logs', function (): voi
         ->set('code', 'lekki')
         ->set('phone', '+2348000000000')
         ->call('createBranch')
-        ->assertHasNoErrors();
+        ->assertHasNoErrors()
+        ->assertDispatched('notify');
 
     $branch = Branch::query()->where('code', 'LEKKI')->firstOrFail();
 
@@ -198,6 +199,37 @@ it('suspends branches without deleting synchronized history', function (): void 
         ->and($branch->exists)->toBeTrue()
         ->and($main->refresh()->is_head_office)->toBeTrue()
         ->and(AuditLog::query()->where('action', 'branch.suspended')->where('branch_id', $branch->id)->exists())->toBeTrue();
+});
+
+it('dispatches warning and danger notifications for branch restriction actions', function (): void {
+    $user = branchManagementUser();
+    $business = branchManagementBusiness($user, branchManagementPlan(['Multiple branches']));
+    Branch::query()->create([
+        'business_id' => $business->id,
+        'name' => 'Main Branch',
+        'code' => 'MAIN',
+        'is_head_office' => true,
+        'status' => BranchStatus::Active,
+    ]);
+    $branch = Branch::query()->create([
+        'business_id' => $business->id,
+        'name' => 'Second Branch',
+        'code' => 'SECOND',
+        'is_head_office' => false,
+        'status' => BranchStatus::Active,
+    ]);
+
+    $this->withSession(['platform.business_id' => $business->id]);
+
+    Livewire::actingAs($user)
+        ->test(BranchManagementPage::class)
+        ->call('suspendBranch', $branch->id)
+        ->assertDispatched('notify');
+
+    Livewire::actingAs($user)
+        ->test(BranchManagementPage::class)
+        ->call('archiveBranch', $branch->id)
+        ->assertDispatched('notify');
 });
 
 it('blocks device activation for suspended branches', function (): void {

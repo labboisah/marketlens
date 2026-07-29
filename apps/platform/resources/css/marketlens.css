@@ -94,4 +94,48 @@
   .ml-table td {
     @apply border-b border-border px-3 py-3;
   }
+
+  .ml-spinner {
+    position: relative;
+  }
+
+  .ml-spinner::before,
+  .ml-spinner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+  }
+
+  .ml-spinner::before {
+    border: 2px solid hsl(var(--ml-border));
+  }
+
+  .ml-spinner::after {
+    border: 2px solid transparent;
+    border-top-color: hsl(var(--ml-accent));
+    border-right-color: hsl(var(--ml-teal));
+    animation: ml-spin 0.75s linear infinite;
+  }
+
+  [data-ml-loading='true'] {
+    @apply pointer-events-none inline-flex items-center justify-center gap-2 opacity-80;
+  }
+
+  [data-ml-loading='true']::before {
+    content: '';
+    width: 1rem;
+    height: 1rem;
+    flex: 0 0 auto;
+    border-radius: 9999px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    animation: ml-spin 0.75s linear infinite;
+  }
+}
+
+@keyframes ml-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

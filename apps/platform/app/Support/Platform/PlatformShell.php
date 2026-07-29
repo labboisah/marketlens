@@ -94,7 +94,7 @@ class PlatformShell
             ['label' => 'Payments', 'href' => route('platform.payments'), 'section' => 'Operations', 'feature' => 'sales', 'icon' => 'credit-card'],
             ['label' => 'Inventory', 'href' => route('platform.inventory'), 'section' => 'Operations', 'feature' => 'inventory', 'icon' => 'package-check'],
             ['label' => 'Expenses', 'href' => route('platform.expenses'), 'section' => 'Operations', 'feature' => 'expenses', 'icon' => 'wallet-cards'],
-            ['label' => 'Customers', 'href' => '#customers', 'section' => 'Operations', 'feature' => 'customer debts', 'icon' => 'users'],
+            ['label' => 'Customers', 'href' => route('platform.customer-debts'), 'section' => 'Operations', 'feature' => 'customer debts', 'icon' => 'users'],
             ['label' => 'Suppliers', 'href' => '#suppliers', 'section' => 'Operations', 'feature' => 'purchases and suppliers', 'icon' => 'truck'],
             ['label' => 'Cashiers', 'href' => '#cashiers', 'section' => 'Operations', 'feature' => 'cashier shifts', 'icon' => 'user-check'],
             ['label' => 'Branches', 'href' => route('platform.branches'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'building-2'],

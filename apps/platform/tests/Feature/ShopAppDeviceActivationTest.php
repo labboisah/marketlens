@@ -98,6 +98,7 @@ it('lets business owners generate hashed short-lived activation codes', function
         ->set('applicationVersionId', $version->id)
         ->call('generate')
         ->assertHasNoErrors()
+        ->assertDispatched('notify')
         ->assertSet('deviceLabel', '');
 
     $device = Device::query()->where('business_id', $business->id)->firstOrFail();

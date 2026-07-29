@@ -87,6 +87,7 @@ class DeviceActivationPage extends Component
         $this->generatedCode = $result['code'];
         $this->deviceLabel = '';
         session()->flash('device_status', 'Activation code generated. It is shown once.');
+        $this->dispatch('notify', tone: 'success', title: 'Activation code generated', message: 'Share the short-lived code with the Shop App. It is shown only once.');
     }
 
     public function revokeActivation(int $activationId, ShopAppActivationService $activationService, BusinessContext $businessContext): void
@@ -99,6 +100,7 @@ class DeviceActivationPage extends Component
             ->findOrFail($activationId);
 
         $activationService->revokeActivation($activation, auth()->user());
+        $this->dispatch('notify', tone: 'warning', title: 'Activation revoked', message: 'The unused activation code can no longer be used.');
     }
 
     public function revokeDevice(int $deviceId, ShopAppActivationService $activationService, BusinessContext $businessContext): void
@@ -111,6 +113,7 @@ class DeviceActivationPage extends Component
             ->findOrFail($deviceId);
 
         $activationService->revokeDevice($device, auth()->user());
+        $this->dispatch('notify', tone: 'danger', title: 'Device revoked', message: 'The Shop App credential is no longer authorized for synchronization.');
     }
 
     private function currentBusiness(BusinessContext $businessContext): Business

@@ -147,3 +147,20 @@ it('renders the permission denied state inside the platform shell', function ():
         ->assertSee('Permission denied')
         ->assertSee('Your account cannot access this business, branch, or Platform module.');
 });
+
+it('renders shared notifications and loading feedback in the authenticated shell', function (): void {
+    $owner = platformShellUser();
+    $plan = platformShellPlan('Basic', ['Sales', 'Remote dashboard']);
+
+    platformShellBusiness($owner, 'Ada Stores', $plan);
+
+    $this
+        ->actingAs($owner)
+        ->withSession(['success' => 'Saved successfully'])
+        ->get(route('platform.dashboard'))
+        ->assertOk()
+        ->assertSee('aria-live="polite"', false)
+        ->assertSee('Loading MarketLens')
+        ->assertSee('Working')
+        ->assertSee('Saved successfully');
+});
