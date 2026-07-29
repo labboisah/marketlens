@@ -16,7 +16,6 @@ use App\Enums\SubscriptionStatus;
 use App\Enums\SyncBatchStatus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -25,6 +24,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 class SyncBatchIntakeService
 {
     private const PROTOCOL_VERSION = '1.0';
+
     private const MAX_DECOMPRESSED_BYTES = 1048576;
 
     public function __construct(private readonly SyncEntityProcessorRegistry $processors) {}
@@ -50,7 +50,7 @@ class SyncBatchIntakeService
 
         $payload = json_decode($decoded, true);
 
-        if (! is_array($payload)) {
+        if (is_array($payload) === false) {
             throw new BadRequestHttpException('Synchronization payload must be valid JSON.');
         }
 
@@ -122,13 +122,11 @@ class SyncBatchIntakeService
             ])->save();
 
             if ($accepted !== []) {
-                $checkpoint = SyncCheckpoint::query()->firstOrNew(
-                    [
-                        'business_id' => $business->id,
-                        'branch_id' => $branch->id,
-                        'device_id' => $device->id,
-                    ],
-                );
+                $checkpoint = SyncCheckpoint::query()->firstOrNew([
+                    'business_id' => $business->id,
+                    'branch_id' => $branch->id,
+                    'device_id' => $device->id,
+                ]);
 
                 $checkpoint->forceFill([
                     'last_batch_uuid' => $batch->uuid,
@@ -208,7 +206,7 @@ class SyncBatchIntakeService
         $conflicts = [];
 
         foreach ($records as $record) {
-            if (! is_array($record) || ! $this->processors->supports($record['entity'] ?? null)) {
+            if (is_array($record) === false || $this->processors->supports($record['entity'] ?? null) === false) {
                 $rejected[] = [
                     'record_uuid' => $record['record_uuid'] ?? null,
                     'entity' => $record['entity'] ?? null,
@@ -253,17 +251,17 @@ class SyncBatchIntakeService
 
     private function assertScope(Device $device, ?Business $business, ?Branch $branch, string $traceId): void
     {
-        if (! $business || $business->id !== $device->business_id || $business->status !== BusinessStatus::Active) {
+        if ($business === null || $business->id !== $device->business_id || $business->status !== BusinessStatus::Active) {
             $this->auditFailure('wrong_or_inactive_business', $device, $traceId);
             throw new AccessDeniedHttpException('Business is not authorized for this synchronization device.');
         }
 
-        if (! in_array($business->currentSubscription?->status, [SubscriptionStatus::Trialing, SubscriptionStatus::Active], true)) {
+        if (in_array($business->currentSubscription?->status, [SubscriptionStatus::Trialing, SubscriptionStatus::Active], true) === false) {
             $this->auditFailure('inactive_subscription', $device, $traceId);
             throw new AccessDeniedHttpException('Business subscription is not active for synchronization.');
         }
 
-        if (! $branch || $branch->id !== $device->branch_id || $branch->business_id !== $business->id || $branch->status !== BranchStatus::Active) {
+        if ($branch === null || $branch->id !== $device->branch_id || $branch->business_id !== $business->id || $branch->status !== BranchStatus::Active) {
             $this->auditFailure('wrong_or_inactive_branch', $device, $traceId);
             throw new AccessDeniedHttpException('Branch is not authorized for this synchronization device.');
         }

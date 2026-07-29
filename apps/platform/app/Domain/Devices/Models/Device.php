@@ -2,6 +2,8 @@
 
 namespace App\Domain\Devices\Models;
 
+use App\Domain\Tenancy\Models\Branch;
+use App\Domain\Tenancy\Models\Business;
 use App\Enums\DeviceStatus;
 use App\Models\Concerns\BelongsToBranchTenant;
 use App\Models\Concerns\BelongsToBusinessTenant;
@@ -58,11 +60,11 @@ class Device extends Model
 
     public function business(): BelongsTo
     {
-        return $this->belongsTo(\App\Domain\Tenancy\Models\Business::class);
+        return $this->belongsTo(Business::class);
     }
 
     public function branch(): BelongsTo
     {
-        return $this->belongsTo(\App\Domain\Tenancy\Models\Branch::class);
+        return $this->belongsTo(Branch::class);
     }
 }

@@ -18,6 +18,8 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
+use Illuminate\Testing\TestResponse;
+use Tests\TestCase;
 
 uses(RefreshDatabase::class);
 
@@ -98,7 +100,7 @@ function syncRecord(string $entity, array $overrides = []): array
     ];
 }
 
-function signedSyncRequest(Tests\TestCase $test, string $method, string $uri, string $credential, string $body = '', array $headers = []): Illuminate\Testing\TestResponse
+function signedSyncRequest(TestCase $test, string $method, string $uri, string $credential, string $body = '', array $headers = []): TestResponse
 {
     $timestamp = now()->toISOString();
     $signature = hash_hmac('sha256', $timestamp.'.'.$body, $credential);
