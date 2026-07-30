@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\OnboardingCompletedController;
+use App\Http\Controllers\Platform\ReportExportDownloadController;
 use App\Http\Controllers\PlatformContextController;
 use App\Livewire\Onboarding\BusinessOnboardingWizard;
 use App\Livewire\Platform\Administration\Dashboard;
@@ -22,6 +23,8 @@ use App\Livewire\Platform\Notifications\NotificationCentrePage;
 use App\Livewire\Platform\Payments\PaymentMonitoringPage;
 use App\Livewire\Platform\PermissionDeniedPage;
 use App\Livewire\Platform\Purchases\PurchaseMonitoringPage;
+use App\Livewire\Platform\Reports\ReportCentrePage;
+use App\Livewire\Platform\Subscriptions\SubscriptionManagementPage;
 use App\Livewire\Platform\Sales\SalesMonitoringPage;
 use App\Livewire\Platform\Staff\StaffPerformanceMonitoringPage;
 use App\Livewire\Platform\Synchronization\SynchronizationMonitoringPage;
@@ -79,6 +82,12 @@ Route::middleware(['auth', 'verified', 'account.active', 'onboarding.complete', 
     Route::get('/devices', DeviceActivationPage::class)->name('platform.devices');
     Route::get('/synchronization', SynchronizationMonitoringPage::class)->name('platform.synchronization');
     Route::get('/alerts', NotificationCentrePage::class)->name('platform.notifications');
+    Route::get('/reports', ReportCentrePage::class)->name('platform.reports');
+    Route::get('/subscription', SubscriptionManagementPage::class)->name('platform.subscription');
+    Route::get('/reports/exports/{export}', ReportExportDownloadController::class)
+        ->middleware('signed')
+        ->name('platform.reports.download');
     Route::post('/platform/context', [PlatformContextController::class, 'update'])->name('platform.context.update');
     Route::get('/platform/permission-denied', PermissionDeniedPage::class)->name('platform.permission-denied');
 });
+

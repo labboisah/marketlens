@@ -3,6 +3,7 @@
 namespace App\Support\Platform;
 
 use App\Domain\Billing\Models\Subscription;
+use App\Domain\Billing\Services\SubscriptionManagementService;
 use App\Domain\Notifications\Models\PlatformNotification;
 use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Models\Business;
@@ -16,6 +17,7 @@ class PlatformShell
     public function __construct(
         private readonly BusinessContext $businessContext,
         private readonly BranchContext $branchContext,
+        private readonly SubscriptionManagementService $subscriptions,
     ) {}
 
     /**
@@ -62,7 +64,7 @@ class PlatformShell
             'business' => $business,
             'branch' => $branch,
             'subscription' => $subscription,
-            'navigation' => $this->navigation($featureNames),
+            'navigation' => $this->navigation($featureNames, $this->subscriptions->allowsOperationalAccess($subscription)),
             'featureNames' => $featureNames,
             'unreadNotifications' => $business ? $this->unreadNotifications($business->id) : 0,
         ];
@@ -72,7 +74,7 @@ class PlatformShell
      * @param  array<int, string>  $featureNames
      * @return array<int, NavigationItem>
      */
-    private function navigation(array $featureNames): array
+    private function navigation(array $featureNames, bool $operationalAccess): array
     {
         return collect($this->items())
             ->map(fn (array $item): NavigationItem => new NavigationItem(
@@ -81,7 +83,7 @@ class PlatformShell
                 section: $item['section'],
                 feature: $item['feature'],
                 icon: $item['icon'],
-                allowed: $this->featureAllowed($item['feature'], $featureNames),
+                allowed: $this->featureAllowed($item['feature'], $featureNames, $operationalAccess),
             ))
             ->all();
     }
@@ -106,8 +108,8 @@ class PlatformShell
             ['label' => 'Devices', 'href' => route('platform.devices'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'monitor'],
             ['label' => 'Synchronization', 'href' => route('platform.synchronization'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'refresh-cw'],
             ['label' => 'Alerts', 'href' => route('platform.notifications'), 'section' => 'Control', 'feature' => 'security alerts', 'icon' => 'bell-ring'],
-            ['label' => 'Reports', 'href' => '#reports', 'section' => 'Insights', 'feature' => 'reports', 'icon' => 'bar-chart-3'],
-            ['label' => 'Subscription', 'href' => '#subscription', 'section' => 'Account', 'feature' => 'base', 'icon' => 'badge-dollar-sign'],
+            ['label' => 'Reports', 'href' => route('platform.reports'), 'section' => 'Insights', 'feature' => 'reports', 'icon' => 'bar-chart-3'],
+            ['label' => 'Subscription', 'href' => route('platform.subscription'), 'section' => 'Account', 'feature' => 'base', 'icon' => 'badge-dollar-sign'],
             ['label' => 'Settings', 'href' => '#settings', 'section' => 'Account', 'feature' => 'base', 'icon' => 'settings'],
             ['label' => 'Support', 'href' => '#support', 'section' => 'Account', 'feature' => 'base', 'icon' => 'life-buoy'],
         ];
@@ -116,10 +118,14 @@ class PlatformShell
     /**
      * @param  array<int, string>  $featureNames
      */
-    private function featureAllowed(string $feature, array $featureNames): bool
+    private function featureAllowed(string $feature, array $featureNames, bool $operationalAccess): bool
     {
         if ($feature === 'base') {
             return true;
+        }
+
+        if (! $operationalAccess) {
+            return false;
         }
 
         return collect($featureNames)->contains(fn (string $name): bool => str_contains($name, $feature));
@@ -133,3 +139,7 @@ class PlatformShell
             ->count();
     }
 }
+
+
+
+

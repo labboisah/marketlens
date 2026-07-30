@@ -2,7 +2,9 @@
 
 namespace App\Domain\Tenancy\Models;
 
+use App\Domain\Billing\Models\BillingProfile;
 use App\Domain\Billing\Models\Subscription;
+use App\Domain\Billing\Models\SubscriptionChangeRequest;
 use App\Enums\BusinessStatus;
 use App\Models\Concerns\HasUuid;
 use App\Models\User;
@@ -69,5 +71,15 @@ class Business extends Model
     public function currentSubscription(): HasOne
     {
         return $this->hasOne(Subscription::class)->latestOfMany();
+    }
+
+    public function billingProfile(): HasOne
+    {
+        return $this->hasOne(BillingProfile::class);
+    }
+
+    public function subscriptionChangeRequests(): HasMany
+    {
+        return $this->hasMany(SubscriptionChangeRequest::class)->latest();
     }
 }

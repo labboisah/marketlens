@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Domain\Billing\Contracts\PaymentGateway;
+use App\Domain\Billing\Gateways\NullPaymentGateway;
 use App\Domain\Tenancy\Services\BranchContext;
 use App\Domain\Tenancy\Services\BusinessContext;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -18,6 +20,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(BusinessContext::class);
         $this->app->singleton(BranchContext::class);
+        $this->app->bind(PaymentGateway::class, NullPaymentGateway::class);
     }
 
     /**

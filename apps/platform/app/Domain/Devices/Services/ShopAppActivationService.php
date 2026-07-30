@@ -3,6 +3,7 @@
 namespace App\Domain\Devices\Services;
 
 use App\Domain\Audit\Models\AuditLog;
+use App\Domain\Billing\Services\SubscriptionManagementService;
 use App\Domain\Devices\Models\Device;
 use App\Domain\Devices\Models\DeviceActivation;
 use App\Domain\Devices\Models\DeviceHeartbeatLog;
@@ -13,7 +14,6 @@ use App\Enums\ApplicationVersionStatus;
 use App\Enums\BranchStatus;
 use App\Enums\BusinessStatus;
 use App\Enums\DeviceStatus;
-use App\Enums\SubscriptionStatus;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -21,6 +21,8 @@ use Illuminate\Validation\ValidationException;
 
 class ShopAppActivationService
 {
+    public function __construct(private readonly SubscriptionManagementService $subscriptions) {}
+
     /**
      * @param  array<string, mixed>  $data
      * @return array{activation: DeviceActivation, code: string}
@@ -221,7 +223,7 @@ class ShopAppActivationService
             throw ValidationException::withMessages(['business' => 'Business is not active.']);
         }
 
-        if (! in_array($business->currentSubscription?->status, [SubscriptionStatus::Trialing, SubscriptionStatus::Active], true)) {
+        if (! $this->subscriptions->allowsOperationalAccess($business->currentSubscription)) {
             throw ValidationException::withMessages(['subscription' => 'Subscription is not active.']);
         }
     }
@@ -242,27 +244,9 @@ class ShopAppActivationService
             ->when($currentDevice, fn ($query) => $query->whereKeyNot($currentDevice->id))
             ->count();
 
-        if ($activeCount >= $this->maxDevices($business)) {
+        if ($activeCount >= $this->subscriptions->maxDevices($business, $deviceType)) {
             throw ValidationException::withMessages(['device' => 'The current subscription does not allow another Shop App device.']);
         }
-    }
-
-    private function maxDevices(Business $business): int
-    {
-        $features = $business->currentSubscription?->plan?->features()
-            ->pluck('name')
-            ->map(fn (string $name): string => strtolower($name))
-            ->all() ?? [];
-
-        if (collect($features)->contains(fn (string $name): bool => str_contains($name, 'more monitoring users and devices'))) {
-            return 25;
-        }
-
-        if (collect($features)->contains(fn (string $name): bool => str_contains($name, 'more client app devices'))) {
-            return 5;
-        }
-
-        return 1;
     }
 
     private function resolveAllowedVersion(mixed $versionId): ?ApplicationVersion
@@ -344,3 +328,8 @@ class ShopAppActivationService
         ]);
     }
 }
+
+
+
+
+
