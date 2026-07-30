@@ -47,13 +47,23 @@ class PlatformShell
             ];
         }
 
-        $businesses = $user->ownedBusinesses()
-            ->with(['branches', 'currentSubscription.plan.features'])
-            ->orderBy('name')
-            ->get();
-
+        $businesses = $user->accessibleBusinesses();
         $business = $businesses->firstWhere('id', $this->businessContext->id()) ?? $businesses->first();
         $branches = $business?->branches->sortBy('name')->values() ?? collect();
+
+        if ($business && ! $user->isBusinessOwner($business)) {
+            $assignment = $user->monitoringAssignments()
+                ->where('business_id', $business->id)
+                ->where('status', 'active')
+                ->whereNull('suspended_at')
+                ->whereNull('revoked_at')
+                ->first();
+
+            if ($assignment && $assignment->branches()->exists()) {
+                $branches = $branches->whereIn('id', $assignment->branches()->pluck('branches.id')->all())->values();
+            }
+        }
+
         $branch = $branches->firstWhere('id', $this->branchContext->id()) ?? $branches->first();
         $subscription = $business?->currentSubscription;
         $featureNames = $subscription?->plan?->features->pluck('name')->map(fn (string $name): string => strtolower($name))->all() ?? [];
@@ -64,7 +74,7 @@ class PlatformShell
             'business' => $business,
             'branch' => $branch,
             'subscription' => $subscription,
-            'navigation' => $this->navigation($featureNames, $this->subscriptions->allowsOperationalAccess($subscription)),
+            'navigation' => $this->navigation($user, $business, $featureNames, $this->subscriptions->allowsOperationalAccess($subscription)),
             'featureNames' => $featureNames,
             'unreadNotifications' => $business ? $this->unreadNotifications($business->id) : 0,
         ];
@@ -74,7 +84,7 @@ class PlatformShell
      * @param  array<int, string>  $featureNames
      * @return array<int, NavigationItem>
      */
-    private function navigation(array $featureNames, bool $operationalAccess): array
+    private function navigation(User $user, ?Business $business, array $featureNames, bool $operationalAccess): array
     {
         return collect($this->items())
             ->map(fn (array $item): NavigationItem => new NavigationItem(
@@ -83,41 +93,41 @@ class PlatformShell
                 section: $item['section'],
                 feature: $item['feature'],
                 icon: $item['icon'],
-                allowed: $this->featureAllowed($item['feature'], $featureNames, $operationalAccess),
+                allowed: $this->featureAllowed($item['feature'], $featureNames, $operationalAccess)
+                    && $this->permissionAllowed($user, $business, $item['permission']),
             ))
             ->all();
     }
 
     /**
-     * @return array<int, array{label: string, href: string, section: string, feature: string, icon: string}>
+     * @return array<int, array{label: string, href: string, section: string, feature: string, icon: string, permission: string}>
      */
     private function items(): array
     {
         return [
-            ['label' => 'Overview', 'href' => route('platform.dashboard'), 'section' => 'Business', 'feature' => 'base', 'icon' => 'layout-dashboard'],
-            ['label' => 'Remote Monitoring', 'href' => '#monitoring', 'section' => 'Business', 'feature' => 'remote dashboard', 'icon' => 'monitor-smartphone'],
-            ['label' => 'Sales', 'href' => route('platform.sales'), 'section' => 'Monitoring', 'feature' => 'sales', 'icon' => 'receipt'],
-            ['label' => 'Payments', 'href' => route('platform.payments'), 'section' => 'Monitoring', 'feature' => 'sales', 'icon' => 'credit-card'],
-            ['label' => 'Inventory', 'href' => route('platform.inventory'), 'section' => 'Monitoring', 'feature' => 'inventory', 'icon' => 'package-check'],
-            ['label' => 'Expenses', 'href' => route('platform.expenses'), 'section' => 'Monitoring', 'feature' => 'expenses', 'icon' => 'wallet-cards'],
-            ['label' => 'Customers', 'href' => route('platform.customer-debts'), 'section' => 'Monitoring', 'feature' => 'customer debts', 'icon' => 'users'],
-            ['label' => 'Purchase & Supplier', 'href' => route('platform.purchases'), 'section' => 'Monitoring', 'feature' => 'base', 'icon' => 'truck'],
-            ['label' => 'Cashier & Staff', 'href' => route('platform.staff-performance'), 'section' => 'Monitoring', 'feature' => 'base', 'icon' => 'user-check'],
-            ['label' => 'Branch Performance', 'href' => route('platform.branch-monitoring'), 'section' => 'Monitoring', 'feature' => 'base', 'icon' => 'bar-chart-3'],
-            ['label' => 'Branches', 'href' => route('platform.branches'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'building-2'],
-            ['label' => 'Devices', 'href' => route('platform.devices'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'monitor'],
-            ['label' => 'Synchronization', 'href' => route('platform.synchronization'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'refresh-cw'],
-            ['label' => 'Alerts', 'href' => route('platform.notifications'), 'section' => 'Control', 'feature' => 'security alerts', 'icon' => 'bell-ring'],
-            ['label' => 'Reports', 'href' => route('platform.reports'), 'section' => 'Insights', 'feature' => 'reports', 'icon' => 'bar-chart-3'],
-            ['label' => 'Subscription', 'href' => route('platform.subscription'), 'section' => 'Account', 'feature' => 'base', 'icon' => 'badge-dollar-sign'],
-            ['label' => 'Settings', 'href' => route('platform.settings'), 'section' => 'Account', 'feature' => 'base', 'icon' => 'settings'],
-            ['label' => 'Support', 'href' => '#support', 'section' => 'Account', 'feature' => 'base', 'icon' => 'life-buoy'],
+            ['label' => 'Overview', 'href' => route('platform.dashboard'), 'section' => 'Business', 'feature' => 'base', 'icon' => 'layout-dashboard', 'permission' => 'view-dashboard'],
+            ['label' => 'Remote Monitoring', 'href' => '#monitoring', 'section' => 'Business', 'feature' => 'remote dashboard', 'icon' => 'monitor-smartphone', 'permission' => 'view-dashboard'],
+            ['label' => 'Sales', 'href' => route('platform.sales'), 'section' => 'Monitoring', 'feature' => 'sales', 'icon' => 'receipt', 'permission' => 'view-sales'],
+            ['label' => 'Payments', 'href' => route('platform.payments'), 'section' => 'Monitoring', 'feature' => 'sales', 'icon' => 'credit-card', 'permission' => 'view-sales'],
+            ['label' => 'Inventory', 'href' => route('platform.inventory'), 'section' => 'Monitoring', 'feature' => 'inventory', 'icon' => 'package-check', 'permission' => 'view-inventory'],
+            ['label' => 'Expenses', 'href' => route('platform.expenses'), 'section' => 'Monitoring', 'feature' => 'expenses', 'icon' => 'wallet-cards', 'permission' => 'view-expenses'],
+            ['label' => 'Customers', 'href' => route('platform.customer-debts'), 'section' => 'Monitoring', 'feature' => 'customer debts', 'icon' => 'users', 'permission' => 'view-customer-debts'],
+            ['label' => 'Purchase & Supplier', 'href' => route('platform.purchases'), 'section' => 'Monitoring', 'feature' => 'base', 'icon' => 'truck', 'permission' => 'view-suppliers'],
+            ['label' => 'Cashier & Staff', 'href' => route('platform.staff-performance'), 'section' => 'Monitoring', 'feature' => 'base', 'icon' => 'user-check', 'permission' => 'view-cashiers'],
+            ['label' => 'Branch Performance', 'href' => route('platform.branch-monitoring'), 'section' => 'Monitoring', 'feature' => 'base', 'icon' => 'bar-chart-3', 'permission' => 'view-branches'],
+            ['label' => 'Branches', 'href' => route('platform.branches'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'building-2', 'permission' => 'view-branches'],
+            ['label' => 'Devices', 'href' => route('platform.devices'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'monitor', 'permission' => 'view-devices'],
+            ['label' => 'Synchronization', 'href' => route('platform.synchronization'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'refresh-cw', 'permission' => 'view-synchronization'],
+            ['label' => 'Alerts', 'href' => route('platform.notifications'), 'section' => 'Control', 'feature' => 'security alerts', 'icon' => 'bell-ring', 'permission' => 'view-alerts'],
+            ['label' => 'Reports', 'href' => route('platform.reports'), 'section' => 'Insights', 'feature' => 'reports', 'icon' => 'bar-chart-3', 'permission' => 'export-reports'],
+            ['label' => 'Monitoring Users', 'href' => route('platform.monitoring-users'), 'section' => 'Account', 'feature' => 'base', 'icon' => 'user-plus', 'permission' => 'manage-monitoring-users'],
+            ['label' => 'Subscription', 'href' => route('platform.subscription'), 'section' => 'Account', 'feature' => 'base', 'icon' => 'badge-dollar-sign', 'permission' => 'manage-subscription'],
+            ['label' => 'Settings', 'href' => route('platform.settings'), 'section' => 'Account', 'feature' => 'base', 'icon' => 'settings', 'permission' => 'manage-business-settings'],
+            ['label' => 'Support', 'href' => '#support', 'section' => 'Account', 'feature' => 'base', 'icon' => 'life-buoy', 'permission' => 'view-dashboard'],
         ];
     }
 
-    /**
-     * @param  array<int, string>  $featureNames
-     */
+    /** @param array<int, string> $featureNames */
     private function featureAllowed(string $feature, array $featureNames, bool $operationalAccess): bool
     {
         if ($feature === 'base') {
@@ -131,6 +141,11 @@ class PlatformShell
         return collect($featureNames)->contains(fn (string $name): bool => str_contains($name, $feature));
     }
 
+    private function permissionAllowed(User $user, ?Business $business, string $permission): bool
+    {
+        return ! $business || $user->hasBusinessPermission($business, $permission);
+    }
+
     private function unreadNotifications(int $businessId): int
     {
         return PlatformNotification::query()
@@ -139,8 +154,3 @@ class PlatformShell
             ->count();
     }
 }
-
-
-
-
-

@@ -20,6 +20,7 @@ use App\Livewire\Platform\Devices\DeviceActivationPage;
 use App\Livewire\Platform\Expenses\ExpenseMonitoringPage;
 use App\Livewire\Platform\Inventory\InventoryMonitoringPage;
 use App\Livewire\Platform\Notifications\NotificationCentrePage;
+use App\Livewire\Platform\MonitoringUsers\MonitoringUserManagementPage;
 use App\Livewire\Platform\Payments\PaymentMonitoringPage;
 use App\Livewire\Platform\PermissionDeniedPage;
 use App\Livewire\Platform\Purchases\PurchaseMonitoringPage;
@@ -84,6 +85,7 @@ Route::middleware(['auth', 'verified', 'account.active', 'onboarding.complete', 
     Route::get('/synchronization', SynchronizationMonitoringPage::class)->name('platform.synchronization');
     Route::get('/alerts', NotificationCentrePage::class)->name('platform.notifications');
     Route::get('/reports', ReportCentrePage::class)->name('platform.reports');
+    Route::get('/monitoring-users', MonitoringUserManagementPage::class)->name('platform.monitoring-users');
     Route::get('/subscription', SubscriptionManagementPage::class)->name('platform.subscription');
     Route::get('/settings', BusinessSettingsPage::class)->name('platform.settings');
     Route::get('/reports/exports/{export}', ReportExportDownloadController::class)
@@ -92,5 +94,7 @@ Route::middleware(['auth', 'verified', 'account.active', 'onboarding.complete', 
     Route::post('/platform/context', [PlatformContextController::class, 'update'])->name('platform.context.update');
     Route::get('/platform/permission-denied', PermissionDeniedPage::class)->name('platform.permission-denied');
 });
+
+
 
 

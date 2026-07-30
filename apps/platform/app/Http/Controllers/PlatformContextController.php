@@ -11,7 +11,7 @@ class PlatformContextController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $user = $request->user();
-        $businessIds = $user->ownedBusinesses()->pluck('businesses.id')->all();
+        $businessIds = $user->accessibleBusinesses()->pluck('id')->all();
 
         $validated = $request->validate([
             'business_id' => ['required', 'integer', Rule::in($businessIds)],
@@ -19,12 +19,17 @@ class PlatformContextController extends Controller
             'date_range' => ['nullable', 'string', Rule::in(['today', '7_days', '30_days', 'month'])],
         ]);
 
-        $business = $user->ownedBusinesses()
-            ->with('branches')
-            ->whereKey($validated['business_id'])
-            ->firstOrFail();
+        $business = $user->accessibleBusinesses()->firstWhere('id', $validated['business_id']);
+        abort_unless($business, 403);
 
         $branchIds = $business->branches->pluck('id')->all();
+        if (! $user->isBusinessOwner($business)) {
+            $assignment = $user->monitoringAssignments()->where('business_id', $business->id)->where('status', 'active')->whereNull('suspended_at')->whereNull('revoked_at')->first();
+            if ($assignment && $assignment->branches()->exists()) {
+                $branchIds = $assignment->branches()->pluck('branches.id')->all();
+            }
+        }
+
         $branchId = (int) ($validated['branch_id'] ?? 0);
 
         if ($branchId !== 0 && ! in_array($branchId, $branchIds, true)) {

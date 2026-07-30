@@ -2,6 +2,8 @@
 
 namespace App\Domain\Tenancy\Models;
 
+use App\Domain\Access\Models\BusinessMonitoringUser;
+use App\Domain\Access\Models\MonitoringUserInvitation;
 use App\Domain\Billing\Models\BillingProfile;
 use App\Domain\Billing\Models\Subscription;
 use App\Domain\Billing\Models\SubscriptionChangeRequest;
@@ -104,5 +106,15 @@ class Business extends Model
     public function trustedDevices(): HasMany
     {
         return $this->hasMany(BusinessTrustedDevice::class)->latest('trusted_at');
+    }
+
+    public function monitoringUsers(): HasMany
+    {
+        return $this->hasMany(BusinessMonitoringUser::class);
+    }
+
+    public function monitoringInvitations(): HasMany
+    {
+        return $this->hasMany(MonitoringUserInvitation::class);
     }
 }
