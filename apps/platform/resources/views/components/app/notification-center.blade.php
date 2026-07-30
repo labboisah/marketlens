@@ -49,3 +49,4 @@
 @foreach ($pageNotifications as $notification)
   <span x-init="$nextTick(() => notify(@js($notification)))" class="hidden"></span>
 @endforeach
+

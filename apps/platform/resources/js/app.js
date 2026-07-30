@@ -9,38 +9,48 @@ Alpine.data('marketlensShell', () => ({
   notifications: [],
   init() {
     document.documentElement.dataset.theme = this.theme;
-    window.addEventListener('marketlens:notify', (event) => this.notify(event.detail || {}));
+    this.notificationListener = (event) => this.handleNotificationEvent(event);
+    document.addEventListener('notify', this.notificationListener);
+    window.addEventListener('notify', this.notificationListener);
+    document.addEventListener('marketlens:notify', this.notificationListener);
+    window.addEventListener('marketlens:notify', this.notificationListener);
   },
   toggleTheme() {
     this.theme = this.theme === 'dark' ? 'light' : 'dark';
     localStorage.setItem('marketlens-theme', this.theme);
     document.documentElement.dataset.theme = this.theme;
   },
-  notify(notification) {
-    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    const item = {
-      id,
-      tone: ['success', 'warning', 'danger', 'information'].includes(notification.tone) ? notification.tone : 'information',
-      title: notification.title || 'MarketLens update',
-      message: notification.message || '',
-      visible: true,
-    };
-
-    this.notifications.unshift(item);
-    window.setTimeout(() => this.dismissNotification(id), notification.timeout || 5000);
-  },
-  dismissNotification(id) {
-    const item = this.notifications.find((notification) => notification.id === id);
-
-    if (!item) {
+  handleNotificationEvent(event) {
+    if (event.__marketlensNotificationHandled) {
       return;
     }
 
-    item.visible = false;
-    window.setTimeout(() => {
-      this.notifications = this.notifications.filter((notification) => notification.id !== id);
-    }, 180);
+    event.__marketlensNotificationHandled = true;
+    this.notify(event.detail || {});
   },
+  notify(notification) {
+    notification = Array.isArray(notification) ? (notification[0] || {}) : (notification || {});
+    notification = notification.detail ? notification.detail : notification;
+    notification = Array.isArray(notification) ? (notification[0] || {}) : notification;
+
+    this.showFluxToast(notification);
+  },
+  showFluxToast(notification) {
+    const variant = { information: 'info' }[notification.tone] || notification.tone || 'info';
+
+    document.dispatchEvent(new CustomEvent('toast-show', {
+      bubbles: true,
+      detail: {
+        duration: notification.timeout || 5000,
+        slots: {
+          heading: notification.title || 'MarketLens update',
+          text: notification.message || '',
+        },
+        dataset: { variant },
+      },
+    }));
+  },
+  dismissNotification() {},
   notificationClasses(tone) {
     return {
       success: 'border-success/30 text-success',
@@ -154,3 +164,9 @@ document.addEventListener('livewire:navigated', finishPageProgress);
 document.addEventListener('livewire:navigate-cancelled', finishPageProgress);
 window.addEventListener('beforeunload', startPageProgress);
 window.addEventListener('pageshow', finishPageProgress);
+
+
+
+
+
+

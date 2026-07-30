@@ -16,4 +16,24 @@ class BusinessPolicy
     {
         return $this->view($user, $business);
     }
+
+    public function manageSettings(User $user, Business $business): bool
+    {
+        return $this->manage($user, $business);
+    }
+
+    public function viewAudit(User $user, Business $business): bool
+    {
+        return $this->view($user, $business);
+    }
+
+    public function exportData(User $user, Business $business): bool
+    {
+        return $this->manage($user, $business);
+    }
+
+    public function requestClosure(User $user, Business $business): bool
+    {
+        return $this->manage($user, $business);
+    }
 }

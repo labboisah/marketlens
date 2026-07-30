@@ -11,6 +11,7 @@
     @php($platformShell = app(\App\Support\Platform\PlatformShell::class)->forUser(auth()->user()))
 
     <div class="ml-page-shell" x-data="marketlensShell">
+      <flux:toast position="top end" />
       <x-app.notification-center />
       <x-app.loading-overlay />
       <x-app.sidebar :shell="$platformShell" />
@@ -32,3 +33,4 @@
     @fluxScripts
   </body>
 </html>
+

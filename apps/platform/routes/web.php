@@ -24,6 +24,7 @@ use App\Livewire\Platform\Payments\PaymentMonitoringPage;
 use App\Livewire\Platform\PermissionDeniedPage;
 use App\Livewire\Platform\Purchases\PurchaseMonitoringPage;
 use App\Livewire\Platform\Reports\ReportCentrePage;
+use App\Livewire\Platform\Settings\BusinessSettingsPage;
 use App\Livewire\Platform\Subscriptions\SubscriptionManagementPage;
 use App\Livewire\Platform\Sales\SalesMonitoringPage;
 use App\Livewire\Platform\Staff\StaffPerformanceMonitoringPage;
@@ -84,10 +85,12 @@ Route::middleware(['auth', 'verified', 'account.active', 'onboarding.complete', 
     Route::get('/alerts', NotificationCentrePage::class)->name('platform.notifications');
     Route::get('/reports', ReportCentrePage::class)->name('platform.reports');
     Route::get('/subscription', SubscriptionManagementPage::class)->name('platform.subscription');
+    Route::get('/settings', BusinessSettingsPage::class)->name('platform.settings');
     Route::get('/reports/exports/{export}', ReportExportDownloadController::class)
         ->middleware('signed')
         ->name('platform.reports.download');
     Route::post('/platform/context', [PlatformContextController::class, 'update'])->name('platform.context.update');
     Route::get('/platform/permission-denied', PermissionDeniedPage::class)->name('platform.permission-denied');
 });
+
 

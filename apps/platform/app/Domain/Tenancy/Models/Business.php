@@ -5,10 +5,13 @@ namespace App\Domain\Tenancy\Models;
 use App\Domain\Billing\Models\BillingProfile;
 use App\Domain\Billing\Models\Subscription;
 use App\Domain\Billing\Models\SubscriptionChangeRequest;
+use App\Domain\Settings\Models\BusinessDataExport;
+use App\Domain\Settings\Models\BusinessTrustedDevice;
 use App\Enums\BusinessStatus;
 use App\Models\Concerns\HasUuid;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -39,6 +42,10 @@ class Business extends Model
         'status',
         'onboarding_status',
         'monitoring_preferences',
+        'default_branch_id',
+        'account_closure_requested_at',
+        'account_closure_requested_by',
+        'account_closure_reason',
         'onboarded_at',
     ];
 
@@ -47,6 +54,7 @@ class Business extends Model
         return [
             'status' => BusinessStatus::class,
             'monitoring_preferences' => 'array',
+            'account_closure_requested_at' => 'datetime',
             'onboarded_at' => 'datetime',
         ];
     }
@@ -54,6 +62,11 @@ class Business extends Model
     public function branches(): HasMany
     {
         return $this->hasMany(Branch::class);
+    }
+
+    public function defaultBranch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class, 'default_branch_id');
     }
 
     public function owners(): BelongsToMany
@@ -81,5 +94,15 @@ class Business extends Model
     public function subscriptionChangeRequests(): HasMany
     {
         return $this->hasMany(SubscriptionChangeRequest::class)->latest();
+    }
+
+    public function dataExports(): HasMany
+    {
+        return $this->hasMany(BusinessDataExport::class)->latest('requested_at');
+    }
+
+    public function trustedDevices(): HasMany
+    {
+        return $this->hasMany(BusinessTrustedDevice::class)->latest('trusted_at');
     }
 }
