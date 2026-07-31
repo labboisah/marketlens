@@ -27,6 +27,8 @@
           @endisset
 
           {{ $slot }}
+
+          
         </main>
       </div>
     </div>

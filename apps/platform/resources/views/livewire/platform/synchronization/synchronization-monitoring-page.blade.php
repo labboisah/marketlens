@@ -2,7 +2,11 @@
   <x-app.page-header
     title="Synchronization monitoring"
     description="Monitor Shop App devices, batch processing, conflicts, heartbeat history, protocol versions, and application-version distribution."
-  />
+  >
+    <x-slot:actions>
+      <a href="{{ route('platform.support', ['category' => 'synchronization']) }}" class="rounded-md border border-border px-3 py-2 text-sm font-semibold text-foreground hover:border-primary/50">Get sync support</a>
+    </x-slot:actions>
+  </x-app.page-header>
 
   <div class="flex flex-wrap gap-2">
     @foreach ($tabs as $key => $label)
@@ -146,7 +150,7 @@
 
   @if ($currentView === 'failed-records')
     <x-app.card title="Failed records" description="Download a redacted report for support without raw payload secrets or production tokens.">
-      <div class="mb-3"><button type="button" wire:click="downloadErrorReport" class="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white">Download redacted error report</button></div>
+      <div class="mb-3 flex flex-wrap gap-2"><button type="button" wire:click="downloadErrorReport" class="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white">Download redacted error report</button><a href="{{ route('platform.support', ['category' => 'synchronization']) }}" class="rounded-md border border-border px-3 py-2 text-sm font-semibold text-foreground hover:border-primary/50">Open support ticket</a></div>
       <x-app.table density="compact">
         <thead><tr><th>Record</th><th>Entity</th><th>Error</th><th>Retryable</th><th>Batch</th><th>Occurred</th></tr></thead>
         <tbody>
@@ -230,3 +234,4 @@
     </x-app.card>
   @endif
 </div>
+

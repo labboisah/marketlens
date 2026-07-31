@@ -58,7 +58,11 @@ return new class extends Migration
         if (! Schema::hasTable('business_monitoring_user_branch')) {
             Schema::create('business_monitoring_user_branch', function (Blueprint $table): void {
                 $table->id();
-                $table->foreignId('business_monitoring_user_id')->constrained('business_monitoring_users')->cascadeOnDelete();
+                $table->unsignedBigInteger('business_monitoring_user_id');
+                $table->foreign('business_monitoring_user_id', 'bmu_branch_assignment_fk')
+                    ->references('id')
+                    ->on('business_monitoring_users')
+                    ->cascadeOnDelete();
                 $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
                 $table->timestamps();
                 $table->unique(['business_monitoring_user_id', 'branch_id'], 'monitoring_user_branch_unique');
@@ -98,3 +102,4 @@ return new class extends Migration
         Schema::dropIfExists('monitoring_roles');
     }
 };
+

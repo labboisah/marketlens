@@ -23,7 +23,7 @@
       <div class="flex items-center gap-2">
         <x-app.status-badge tone="information">{{ $subscription?->plan?->name ?? 'No plan' }}</x-app.status-badge>
         <x-app.status-badge tone="warning">Sync stale</x-app.status-badge>
-        <a href="#support" class="hidden rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-primary sm:inline-flex">Support</a>
+        <a href="{{ route('platform.support') }}" class="hidden rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-primary sm:inline-flex">Support</a>
         <button type="button" class="rounded-md border border-border px-3 py-2 text-sm font-medium" x-on:click="toggleTheme" aria-label="Toggle theme">
           Theme
         </button>
@@ -80,3 +80,4 @@
   </div>
   <x-app.page-progress />
 </header>
+

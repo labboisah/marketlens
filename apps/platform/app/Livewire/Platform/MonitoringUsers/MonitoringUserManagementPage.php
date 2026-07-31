@@ -65,7 +65,9 @@ class MonitoringUserManagementPage extends Component
 
     public function invite(BusinessContext $businessContext, MonitoringUserManagementService $service): void
     {
+        
         $business = $this->currentBusiness($businessContext);
+        
         $this->authorize('manageMonitoringUsers', $business);
 
         $roleIds = $service->roles()->pluck('id')->all();

@@ -3,6 +3,8 @@
 use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\EnsureApiVersion;
 use App\Http\Middleware\EnsureOnboardingIsCompleted;
+use App\Http\Middleware\EnsureUserIsSuperAdmin;
+use App\Http\Middleware\EnsureLegalDocumentsAreAccepted;
 use App\Http\Middleware\ResolvePlatformContext;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -21,6 +23,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'api.version' => EnsureApiVersion::class,
             'account.active' => EnsureAccountIsActive::class,
             'onboarding.complete' => EnsureOnboardingIsCompleted::class,
+            'legal.accepted' => EnsureLegalDocumentsAreAccepted::class,
+            'super.admin' => EnsureUserIsSuperAdmin::class,
             'platform.context' => ResolvePlatformContext::class,
         ]);
     })
@@ -41,3 +45,4 @@ return Application::configure(basePath: dirname(__DIR__))
             ], $response->getStatusCode());
         });
     })->create();
+

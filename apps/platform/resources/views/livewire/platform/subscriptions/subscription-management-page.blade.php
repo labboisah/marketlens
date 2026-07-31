@@ -2,7 +2,11 @@
   <x-app.page-header
     title="Subscription management"
     description="Review the current plan, usage, billing records, and safe subscription change requests."
-  />
+  >
+    <x-slot:actions>
+      <a href="{{ route('platform.support', ['category' => 'billing']) }}" class="rounded-md border border-border px-3 py-2 text-sm font-semibold text-foreground hover:border-primary/50">Billing support</a>
+    </x-slot:actions>
+  </x-app.page-header>
 
   <section class="grid gap-4 xl:grid-cols-3">
     <x-app.card title="Current plan" description="Billing access stays available even when premium features are restricted.">
@@ -157,3 +161,4 @@
     </x-app.card>
   </section>
 </div>
+

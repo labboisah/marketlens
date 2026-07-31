@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Domain\Access\Models\BusinessMonitoringUser;
+use App\Domain\Legal\Models\LegalAcceptance;
 use App\Domain\Tenancy\Models\Business;
 use App\Enums\AccountStatus;
 use Database\Factories\UserFactory;
@@ -17,7 +18,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'phone', 'password', 'account_status', 'terms_accepted_at', 'privacy_accepted_at'])]
+#[Fillable(['name', 'email', 'phone', 'password', 'account_status', 'is_super_admin', 'super_admin_confirmed_at', 'terms_accepted_at', 'privacy_accepted_at'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -30,6 +31,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'account_status' => AccountStatus::class,
+            'is_super_admin' => 'boolean',
+            'super_admin_confirmed_at' => 'datetime',
             'terms_accepted_at' => 'datetime',
             'privacy_accepted_at' => 'datetime',
         ];
@@ -45,6 +48,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return in_array($this->account_status, [AccountStatus::Suspended, AccountStatus::Disabled], true);
     }
 
+    public function isSuperAdmin(): bool
+    {
+        return (bool) $this->is_super_admin && $this->hasActiveAccount();
+    }
+
     public function ownedBusinesses(): BelongsToMany
     {
         return $this->belongsToMany(Business::class, 'business_owners')
@@ -55,6 +63,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function monitoringAssignments(): HasMany
     {
         return $this->hasMany(BusinessMonitoringUser::class);
+    }
+
+    public function legalAcceptances(): HasMany
+    {
+        return $this->hasMany(LegalAcceptance::class);
     }
 
     public function monitoringBusinesses(): BelongsToMany
@@ -139,3 +152,4 @@ class User extends Authenticatable implements MustVerifyEmail
         return ! $assignment->branches()->exists() || $assignment->branches()->whereKey($branchId)->exists();
     }
 }
+

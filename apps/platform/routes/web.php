@@ -11,6 +11,9 @@ use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\OnboardingCompletedController;
 use App\Http\Controllers\Platform\ReportExportDownloadController;
 use App\Http\Controllers\PlatformContextController;
+use App\Livewire\Legal\LegalAcceptancePage;
+use App\Livewire\Legal\LegalDocumentPage;
+use App\Livewire\Legal\LegalIndexPage;
 use App\Livewire\Onboarding\BusinessOnboardingWizard;
 use App\Livewire\Platform\Administration\Dashboard;
 use App\Livewire\Platform\Branches\BranchManagementPage;
@@ -29,6 +32,7 @@ use App\Livewire\Platform\Settings\BusinessSettingsPage;
 use App\Livewire\Platform\Subscriptions\SubscriptionManagementPage;
 use App\Livewire\Platform\Sales\SalesMonitoringPage;
 use App\Livewire\Platform\Staff\StaffPerformanceMonitoringPage;
+use App\Livewire\Platform\Support\SupportCentrePage;
 use App\Livewire\Platform\Synchronization\SynchronizationMonitoringPage;
 use App\Livewire\PublicSite\BusinessTypesPage;
 use App\Livewire\PublicSite\FeaturesPage;
@@ -36,6 +40,7 @@ use App\Livewire\PublicSite\HowItWorksPage;
 use App\Livewire\PublicSite\PricingPage;
 use App\Livewire\PublicSite\ProductPage;
 use App\Livewire\PublicSite\WelcomePage;
+use App\Livewire\SuperAdmin\SuperAdminDashboardPage;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', WelcomePage::class)->name('welcome');
@@ -44,6 +49,11 @@ Route::get('/features', FeaturesPage::class)->name('public.features');
 Route::get('/business-types', BusinessTypesPage::class)->name('public.business-types');
 Route::get('/how-it-works', HowItWorksPage::class)->name('public.how-it-works');
 Route::get('/pricing', PricingPage::class)->name('public.pricing');
+Route::get('/legal', LegalIndexPage::class)->name('legal.index');
+Route::middleware(['auth', 'verified', 'account.active'])->get('/legal/acceptance', LegalAcceptancePage::class)->name('legal.acceptance');
+Route::get('/legal/{slug}', LegalDocumentPage::class)->name('legal.show');
+Route::redirect('/terms', '/legal/terms-of-service')->name('legal.terms');
+Route::redirect('/privacy', '/legal/privacy-policy')->name('legal.privacy');
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
@@ -65,12 +75,19 @@ Route::middleware('auth')->group(function (): void {
 
 Route::get('/account-disabled', AccountDisabledController::class)->name('account.disabled');
 
-Route::middleware(['auth', 'verified', 'account.active'])->group(function (): void {
+Route::middleware(['auth', 'verified', 'account.active', 'legal.accepted'])->group(function (): void {
     Route::get('/onboarding', BusinessOnboardingWizard::class)->name('onboarding.wizard');
     Route::get('/onboarding/completed', OnboardingCompletedController::class)->name('onboarding.completed');
 });
 
-Route::middleware(['auth', 'verified', 'account.active', 'onboarding.complete', 'platform.context'])->group(function (): void {
+
+Route::middleware(['auth', 'verified', 'account.active', 'legal.accepted', 'super.admin'])
+    ->prefix('/admin/platform')
+    ->name('super-admin.')
+    ->group(function (): void {
+        Route::get('/', SuperAdminDashboardPage::class)->name('dashboard');
+    });
+Route::middleware(['auth', 'verified', 'account.active', 'legal.accepted', 'onboarding.complete', 'platform.context'])->group(function (): void {
     Route::get('/admin/dashboard', Dashboard::class)->name('platform.dashboard');
     Route::get('/sales', SalesMonitoringPage::class)->name('platform.sales');
     Route::get('/payments', PaymentMonitoringPage::class)->name('platform.payments');
@@ -88,13 +105,11 @@ Route::middleware(['auth', 'verified', 'account.active', 'onboarding.complete', 
     Route::get('/monitoring-users', MonitoringUserManagementPage::class)->name('platform.monitoring-users');
     Route::get('/subscription', SubscriptionManagementPage::class)->name('platform.subscription');
     Route::get('/settings', BusinessSettingsPage::class)->name('platform.settings');
+    Route::get('/support', SupportCentrePage::class)->name('platform.support');
     Route::get('/reports/exports/{export}', ReportExportDownloadController::class)
         ->middleware('signed')
         ->name('platform.reports.download');
     Route::post('/platform/context', [PlatformContextController::class, 'update'])->name('platform.context.update');
     Route::get('/platform/permission-denied', PermissionDeniedPage::class)->name('platform.permission-denied');
 });
-
-
-
 

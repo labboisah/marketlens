@@ -123,7 +123,7 @@ class PlatformShell
             ['label' => 'Monitoring Users', 'href' => route('platform.monitoring-users'), 'section' => 'Account', 'feature' => 'base', 'icon' => 'user-plus', 'permission' => 'manage-monitoring-users'],
             ['label' => 'Subscription', 'href' => route('platform.subscription'), 'section' => 'Account', 'feature' => 'base', 'icon' => 'badge-dollar-sign', 'permission' => 'manage-subscription'],
             ['label' => 'Settings', 'href' => route('platform.settings'), 'section' => 'Account', 'feature' => 'base', 'icon' => 'settings', 'permission' => 'manage-business-settings'],
-            ['label' => 'Support', 'href' => '#support', 'section' => 'Account', 'feature' => 'base', 'icon' => 'life-buoy', 'permission' => 'view-dashboard'],
+            ['label' => 'Support', 'href' => route('platform.support'), 'section' => 'Account', 'feature' => 'base', 'icon' => 'life-buoy', 'permission' => 'view-dashboard'],
         ];
     }
 
@@ -154,3 +154,4 @@ class PlatformShell
             ->count();
     }
 }
+

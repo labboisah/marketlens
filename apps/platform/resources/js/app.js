@@ -1,7 +1,5 @@
 import './bootstrap';
-import Alpine from 'alpinejs';
 
-window.Alpine = Alpine;
 
 Alpine.data('marketlensShell', () => ({
   sidebarOpen: false,
@@ -69,7 +67,7 @@ Alpine.data('marketlensShell', () => ({
   },
 }));
 
-Alpine.start();
+
 
 const actionSelector = 'button, a[role="button"]';
 const navigationSelector = 'a[href]:not([target]):not([download])';
@@ -164,9 +162,3 @@ document.addEventListener('livewire:navigated', finishPageProgress);
 document.addEventListener('livewire:navigate-cancelled', finishPageProgress);
 window.addEventListener('beforeunload', startPageProgress);
 window.addEventListener('pageshow', finishPageProgress);
-
-
-
-
-
-

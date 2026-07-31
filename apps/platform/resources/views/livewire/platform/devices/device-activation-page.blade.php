@@ -2,7 +2,11 @@
   <x-app.page-header
     title="Shop App device activation"
     description="Generate short-lived, single-use activation codes and monitor activated Shop App devices."
-  />
+  >
+    <x-slot:actions>
+      <a href="{{ route('platform.support', ['category' => 'device']) }}" class="rounded-md border border-border px-3 py-2 text-sm font-semibold text-foreground hover:border-primary/50">Get device support</a>
+    </x-slot:actions>
+  </x-app.page-header>
 
   @if (session('device_status'))
     <x-app.status-badge tone="success">{{ session('device_status') }}</x-app.status-badge>
@@ -105,6 +109,7 @@
                   <td class="text-sm text-muted">{{ count($device->synchronization_errors ?? []) }}</td>
                   <td>
                     <div class="flex flex-wrap gap-2">
+                      <a href="{{ route('platform.support', ['category' => 'device', 'device_id' => $device->id, 'branch_id' => $device->branch_id]) }}" class="rounded-md border border-border px-2 py-1 text-xs font-medium text-foreground hover:border-primary/50">Support</a>
                       @if ($activation && ! $activation->used_at && ! $activation->revoked_at)
                         <button type="button" wire:click="revokeActivation({{ $activation->id }})" class="rounded-md border border-warning/40 px-2 py-1 text-xs font-medium text-warning">
                           Revoke code
@@ -126,3 +131,4 @@
     </x-app.card>
   </section>
 </div>
+

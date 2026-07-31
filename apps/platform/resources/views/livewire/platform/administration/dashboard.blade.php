@@ -115,6 +115,7 @@
     <x-app.card title="Synchronization health" description="Data freshness">
       <x-app.sync-indicator state="{{ ($freshness['is_stale'] ?? true) ? 'delayed' : 'synced' }}" :last-synced-at="$lastSync ? $lastSync->format('M j, Y H:i') : 'Not synchronized'" />
       <p class="mt-3 text-sm text-muted">Dashboard metrics are read from summary tables and cache. Raw synchronized records are not scanned on page load.</p>
+      <a href="{{ route('platform.support', ['category' => 'synchronization']) }}" class="mt-3 inline-flex rounded-md border border-border px-3 py-2 text-sm font-semibold text-foreground hover:border-primary/50">Get synchronization help</a>
     </x-app.card>
   </section>
 
@@ -208,3 +209,4 @@
     </x-app.card>
   </section>
 </div>
+
