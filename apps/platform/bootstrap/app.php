@@ -4,11 +4,14 @@ use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\EnsureApiVersion;
 use App\Http\Middleware\EnsureOnboardingIsCompleted;
 use App\Http\Middleware\EnsureUserIsSuperAdmin;
+use App\Http\Middleware\AttachTraceId;
 use App\Http\Middleware\EnsureLegalDocumentsAreAccepted;
 use App\Http\Middleware\ResolvePlatformContext;
+use App\Support\Observability\SensitiveDataSanitizer;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -19,6 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(AttachTraceId::class);
+
         $middleware->alias([
             'api.version' => EnsureApiVersion::class,
             'account.active' => EnsureAccountIsActive::class,
@@ -30,6 +35,18 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(fn ($request, Throwable $e) => $request->is('api/*'));
+        $exceptions->report(function (Throwable $e): void {
+            $request = request();
+
+            Log::channel('exceptions')->error('platform.exception.unhandled', app(SensitiveDataSanitizer::class)->sanitize([
+                'trace_id' => $request?->attributes->get('trace_id'),
+                'exception' => $e::class,
+                'message' => $e->getMessage(),
+                'path' => $request ? '/'.ltrim($request->path(), '/') : null,
+                'route' => $request?->route()?->getName(),
+                'user_id' => $request?->user()?->id,
+            ]));
+        });
 
         $exceptions->respond(function ($response, Throwable $e, $request) {
             if (! $request->is('api/*')) {
@@ -41,8 +58,12 @@ return Application::configure(basePath: dirname(__DIR__))
                 'message' => $response->exception?->getMessage() ?: 'The request could not be completed.',
                 'code' => str($e::class)->classBasename()->snake()->upper()->toString(),
                 'errors' => [],
-                'trace_id' => (string) Str::uuid(),
+                'trace_id' => $request->attributes->get('trace_id') ?: (string) Str::uuid(),
             ], $response->getStatusCode());
         });
     })->create();
+
+
+
+
 

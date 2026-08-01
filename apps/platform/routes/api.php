@@ -17,6 +17,7 @@ Route::prefix('v1')->middleware(['api.version', 'throttle:api'])->group(function
         Route::post('/activate', [DeviceController::class, 'activate'])->name('activate');
         Route::get('/status', [DeviceController::class, 'status'])->name('status');
         Route::post('/heartbeat', [DeviceController::class, 'heartbeat'])->name('heartbeat');
+        Route::get('/application-update', [DeviceController::class, 'applicationUpdate'])->name('application-update');
         Route::get('/versions', [DeviceController::class, 'versions'])->name('versions');
     });
 
@@ -32,3 +33,5 @@ Route::prefix('v1')->middleware(['api.version', 'throttle:api'])->group(function
         Route::get('/branches', [MonitoringController::class, 'branches'])->name('branches');
     });
 });
+
+

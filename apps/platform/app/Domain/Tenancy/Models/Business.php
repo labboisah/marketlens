@@ -7,6 +7,7 @@ use App\Domain\Access\Models\MonitoringUserInvitation;
 use App\Domain\Billing\Models\BillingProfile;
 use App\Domain\Billing\Models\Subscription;
 use App\Domain\Billing\Models\SubscriptionChangeRequest;
+use App\Domain\Devices\Models\Device;
 use App\Domain\Settings\Models\BusinessDataExport;
 use App\Domain\Settings\Models\BusinessTrustedDevice;
 use App\Enums\BusinessStatus;
@@ -64,6 +65,11 @@ class Business extends Model
     public function branches(): HasMany
     {
         return $this->hasMany(Branch::class);
+    }
+
+    public function devices(): HasMany
+    {
+        return $this->hasMany(Device::class);
     }
 
     public function defaultBranch(): BelongsTo

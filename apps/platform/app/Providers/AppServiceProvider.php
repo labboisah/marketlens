@@ -7,7 +7,10 @@ use App\Domain\Billing\Gateways\NullPaymentGateway;
 use App\Domain\Tenancy\Services\BranchContext;
 use App\Domain\Tenancy\Services\BusinessContext;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -34,5 +37,33 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('device', fn (Request $request) => Limit::perMinute(30)->by($request->ip()));
         RateLimiter::for('sync', fn (Request $request) => Limit::perMinute((int) config('marketlens.sync_rate_limit', 120))->by($request->user()?->id ?: $request->ip()));
         RateLimiter::for('monitoring', fn (Request $request) => Limit::perMinute(90)->by($request->user()?->id ?: $request->ip()));
+
+        $this->registerSlowQueryLogging();
+    }
+
+    private function registerSlowQueryLogging(): void
+    {
+        if (! config('performance.monitoring.slow_query.enabled')) {
+            return;
+        }
+
+        DB::listen(function (QueryExecuted $query): void {
+            $threshold = (int) config('performance.monitoring.slow_query.threshold_ms', 250);
+
+            if ($query->time < $threshold) {
+                return;
+            }
+
+            Log::warning('Slow database query detected', [
+                'time_ms' => $query->time,
+                'connection' => $query->connectionName,
+                'sql_shape' => preg_replace('/\s+/', ' ', $query->sql),
+                'bindings' => '[redacted]',
+                'path' => request() ? '/'.ltrim(request()->path(), '/') : null,
+            ]);
+        });
     }
 }
+
+
+

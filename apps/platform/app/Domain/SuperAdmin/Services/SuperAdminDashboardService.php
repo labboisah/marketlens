@@ -26,6 +26,47 @@ use Illuminate\Support\Collection;
 class SuperAdminDashboardService
 {
     /** @return array<string, mixed> */
+    public function ownerAccountMetrics(): array
+    {
+        $ownerAccounts = User::query()->whereHas('ownedBusinesses');
+
+        return [
+            'owner_accounts' => (clone $ownerAccounts)->count(),
+            'active_owner_accounts' => (clone $ownerAccounts)->where('account_status', \App\Enums\AccountStatus::Active)->count(),
+            'accounts_requiring_attention' => (clone $ownerAccounts)
+                ->whereIn('account_status', [\App\Enums\AccountStatus::PendingVerification, \App\Enums\AccountStatus::Suspended, \App\Enums\AccountStatus::Disabled])
+                ->count(),
+            'businesses_under_management' => \DB::table('business_owners')->distinct('business_id')->count('business_id'),
+        ];
+    }
+
+    /** @return Collection<int, array<string, mixed>> */
+    public function businessOwnerAccountSummaries(): Collection
+    {
+        return User::query()
+            ->whereHas('ownedBusinesses')
+            ->with(['ownedBusinesses' => fn ($query) => $query->with(['currentSubscription.plan'])->withCount(['branches', 'devices'])->orderBy('businesses.name')])
+            ->withCount('ownedBusinesses')
+            ->latest()
+            ->limit(15)
+            ->get()
+            ->map(function (User $owner): array {
+                $primaryBusiness = $owner->ownedBusinesses->first();
+
+                return [
+                    'owner' => $owner,
+                    'account_status' => $owner->account_status?->value ?? $owner->account_status,
+                    'verified_at' => $owner->email_verified_at,
+                    'business_count' => $owner->owned_businesses_count,
+                    'primary_business' => $primaryBusiness,
+                    'primary_plan' => $primaryBusiness?->currentSubscription?->plan?->name ?? 'No plan',
+                    'primary_subscription_status' => $primaryBusiness?->currentSubscription?->status?->value ?? $primaryBusiness?->currentSubscription?->status ?? 'none',
+                    'branch_count' => $primaryBusiness?->branches_count ?? 0,
+                    'device_count' => $primaryBusiness?->devices_count ?? 0,
+                ];
+            });
+    }
+    /** @return array<string, mixed> */
     public function metrics(): array
     {
         $activeSubscriptions = Subscription::query()->where('status', SubscriptionStatus::Active)->count();
@@ -72,10 +113,38 @@ class SuperAdminDashboardService
         ];
     }
 
+    /** @return Collection<int, array<string, mixed>> */
+    public function businessAccountSummaries(): Collection
+    {
+        return Business::query()
+            ->with(['owners', 'currentSubscription.plan', 'billingProfile'])
+            ->withCount(['branches', 'devices', 'monitoringUsers'])
+            ->withMax('branches as latest_branch_sync_at', 'last_synchronized_at')
+            ->latest()
+            ->limit(8)
+            ->get()
+            ->map(fn (Business $business): array => [
+                'business' => $business,
+                'owners' => $business->owners->pluck('email')->filter()->values(),
+                'plan' => $business->currentSubscription?->plan?->name ?? 'No plan',
+                'subscription_status' => $business->currentSubscription?->status?->value ?? $business->currentSubscription?->status ?? 'none',
+                'billing_email' => $business->billingProfile?->billing_email ?? $business->email,
+                'branch_count' => $business->branches_count,
+                'device_count' => $business->devices_count,
+                'monitoring_user_count' => $business->monitoring_users_count,
+                'latest_sync_at' => $business->latest_branch_sync_at,
+            ]);
+    }
     public function tableRows(string $module): Collection
     {
         return match ($module) {
-            'businesses' => Business::query()->latest()->limit(25)->get(['id', 'name', 'status', 'created_at']),
+            'businesses' => Business::query()
+                ->with(['owners', 'currentSubscription.plan', 'defaultBranch'])
+                ->withCount(['branches', 'devices'])
+                ->withMax('branches as latest_branch_sync_at', 'last_synchronized_at')
+                ->latest()
+                ->limit(25)
+                ->get(),
             'business-owners' => User::query()->whereHas('ownedBusinesses')->latest()->limit(25)->get(['id', 'name', 'email', 'account_status', 'created_at']),
             'plans' => Plan::query()->latest()->limit(25)->get(['id', 'name', 'billing_interval', 'price_minor', 'currency', 'is_active']),
             'subscriptions' => Subscription::query()->with(['business', 'plan'])->latest()->limit(25)->get(),
@@ -110,3 +179,5 @@ class SuperAdminDashboardService
             ->sum(\DB::raw("case when plans.billing_interval = 'annual' then plans.price_minor / 12 else plans.price_minor end"));
     }
 }
+
+

@@ -8,7 +8,10 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\Health\LivenessController;
+use App\Http\Controllers\Health\ReadinessController;
 use App\Http\Controllers\OnboardingCompletedController;
+use App\Http\Controllers\Platform\ApplicationVersionDownloadController;
 use App\Http\Controllers\Platform\ReportExportDownloadController;
 use App\Http\Controllers\PlatformContextController;
 use App\Livewire\Legal\LegalAcceptancePage;
@@ -40,8 +43,13 @@ use App\Livewire\PublicSite\HowItWorksPage;
 use App\Livewire\PublicSite\PricingPage;
 use App\Livewire\PublicSite\ProductPage;
 use App\Livewire\PublicSite\WelcomePage;
+use App\Livewire\SuperAdmin\ApplicationVersionManagementPage;
 use App\Livewire\SuperAdmin\SuperAdminDashboardPage;
+use App\Livewire\SuperAdmin\SystemHealthPage;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/health/live', LivenessController::class)->name('health.live');
+Route::get('/health/ready', ReadinessController::class)->name('health.ready');
 
 Route::get('/', WelcomePage::class)->name('welcome');
 Route::get('/product', ProductPage::class)->name('public.product');
@@ -74,6 +82,9 @@ Route::middleware('auth')->group(function (): void {
 });
 
 Route::get('/account-disabled', AccountDisabledController::class)->name('account.disabled');
+Route::get('/application-versions/{version}/download', ApplicationVersionDownloadController::class)
+    ->middleware('signed')
+    ->name('platform.application-versions.download');
 
 Route::middleware(['auth', 'verified', 'account.active', 'legal.accepted'])->group(function (): void {
     Route::get('/onboarding', BusinessOnboardingWizard::class)->name('onboarding.wizard');
@@ -86,6 +97,8 @@ Route::middleware(['auth', 'verified', 'account.active', 'legal.accepted', 'supe
     ->name('super-admin.')
     ->group(function (): void {
         Route::get('/', SuperAdminDashboardPage::class)->name('dashboard');
+        Route::get('/application-versions', ApplicationVersionManagementPage::class)->name('application-versions');
+        Route::get('/system-health', SystemHealthPage::class)->name('system-health');
     });
 Route::middleware(['auth', 'verified', 'account.active', 'legal.accepted', 'onboarding.complete', 'platform.context'])->group(function (): void {
     Route::get('/admin/dashboard', Dashboard::class)->name('platform.dashboard');
@@ -112,4 +125,7 @@ Route::middleware(['auth', 'verified', 'account.active', 'legal.accepted', 'onbo
     Route::post('/platform/context', [PlatformContextController::class, 'update'])->name('platform.context.update');
     Route::get('/platform/permission-denied', PermissionDeniedPage::class)->name('platform.permission-denied');
 });
+
+
+
 

@@ -37,6 +37,22 @@
     --ml-information: 199 95% 74%;
   }
 
+  [data-theme='royal-blue'] {
+    --ml-background: 214 95% 96%;
+    --ml-foreground: 222 76% 13%;
+    --ml-surface: 0 0% 100%;
+    --ml-surface-muted: 214 88% 92%;
+    --ml-border: 218 74% 82%;
+    --ml-muted: 219 34% 38%;
+    --ml-primary: 224 86% 36%;
+    --ml-accent: 203 96% 48%;
+    --ml-teal: 173 77% 35%;
+    --ml-success: 151 79% 34%;
+    --ml-warning: 36 92% 46%;
+    --ml-danger: 0 74% 48%;
+    --ml-information: 209 92% 46%;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: 'tnum' 0;

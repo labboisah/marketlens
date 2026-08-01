@@ -203,6 +203,11 @@ class ShopAppActivationService
         return hash_hmac('sha256', $secret, (string) config('app.key'));
     }
 
+    public function deviceForCredential(string $credential): Device
+    {
+        return $this->deviceFromCredential($credential);
+    }
+
     private function generateCode(): string
     {
         return strtoupper(Str::random(4).'-'.Str::random(4));
@@ -328,6 +333,7 @@ class ShopAppActivationService
         ]);
     }
 }
+
 
 
 

@@ -26,8 +26,13 @@ uses(RefreshDatabase::class);
 
 function superAdminFixture(): array
 {
-    $owner = User::factory()->create(['account_status' => AccountStatus::Active, 'email_verified_at' => now()]);
-    $superAdmin = User::factory()->create(['account_status' => AccountStatus::Active, 'email_verified_at' => now(), 'is_super_admin' => true]);
+    $owner = User::factory()->create(['account_status' => AccountStatus::Active, 'email_verified_at' => now(), 'terms_accepted_at' => now(), 'privacy_accepted_at' => now()]);
+    $superAdmin = User::factory()->create(['account_status' => AccountStatus::Active, 'email_verified_at' => now(), 'is_super_admin' => true, 'terms_accepted_at' => now(), 'privacy_accepted_at' => now()]);
+
+    $legalDocuments = app(\App\Domain\Legal\Services\LegalDocumentService::class);
+    foreach ([$owner, $superAdmin] as $user) {
+        $legalDocuments->acceptVersions($user, $legalDocuments->requiredVersionsFor($user)->pluck('id')->all());
+    }
 
     $plan = Plan::query()->create([
         'name' => 'Operator Plan',
@@ -41,7 +46,7 @@ function superAdminFixture(): array
     ]);
     $plan->features()->create(['name' => 'Reports', 'sort_order' => 1]);
 
-    $business = Business::query()->create(['name' => 'Operator Stores', 'status' => BusinessStatus::Active, 'onboarding_status' => 'completed']);
+    $business = Business::query()->create(['name' => 'Operator Stores', 'email' => 'accounts@operator.test', 'status' => BusinessStatus::Active, 'onboarding_status' => 'completed']);
     $suspendedBusiness = Business::query()->create(['name' => 'Suspended Stores', 'status' => BusinessStatus::Suspended, 'onboarding_status' => 'completed']);
     $branch = Branch::query()->create(['business_id' => $business->id, 'name' => 'Main Branch', 'status' => BranchStatus::Active]);
     $owner->ownedBusinesses()->attach($business->id, ['role' => 'owner']);
@@ -69,36 +74,35 @@ it('keeps super-admin area separate from business-owner navigation and denies no
     $this->actingAs($superAdmin)
         ->get(route('super-admin.dashboard'))
         ->assertOk()
-        ->assertSee('Super administration')
-        ->assertSee('Platform Super-Administrator Dashboard')
-        ->assertSee('Administration modules')
-        ->assertSee('Businesses')
-        ->assertSee('Legal documents')
+        ->assertSee('Admin account')
+        ->assertSee('Signed-in admin')
+        ->assertSee('Admin status')
+        ->assertSee('Manage business owner accounts')
+        ->assertSee('Owner Account Review')
+        ->assertDontSee('Administration modules')
+        ->assertDontSee('Legal documents')
         ->assertDontSee('Remote Monitoring')
+        ->assertDontSee('Business Platform')
         ->assertDontSee('Monitoring Users');
 });
 
-it('renders platform-wide metrics and administration modules for super admins', function (): void {
+it('renders business-owner account management information for super admins', function (): void {
     [$owner, $superAdmin] = superAdminFixture();
 
     Livewire::actingAs($superAdmin)
         ->test(SuperAdminDashboardPage::class)
-        ->assertSee('Total businesses')
-        ->assertSee('Active businesses')
-        ->assertSee('Trial businesses')
-        ->assertSee('Suspended businesses')
-        ->assertSee('Active subscriptions')
-        ->assertSee('Expired subscriptions')
-        ->assertSee('MRR foundation')
-        ->assertSee('Active Shop App devices')
-        ->assertSee('Delayed devices')
-        ->assertSee('Failed sync batches')
-        ->assertSee('Application versions in use')
-        ->assertSee('Open support tickets')
-        ->assertSee('Security alerts')
-        ->call('setModule', 'support-tickets')
-        ->assertSet('module', 'support-tickets')
-        ->assertSee('Need help');
+        ->assertSee('Business-owner accounts')
+        ->assertSee('Active owner accounts')
+        ->assertSee('Accounts needing review')
+        ->assertSee('Businesses linked to owners')
+        ->assertSee('Owner Account Review')
+        ->assertSee('Operator Stores')
+        ->assertSee($owner->email)
+        ->assertSee('1 branches / 1 devices')
+        ->assertSee('Operator Plan')
+        ->assertDontSee('Failed sync batches')
+        ->assertDontSee('Application versions in use')
+        ->assertDontSee('Administration modules');
 });
 
 it('records sensitive action confirmation and rejects unrestricted impersonation assumptions', function (): void {
@@ -121,3 +125,6 @@ it('records sensitive action confirmation and rejects unrestricted impersonation
         ->get('/admin/platform/impersonate/'.$owner->id)
         ->assertNotFound();
 });
+
+
+

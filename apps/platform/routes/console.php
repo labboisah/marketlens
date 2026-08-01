@@ -9,3 +9,8 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('horizon:snapshot')->everyFiveMinutes();
+
+Schedule::call(fn () => cache()->put((string) config('observability.scheduler_heartbeat_key'), now()->toIso8601String(), now()->addMinutes(30)))
+    ->name('observability.scheduler-heartbeat')
+    ->everyMinute();
+

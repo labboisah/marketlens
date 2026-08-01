@@ -17,11 +17,19 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(PlanSeeder::class);
 
-        // User::factory(10)->create();
+        $admin = [
+            'name' => 'Admin',
+            'email' => 'admin@marketlens.ng',
+            'email_verified_at' => now(),
+            'is_super_admin'=> true,
+            'account_status'=> 'active',
+            'super_admin_confirmed_at'=> now(),
+            'terms_accepted_at' => now(),
+            'privacy_accepted_at' => now(),
+            'password'=> bcrypt('Admin@123'),
+            'phone' => '+2349012345678',
+        ];
 
-        // User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        User::create($admin);
     }
 }

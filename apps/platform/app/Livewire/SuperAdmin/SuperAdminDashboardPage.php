@@ -6,16 +6,12 @@ use App\Domain\SuperAdmin\Services\SuperAdminDashboardService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\Url;
 use Livewire\Component;
 
 #[Layout('layouts.super-admin')]
 class SuperAdminDashboardPage extends Component
 {
     use AuthorizesRequests;
-
-    #[Url]
-    public string $module = 'businesses';
 
     public string $confirmationPhrase = '';
 
@@ -24,25 +20,10 @@ class SuperAdminDashboardPage extends Component
         abort_unless(auth()->user()?->isSuperAdmin(), 403);
 
         return view('livewire.super-admin.dashboard-page', [
-            'metrics' => $dashboard->metrics(),
-            'modules' => $dashboard->modules(),
-            'rows' => $dashboard->tableRows($this->module),
-            'activeModule' => collect($dashboard->modules())->firstWhere('route', $this->module),
+            'ownerMetrics' => $dashboard->ownerAccountMetrics(),
+            'ownerAccounts' => $dashboard->businessOwnerAccountSummaries(),
             'twoFactorReady' => (bool) auth()->user()?->super_admin_confirmed_at,
-        ])->title('Platform Super Admin');
-    }
-
-    public function setModule(string $module, SuperAdminDashboardService $dashboard): void
-    {
-        abort_unless(auth()->user()?->isSuperAdmin(), 403);
-
-        if (! collect($dashboard->modules())->pluck('route')->contains($module)) {
-            $this->addError('module', 'The selected administration module is not available.');
-
-            return;
-        }
-
-        $this->module = $module;
+        ])->title('Business Owner Account Administration');
     }
 
     public function confirmSensitiveAction(SuperAdminDashboardService $dashboard): void

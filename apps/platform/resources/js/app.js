@@ -5,7 +5,12 @@ Alpine.data('marketlensShell', () => ({
   sidebarOpen: false,
   theme: localStorage.getItem('marketlens-theme') || 'light',
   notifications: [],
+  themes: ['light', 'dark', 'royal-blue'],
   init() {
+    if (!this.themes.includes(this.theme)) {
+      this.theme = 'light';
+    }
+
     document.documentElement.dataset.theme = this.theme;
     this.notificationListener = (event) => this.handleNotificationEvent(event);
     document.addEventListener('notify', this.notificationListener);
@@ -14,9 +19,18 @@ Alpine.data('marketlensShell', () => ({
     window.addEventListener('marketlens:notify', this.notificationListener);
   },
   toggleTheme() {
-    this.theme = this.theme === 'dark' ? 'light' : 'dark';
+    const currentIndex = this.themes.indexOf(this.theme);
+
+    this.theme = this.themes[(currentIndex + 1) % this.themes.length];
     localStorage.setItem('marketlens-theme', this.theme);
     document.documentElement.dataset.theme = this.theme;
+  },
+  themeLabel() {
+    return {
+      light: 'Light',
+      dark: 'Dark',
+      'royal-blue': 'Royal blue',
+    }[this.theme] || 'Light';
   },
   handleNotificationEvent(event) {
     if (event.__marketlensNotificationHandled) {
@@ -162,3 +176,4 @@ document.addEventListener('livewire:navigated', finishPageProgress);
 document.addEventListener('livewire:navigate-cancelled', finishPageProgress);
 window.addEventListener('beforeunload', startPageProgress);
 window.addEventListener('pageshow', finishPageProgress);
+
