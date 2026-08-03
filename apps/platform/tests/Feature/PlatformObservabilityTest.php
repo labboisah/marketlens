@@ -28,7 +28,8 @@ function observabilitySuperAdmin(): User
 
 function fakeHealthService(string $status = 'healthy'): PlatformHealthService
 {
-    return new class($status) extends PlatformHealthService {
+    return new class($status) extends PlatformHealthService
+    {
         public function __construct(private readonly string $status) {}
 
         public function snapshot(): array
@@ -101,7 +102,7 @@ it('restricts the system health page to super admins and renders safe component 
 
     $this->actingAs($owner)
         ->get(route('super-admin.system-health'))
-        ->assertRedirect(route('legal.acceptance'));
+        ->assertForbidden();
 
     $this->actingAs($superAdmin)
         ->get(route('super-admin.system-health'))
@@ -131,4 +132,3 @@ it('redacts credentials and raw authorization metadata before logging', function
         ->and($sanitized['database_password'])->toBe('[redacted]')
         ->and($sanitized['safe_count'])->toBe(3);
 });
-

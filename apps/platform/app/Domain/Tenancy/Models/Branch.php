@@ -29,6 +29,7 @@ class Branch extends Model
         'state',
         'local_government_area',
         'is_head_office',
+        'module_settings',
         'last_synchronized_at',
         'archived_at',
         'status',
@@ -39,6 +40,7 @@ class Branch extends Model
         return [
             'status' => BranchStatus::class,
             'is_head_office' => 'boolean',
+            'module_settings' => 'array',
             'last_synchronized_at' => 'datetime',
             'archived_at' => 'datetime',
         ];

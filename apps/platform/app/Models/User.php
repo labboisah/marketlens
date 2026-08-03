@@ -4,6 +4,9 @@ namespace App\Models;
 
 use App\Domain\Access\Models\BusinessMonitoringUser;
 use App\Domain\Legal\Models\LegalAcceptance;
+use App\Domain\Modules\Services\ModuleAccessService;
+use App\Domain\Tenancy\Models\Branch;
+use App\Enums\BusinessModule;
 use App\Domain\Tenancy\Models\Business;
 use App\Enums\AccountStatus;
 use Database\Factories\UserFactory;
@@ -132,6 +135,23 @@ class User extends Authenticatable implements MustVerifyEmail
         return $roleAllows || $directAllows;
     }
 
+
+    public function canAccessModule(Business|int $business, BusinessModule|string $module, Branch|int|null $branch = null): bool
+    {
+        $businessModel = $business instanceof Business ? $business : Business::query()->find($business);
+
+        if (! $businessModel || ! $this->canAccessBusiness($businessModel)) {
+            return false;
+        }
+
+        $branchModel = $branch instanceof Branch ? $branch : ($branch ? Branch::query()->find($branch) : null);
+
+        if ($branchModel && ! $this->canAccessBranch($businessModel->id, $branchModel->id)) {
+            return false;
+        }
+
+        return app(ModuleAccessService::class)->available($businessModel, $module, $branchModel);
+    }
     public function canAccessBranch(int $businessId, ?int $branchId): bool
     {
         if (! $branchId || $this->isBusinessOwner($businessId)) {

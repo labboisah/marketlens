@@ -178,13 +178,16 @@ it('does not require acceptance for non material legal updates', function (): vo
 
 it('requires every pending material version before recording acceptance', function (): void {
     [$user] = legalFixture();
-    materialLegalVersion('terms-of-service', '2099.03.01');
-    materialLegalVersion('privacy-policy', '2099.03.01');
+    $termsVersion = materialLegalVersion('terms-of-service', '2099.03.01');
+    $privacyVersion = materialLegalVersion('privacy-policy', '2099.03.01');
 
     Livewire::actingAs($user)
         ->test(LegalAcceptancePage::class)
         ->call('accept')
         ->assertHasErrors(['acceptedVersions']);
 
-    expect(LegalAcceptance::query()->where('user_id', $user->id)->exists())->toBeFalse();
+    expect(LegalAcceptance::query()
+        ->where('user_id', $user->id)
+        ->whereIn('legal_document_version_id', [$termsVersion->id, $privacyVersion->id])
+        ->exists())->toBeFalse();
 });

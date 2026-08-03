@@ -150,6 +150,54 @@
         @endunless
       </x-app.card>
 
+
+      <x-app.card title="Branch Modules and Operational Settings" description="Branch statuses inherit from business settings unless an allowed override is selected.">
+        @if ($selectedBranch)
+          <form wire:submit="saveModuleSettings" class="space-y-4">
+            @foreach ($businessModules as $module)
+              @php($access = $moduleAccess[$module->value])
+              @php($businessAccess = $businessModuleAccess[$module->value])
+              <div class="space-y-3 rounded-md border border-border p-3 text-sm">
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <p class="font-semibold">{{ $module->displayName() }}</p>
+                    <p class="text-xs text-muted">Inherited value: {{ $businessAccess->available ? 'Enabled' : 'Disabled' }}</p>
+                    <p class="text-xs text-muted">Override value: {{ str($access->branchStatus ?? 'inherit')->replace('_', ' ')->title() }}</p>
+                    <p class="text-xs text-muted">Effective value: {{ $access->available ? 'Enabled' : 'Disabled' }}</p>
+                    <p class="text-xs text-muted">Source: {{ ucfirst($access->source) }}</p>
+                  </div>
+                  <x-app.status-badge tone="{{ $access->available ? 'success' : 'warning' }}">{{ $access->available ? 'Available' : 'Unavailable' }}</x-app.status-badge>
+                </div>
+                <div class="grid gap-3 md:grid-cols-2">
+                  <label class="block font-medium">Module inheritance
+                    <select wire:model="moduleSettings.{{ $module->value }}.status" class="ml-field mt-1 w-full">
+                      @foreach ($branchModuleStatuses as $status)
+                        <option value="{{ $status->value }}">{{ str($status->value)->title() }}</option>
+                      @endforeach
+                    </select>
+                  </label>
+                  <label class="block font-medium">Settlement frequency
+                    <select wire:model="moduleSettings.{{ $module->value }}.settlement_frequency" class="ml-field mt-1 w-full">
+                      @foreach ($settlementFrequencies as $frequency)
+                        <option value="{{ $frequency->value }}">{{ str($frequency->value)->title() }}</option>
+                      @endforeach
+                    </select>
+                  </label>
+                  <label class="block font-medium md:col-span-2">Default branch rule<input wire:model="moduleSettings.{{ $module->value }}.default_branch_rule" class="ml-field mt-1 w-full"></label>
+                  <label class="flex items-center gap-2"><input wire:model="moduleSettings.{{ $module->value }}.require_manager_approval" type="checkbox" class="rounded border-border text-primary"> Approval requirements</label>
+                  <label class="flex items-center gap-2"><input wire:model="moduleSettings.{{ $module->value }}.branch_service_pricing" type="checkbox" class="rounded border-border text-primary"> Branch service pricing</label>
+                </div>
+                @if (($business->module_settings[$module->value]['business_level_locks']['prevent_branch_overrides'] ?? false) === true)
+                  <x-app.status-badge tone="warning">Business-level lock prevents branch overrides</x-app.status-badge>
+                @endif
+              </div>
+            @endforeach
+            <button type="submit" class="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white">Save branch module settings</button>
+          </form>
+        @else
+          <x-app.empty-state title="No branch selected" message="Select a branch to configure module inheritance." />
+        @endif
+      </x-app.card>
       <x-app.card title="Branch details" description="Selected branch state">
         @if ($selectedBranch)
           <dl class="space-y-3 text-sm">

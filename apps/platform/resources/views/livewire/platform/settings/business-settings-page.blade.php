@@ -78,6 +78,105 @@
     </x-app.card>
   </section>
 
+
+  <section>
+    <x-app.card title="Modules and Business Capabilities" description="Plan availability, business enablement, and branch inheritance combine to determine module access.">
+      <form wire:submit="saveModules" class="space-y-5">
+        <div class="grid gap-4 xl:grid-cols-2">
+          <div class="space-y-3 rounded-md border border-border p-4">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <p class="font-semibold">Services and Revenue Sharing</p>
+                <p class="text-xs text-muted">Plan: {{ $moduleAccess['services']->planAllows ? 'Allowed' : 'Unavailable' }}</p>
+              </div>
+              <input wire:model="moduleSettings.services.enabled" type="checkbox" class="rounded border-border text-primary" @disabled(! $moduleAccess['services']->planAllows)>
+            </div>
+            @unless($moduleAccess['services']->planAllows)
+              <x-app.subscription-feature-restriction feature="Services and Revenue Sharing" :plan="$business->currentSubscription?->plan" />
+            @endunless
+            <div class="grid gap-3 md:grid-cols-2">
+              <label class="flex items-center gap-2 text-sm"><input wire:model="moduleSettings.services.staff_revenue_sharing_enabled" type="checkbox" class="rounded border-border text-primary"> Enable staff revenue sharing</label>
+              <label class="flex items-center gap-2 text-sm"><input wire:model="moduleSettings.services.deduct_direct_expenses_before_sharing" type="checkbox" class="rounded border-border text-primary"> Deduct direct expenses before sharing</label>
+              <label class="block text-sm font-medium">Default calculation basis
+                <select wire:model="moduleSettings.services.default_calculation_basis" class="ml-field mt-1 w-full">
+                  @foreach ($calculationBases as $basis)
+                    <option value="{{ $basis->value }}">{{ str($basis->value)->replace('_', ' ')->title() }}</option>
+                  @endforeach
+                </select>
+              </label>
+              <label class="block text-sm font-medium">Settlement frequency
+                <select wire:model="moduleSettings.services.settlement_frequency" class="ml-field mt-1 w-full">
+                  @foreach ($settlementFrequencies as $frequency)
+                    <option value="{{ $frequency->value }}">{{ str($frequency->value)->title() }}</option>
+                  @endforeach
+                </select>
+              </label>
+              <label class="block text-sm font-medium">Staff percentage<input wire:model="moduleSettings.services.staff_percentage" type="number" min="0" max="100" class="ml-field mt-1 w-full"></label>
+              <label class="block text-sm font-medium">Business percentage<input wire:model="moduleSettings.services.business_percentage" type="number" min="0" max="100" class="ml-field mt-1 w-full"></label>
+              <label class="block text-sm font-medium">Expense-reserve percentage<input wire:model="moduleSettings.services.expense_reserve_percentage" type="number" min="0" max="100" class="ml-field mt-1 w-full"></label>
+            </div>
+            <div class="grid gap-2 md:grid-cols-2">
+              @foreach ([
+                'require_service_completion_before_allocation' => 'Require service completion before allocation',
+                'require_confirmed_payment_before_allocation' => 'Require confirmed payment before allocation',
+                'require_manager_approval' => 'Require manager approval',
+                'allow_multiple_staff_per_service' => 'Allow multiple staff per service',
+                'allow_service_specific_rules' => 'Allow service-specific rules',
+                'allow_branch_specific_rules' => 'Allow branch-specific rules',
+                'business_level_locks.prevent_branch_overrides' => 'Lock branch overrides',
+              ] as $key => $label)
+                <label class="flex items-center gap-2 text-sm"><input wire:model="moduleSettings.services.{{ $key }}" type="checkbox" class="rounded border-border text-primary"> {{ $label }}</label>
+              @endforeach
+            </div>
+          </div>
+
+          <div class="space-y-3 rounded-md border border-border p-4">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <p class="font-semibold">Shareholders and Profit Distribution</p>
+                <p class="text-xs text-muted">Plan: {{ $moduleAccess['shareholders']->planAllows ? 'Allowed' : 'Unavailable' }}</p>
+              </div>
+              <input wire:model="moduleSettings.shareholders.enabled" type="checkbox" class="rounded border-border text-primary" @disabled(! $moduleAccess['shareholders']->planAllows)>
+            </div>
+            @unless($moduleAccess['shareholders']->planAllows)
+              <x-app.subscription-feature-restriction feature="Shareholders and Profit Distribution" :plan="$business->currentSubscription?->plan" />
+            @endunless
+            <div class="grid gap-3 md:grid-cols-2">
+              <label class="block text-sm font-medium">Ownership type
+                <select wire:model="moduleSettings.shareholders.ownership_type" class="ml-field mt-1 w-full">
+                  @foreach ($ownershipTypes as $type)
+                    <option value="{{ $type->value }}">{{ str($type->value)->replace('_', ' ')->title() }}</option>
+                  @endforeach
+                </select>
+              </label>
+              <label class="block text-sm font-medium">Distribution basis
+                <select wire:model="moduleSettings.shareholders.distribution_basis" class="ml-field mt-1 w-full">
+                  @foreach ($distributionBases as $basis)
+                    <option value="{{ $basis->value }}">{{ str($basis->value)->replace('_', ' ')->title() }}</option>
+                  @endforeach
+                </select>
+              </label>
+            </div>
+            <div class="grid gap-2 md:grid-cols-2">
+              @foreach ([
+                'require_approved_resolution' => 'Require approved resolution',
+                'require_closed_accounting_period' => 'Require closed accounting period',
+                'require_retained_profit_allocation' => 'Require retained-profit allocation',
+                'require_tax_provision' => 'Require tax provision',
+                'allow_partial_payments' => 'Allow partial payments',
+                'allow_shareholder_loans' => 'Allow shareholder loans',
+                'allow_capital_contributions' => 'Allow capital contributions',
+                'business_level_locks.prevent_branch_overrides' => 'Lock branch overrides',
+              ] as $key => $label)
+                <label class="flex items-center gap-2 text-sm"><input wire:model="moduleSettings.shareholders.{{ $key }}" type="checkbox" class="rounded border-border text-primary"> {{ $label }}</label>
+              @endforeach
+            </div>
+          </div>
+        </div>
+        <button type="submit" class="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white">Save module settings</button>
+      </form>
+    </x-app.card>
+  </section>
   <section class="grid gap-4 xl:grid-cols-[1fr_0.9fr]">
     <x-app.card title="Notification settings" description="Channel preferences for business-owner alerts. SMS and WhatsApp are placeholders for future gateway adapters.">
       <form wire:submit="saveNotifications" class="space-y-3">

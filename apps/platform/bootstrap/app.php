@@ -5,6 +5,8 @@ use App\Http\Middleware\EnsureApiVersion;
 use App\Http\Middleware\EnsureOnboardingIsCompleted;
 use App\Http\Middleware\EnsureUserIsSuperAdmin;
 use App\Http\Middleware\AttachTraceId;
+use App\Http\Middleware\EnsureModuleIsAvailable;
+use App\Exceptions\ModuleUnavailableException;
 use App\Http\Middleware\EnsureLegalDocumentsAreAccepted;
 use App\Http\Middleware\ResolvePlatformContext;
 use App\Support\Observability\SensitiveDataSanitizer;
@@ -31,10 +33,25 @@ return Application::configure(basePath: dirname(__DIR__))
             'legal.accepted' => EnsureLegalDocumentsAreAccepted::class,
             'super.admin' => EnsureUserIsSuperAdmin::class,
             'platform.context' => ResolvePlatformContext::class,
+            'module.available' => EnsureModuleIsAvailable::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(fn ($request, Throwable $e) => $request->is('api/*'));
+        $exceptions->render(function (ModuleUnavailableException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                    'code' => 'MODULE_UNAVAILABLE',
+                    'errors' => [],
+                    'trace_id' => $request->attributes->get('trace_id') ?: (string) Str::uuid(),
+                    'meta' => ['module_access' => $e->access->toArray()],
+                ], 403);
+            }
+
+            return redirect()->route('platform.permission-denied')->with('module_unavailable', $e->getMessage());
+        });
         $exceptions->report(function (Throwable $e): void {
             $request = request();
 

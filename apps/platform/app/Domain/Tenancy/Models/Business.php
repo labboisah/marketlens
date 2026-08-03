@@ -45,6 +45,7 @@ class Business extends Model
         'status',
         'onboarding_status',
         'monitoring_preferences',
+        'module_settings',
         'default_branch_id',
         'account_closure_requested_at',
         'account_closure_requested_by',
@@ -57,6 +58,7 @@ class Business extends Model
         return [
             'status' => BusinessStatus::class,
             'monitoring_preferences' => 'array',
+            'module_settings' => 'array',
             'account_closure_requested_at' => 'datetime',
             'onboarded_at' => 'datetime',
         ];
@@ -97,6 +99,11 @@ class Business extends Model
     public function billingProfile(): HasOne
     {
         return $this->hasOne(BillingProfile::class);
+    }
+
+    public function billingAccount(): HasOne
+    {
+        return $this->hasOne(\App\Domain\Billing\Models\BillingAccount::class);
     }
 
     public function subscriptionChangeRequests(): HasMany

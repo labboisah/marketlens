@@ -72,6 +72,34 @@ it('logs in active verified platform users with remember me and regenerates acce
     expect(AuditLog::query()->where('action', 'platform_user.logged_in')->exists())->toBeTrue();
 });
 
+it('logs super admins directly into the super-admin dashboard without onboarding', function (): void {
+    $superAdmin = User::factory()->create([
+        'email' => 'root@example.test',
+        'account_status' => AccountStatus::Active,
+        'is_super_admin' => true,
+        'super_admin_confirmed_at' => now(),
+    ]);
+
+    $response = $this->post('/login', [
+        'email' => 'root@example.test',
+        'password' => 'password',
+    ]);
+
+    $response->assertRedirect(route('super-admin.dashboard'));
+    $this->assertAuthenticatedAs($superAdmin);
+});
+
+it('redirects super admins away from business-owner onboarding', function (): void {
+    $superAdmin = User::factory()->create([
+        'account_status' => AccountStatus::Active,
+        'is_super_admin' => true,
+        'super_admin_confirmed_at' => now(),
+    ]);
+
+    $this->actingAs($superAdmin)
+        ->get(route('onboarding.wizard'))
+        ->assertRedirect(route('super-admin.dashboard'));
+});
 it('uses generic login failure messages', function (): void {
     User::factory()->create(['email' => 'owner@example.test']);
 

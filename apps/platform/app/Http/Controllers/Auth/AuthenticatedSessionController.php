@@ -65,6 +65,10 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('account.disabled');
         }
 
+        if ($user->isSuperAdmin()) {
+            return redirect()->route('super-admin.dashboard');
+        }
+
         if (! BusinessOwner::query()->where('user_id', $user->id)->exists()) {
             return redirect()->intended(route('onboarding.wizard'));
         }

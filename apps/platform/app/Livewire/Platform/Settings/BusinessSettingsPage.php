@@ -5,6 +5,7 @@ namespace App\Livewire\Platform\Settings;
 use App\Domain\Audit\Models\AuditLog;
 use App\Domain\Notifications\Models\AlertNotificationPreference;
 use App\Domain\Settings\Models\BusinessDataExport;
+use App\Domain\Modules\Services\ModuleAccessService;
 use App\Domain\Settings\Models\BusinessTrustedDevice;
 use App\Domain\Settings\Services\BusinessSettingsService;
 use App\Domain\Tenancy\Models\Business;
@@ -12,6 +13,11 @@ use App\Domain\Tenancy\Services\BusinessContext;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
+use App\Enums\BusinessModule;
+use App\Enums\ServiceCalculationBasis;
+use App\Enums\SettlementFrequency;
+use App\Enums\ShareholderDistributionBasis;
+use App\Enums\ShareholderOwnershipType;
 use Illuminate\Validation\Rule;
 use Laravel\Sanctum\PersonalAccessToken;
 use Livewire\Attributes\Layout;
@@ -75,6 +81,8 @@ class BusinessSettingsPage extends Component
     public string $passwordConfirmation = '';
 
     public string $closureReason = '';
+    /** @var array<string, mixed> */
+    public array $moduleSettings = [];
 
     public function mount(BusinessContext $businessContext): void
     {
@@ -100,6 +108,7 @@ class BusinessSettingsPage extends Component
         $this->staleDataWarningThreshold = (int) ($preferences['stale_data_warning_threshold'] ?? 60);
         $this->summaryDisplayPreferences = array_merge($this->summaryDisplayPreferences, $preferences['summary_display_preferences'] ?? []);
         $this->notificationPreferences = $this->defaultNotificationPreferences($business);
+        $this->moduleSettings = $this->defaultModuleSettings($business);
     }
 
     public function render(BusinessContext $businessContext, BusinessSettingsService $settings): View
@@ -132,6 +141,12 @@ class BusinessSettingsPage extends Component
                 ->limit(12)
                 ->get(),
             'retentionDays' => (int) config('marketlens.billing.retention_days', 180),
+            'moduleAccess' => app(ModuleAccessService::class)->resolveAll($business),
+            'businessModules' => BusinessModule::cases(),
+            'calculationBases' => ServiceCalculationBasis::cases(),
+            'settlementFrequencies' => SettlementFrequency::cases(),
+            'ownershipTypes' => ShareholderOwnershipType::cases(),
+            'distributionBases' => ShareholderDistributionBasis::cases(),
         ])->title('Business settings');
     }
 
@@ -206,6 +221,46 @@ class BusinessSettingsPage extends Component
         $this->dispatch('notify', tone: 'success', title: 'Monitoring settings saved', message: 'Dashboard defaults and warning thresholds were updated.');
     }
 
+
+    public function saveModules(BusinessContext $businessContext, BusinessSettingsService $settings): void
+    {
+        $business = $this->currentBusiness($businessContext);
+        $this->authorize('manageSettings', $business);
+
+        $validated = $this->validate([
+            'moduleSettings.services.enabled' => ['boolean'],
+            'moduleSettings.services.staff_revenue_sharing_enabled' => ['boolean'],
+            'moduleSettings.services.default_calculation_basis' => ['required', Rule::enum(ServiceCalculationBasis::class)],
+            'moduleSettings.services.deduct_direct_expenses_before_sharing' => ['boolean'],
+            'moduleSettings.services.staff_percentage' => ['required', 'integer', 'min:0', 'max:100'],
+            'moduleSettings.services.business_percentage' => ['required', 'integer', 'min:0', 'max:100'],
+            'moduleSettings.services.expense_reserve_percentage' => ['required', 'integer', 'min:0', 'max:100'],
+            'moduleSettings.services.require_service_completion_before_allocation' => ['boolean'],
+            'moduleSettings.services.require_confirmed_payment_before_allocation' => ['boolean'],
+            'moduleSettings.services.require_manager_approval' => ['boolean'],
+            'moduleSettings.services.allow_multiple_staff_per_service' => ['boolean'],
+            'moduleSettings.services.allow_service_specific_rules' => ['boolean'],
+            'moduleSettings.services.allow_branch_specific_rules' => ['boolean'],
+            'moduleSettings.services.settlement_frequency' => ['required', Rule::enum(SettlementFrequency::class)],
+            'moduleSettings.services.business_level_locks.prevent_branch_overrides' => ['boolean'],
+            'moduleSettings.shareholders.enabled' => ['boolean'],
+            'moduleSettings.shareholders.ownership_type' => ['required', Rule::enum(ShareholderOwnershipType::class)],
+            'moduleSettings.shareholders.distribution_basis' => ['required', Rule::enum(ShareholderDistributionBasis::class)],
+            'moduleSettings.shareholders.require_approved_resolution' => ['boolean'],
+            'moduleSettings.shareholders.require_closed_accounting_period' => ['boolean'],
+            'moduleSettings.shareholders.require_retained_profit_allocation' => ['boolean'],
+            'moduleSettings.shareholders.require_tax_provision' => ['boolean'],
+            'moduleSettings.shareholders.allow_partial_payments' => ['boolean'],
+            'moduleSettings.shareholders.allow_shareholder_loans' => ['boolean'],
+            'moduleSettings.shareholders.allow_capital_contributions' => ['boolean'],
+            'moduleSettings.shareholders.business_level_locks.prevent_branch_overrides' => ['boolean'],
+        ]);
+
+        $settings->updateModules($business, auth()->user(), $validated['moduleSettings']);
+        $this->moduleSettings = $this->defaultModuleSettings($business->refresh());
+
+        $this->dispatch('notify', tone: 'success', title: 'Module settings saved', message: 'Business module capabilities and defaults were updated.');
+    }
     public function saveNotifications(BusinessContext $businessContext, BusinessSettingsService $settings): void
     {
         $business = $this->currentBusiness($businessContext);
@@ -370,6 +425,45 @@ class BusinessSettingsPage extends Component
         return $defaults;
     }
 
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function defaultModuleSettings(Business $business): array
+    {
+        return array_replace_recursive([
+            'services' => [
+                'enabled' => false,
+                'staff_revenue_sharing_enabled' => false,
+                'default_calculation_basis' => ServiceCalculationBasis::GrossAmount->value,
+                'deduct_direct_expenses_before_sharing' => false,
+                'staff_percentage' => 50,
+                'business_percentage' => 50,
+                'expense_reserve_percentage' => 0,
+                'require_service_completion_before_allocation' => true,
+                'require_confirmed_payment_before_allocation' => true,
+                'require_manager_approval' => false,
+                'allow_multiple_staff_per_service' => false,
+                'allow_service_specific_rules' => false,
+                'allow_branch_specific_rules' => false,
+                'settlement_frequency' => SettlementFrequency::Monthly->value,
+                'business_level_locks' => ['prevent_branch_overrides' => false],
+            ],
+            'shareholders' => [
+                'enabled' => false,
+                'ownership_type' => ShareholderOwnershipType::LimitedCompany->value,
+                'distribution_basis' => ShareholderDistributionBasis::OwnershipPercentage->value,
+                'require_approved_resolution' => true,
+                'require_closed_accounting_period' => true,
+                'require_retained_profit_allocation' => true,
+                'require_tax_provision' => true,
+                'allow_partial_payments' => false,
+                'allow_shareholder_loans' => false,
+                'allow_capital_contributions' => false,
+                'business_level_locks' => ['prevent_branch_overrides' => false],
+            ],
+        ], $business->module_settings ?? []);
+    }
     private function platformSessions(): \Illuminate\Support\Collection
     {
         return DB::table('sessions')

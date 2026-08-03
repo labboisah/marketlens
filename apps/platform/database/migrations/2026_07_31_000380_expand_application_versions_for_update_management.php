@@ -10,13 +10,13 @@ return new class extends Migration
     {
         Schema::table('application_versions', function (Blueprint $table): void {
             if (! Schema::hasColumn('application_versions', 'platform')) {
-                $table->string('platform')->nullable()->after('application');
+                $table->string('platform', 80)->nullable()->after('application');
             }
             if (! Schema::hasColumn('application_versions', 'architecture')) {
-                $table->string('architecture')->nullable()->after('platform');
+                $table->string('architecture', 80)->nullable()->after('platform');
             }
             if (! Schema::hasColumn('application_versions', 'release_channel')) {
-                $table->string('release_channel')->default('stable')->after('version');
+                $table->string('release_channel', 40)->default('stable')->after('version');
             }
             if (! Schema::hasColumn('application_versions', 'minimum_supported_version')) {
                 $table->string('minimum_supported_version')->nullable()->after('release_notes');
@@ -48,8 +48,18 @@ return new class extends Migration
             if (! Schema::hasColumn('application_versions', 'checksum')) {
                 $table->string('checksum')->nullable()->after('download_size_bytes');
             }
+        });
 
-            $table->index(['application', 'platform', 'architecture', 'release_channel', 'status', 'is_active'], 'app_versions_lookup_idx');
+        Schema::table('application_versions', function (Blueprint $table): void {
+            $table->string('application', 120)->change();
+            $table->string('platform', 80)->nullable()->change();
+            $table->string('architecture', 80)->nullable()->change();
+            $table->string('release_channel', 40)->default('stable')->change();
+            $table->string('status', 40)->default('draft')->change();
+
+            if (! Schema::hasIndex('application_versions', 'app_versions_lookup_idx')) {
+                $table->index(['application', 'platform', 'architecture', 'release_channel', 'status', 'is_active'], 'app_versions_lookup_idx');
+            }
         });
     }
 

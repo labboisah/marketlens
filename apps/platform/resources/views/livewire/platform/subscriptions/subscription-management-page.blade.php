@@ -83,6 +83,29 @@
     </x-app.card>
   </section>
 
+  <section class="grid gap-4 xl:grid-cols-[1fr_0.8fr]">
+    <x-app.card title="Billing account" description="Available balance and manual billing adjustments.">
+      <div class="space-y-2">
+        <p class="text-sm text-muted">Account balance</p>
+        <p class="text-xl font-semibold">{{ $billingAccount?->currency ?? 'NGN' }} {{ number_format((int) ($billingAccount?->getRawOriginal('balance_minor') ?? 0) / 100, 2) }}</p>
+        <p class="text-sm text-muted">Status: {{ ucfirst($billingAccount?->status ?? 'unknown') }}</p>
+      </div>
+    </x-app.card>
+
+    <x-app.card title="Latest invoices" description="Recent manual invoices for this business.">
+      <div class="space-y-3">
+        @forelse ($invoices as $invoice)
+          <div class="rounded-md border border-border p-3 text-sm">
+            <p class="font-semibold">{{ $invoice->invoice_number }} — {{ ucfirst($invoice->status->value) }}</p>
+            <p class="text-muted">{{ $invoice->currency }} {{ number_format((int) $invoice->getRawOriginal('total_minor') / 100, 2) }} • Issued {{ $invoice->issued_at?->format('M j, Y') ?? 'unknown' }}</p>
+          </div>
+        @empty
+          <x-app.empty-state title="No invoices yet" message="Invoices will appear here once billing is generated." />
+        @endforelse
+      </div>
+    </x-app.card>
+  </section>
+
   <section class="grid gap-4 xl:grid-cols-[1fr_1fr]">
     <x-app.card title="Upgrade and downgrade options" description="Requests are recorded first; no provider is hard-coded into this domain.">
       <div class="space-y-3">

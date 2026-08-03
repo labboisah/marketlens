@@ -4,11 +4,13 @@ namespace App\Support\Platform;
 
 use App\Domain\Billing\Models\Subscription;
 use App\Domain\Billing\Services\SubscriptionManagementService;
+use App\Domain\Modules\Services\ModuleAccessService;
 use App\Domain\Notifications\Models\PlatformNotification;
 use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Models\Business;
 use App\Domain\Tenancy\Services\BranchContext;
 use App\Domain\Tenancy\Services\BusinessContext;
+use App\Enums\BusinessModule;
 use App\Models\User;
 use Illuminate\Support\Collection;
 
@@ -18,6 +20,7 @@ class PlatformShell
         private readonly BusinessContext $businessContext,
         private readonly BranchContext $branchContext,
         private readonly SubscriptionManagementService $subscriptions,
+        private readonly ModuleAccessService $moduleAccess,
     ) {}
 
     /**
@@ -74,7 +77,7 @@ class PlatformShell
             'business' => $business,
             'branch' => $branch,
             'subscription' => $subscription,
-            'navigation' => $this->navigation($user, $business, $featureNames, $this->subscriptions->allowsOperationalAccess($subscription)),
+            'navigation' => $this->navigation($user, $business, $branch, $featureNames, $this->subscriptions->allowsOperationalAccess($subscription)),
             'featureNames' => $featureNames,
             'unreadNotifications' => $business ? $this->unreadNotifications($business->id) : 0,
         ];
@@ -84,7 +87,7 @@ class PlatformShell
      * @param  array<int, string>  $featureNames
      * @return array<int, NavigationItem>
      */
-    private function navigation(User $user, ?Business $business, array $featureNames, bool $operationalAccess): array
+    private function navigation(User $user, ?Business $business, ?Branch $branch, array $featureNames, bool $operationalAccess): array
     {
         return collect($this->items())
             ->map(fn (array $item): NavigationItem => new NavigationItem(
@@ -93,7 +96,7 @@ class PlatformShell
                 section: $item['section'],
                 feature: $item['feature'],
                 icon: $item['icon'],
-                allowed: $this->featureAllowed($item['feature'], $featureNames, $operationalAccess)
+                allowed: $this->featureAllowed($item['feature'], $featureNames, $operationalAccess, $business, $branch)
                     && $this->permissionAllowed($user, $business, $item['permission']),
             ))
             ->all();
@@ -120,6 +123,8 @@ class PlatformShell
             ['label' => 'Synchronization', 'href' => route('platform.synchronization'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'refresh-cw', 'permission' => 'view-synchronization'],
             ['label' => 'Alerts', 'href' => route('platform.notifications'), 'section' => 'Control', 'feature' => 'security alerts', 'icon' => 'bell-ring', 'permission' => 'view-alerts'],
             ['label' => 'Reports', 'href' => route('platform.reports'), 'section' => 'Insights', 'feature' => 'reports', 'icon' => 'bar-chart-3', 'permission' => 'export-reports'],
+            ['label' => 'Services and Revenue Sharing', 'href' => route('platform.services'), 'section' => 'Insights', 'feature' => 'module:services', 'icon' => 'hand-coins', 'permission' => 'view-sales'],
+            ['label' => 'Shareholders and Profit Distribution', 'href' => route('platform.shareholders'), 'section' => 'Insights', 'feature' => 'module:shareholders', 'icon' => 'landmark', 'permission' => 'export-reports'],
             ['label' => 'Monitoring Users', 'href' => route('platform.monitoring-users'), 'section' => 'Account', 'feature' => 'base', 'icon' => 'user-plus', 'permission' => 'manage-monitoring-users'],
             ['label' => 'Subscription', 'href' => route('platform.subscription'), 'section' => 'Account', 'feature' => 'base', 'icon' => 'badge-dollar-sign', 'permission' => 'manage-subscription'],
             ['label' => 'Settings', 'href' => route('platform.settings'), 'section' => 'Account', 'feature' => 'base', 'icon' => 'settings', 'permission' => 'manage-business-settings'],
@@ -128,7 +133,7 @@ class PlatformShell
     }
 
     /** @param array<int, string> $featureNames */
-    private function featureAllowed(string $feature, array $featureNames, bool $operationalAccess): bool
+    private function featureAllowed(string $feature, array $featureNames, bool $operationalAccess, ?Business $business, ?Branch $branch): bool
     {
         if ($feature === 'base') {
             return true;
@@ -136,6 +141,10 @@ class PlatformShell
 
         if (! $operationalAccess) {
             return false;
+        }
+
+        if (str_starts_with($feature, 'module:')) {
+            return $business !== null && $this->moduleAccess->available($business, BusinessModule::from(substr($feature, 7)), $branch);
         }
 
         return collect($featureNames)->contains(fn (string $name): bool => str_contains($name, $feature));
@@ -154,4 +163,3 @@ class PlatformShell
             ->count();
     }
 }
-

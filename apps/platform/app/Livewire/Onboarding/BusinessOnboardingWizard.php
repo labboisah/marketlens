@@ -68,6 +68,12 @@ class BusinessOnboardingWizard extends Component
     {
         abort_unless(auth()->check(), 403);
 
+        if (auth()->user()?->isSuperAdmin()) {
+            $this->redirectRoute('super-admin.dashboard');
+
+            return;
+        }
+
         if (BusinessOwner::query()->where('user_id', auth()->id())->exists()) {
             $this->redirectRoute('onboarding.completed');
 

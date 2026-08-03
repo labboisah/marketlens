@@ -92,6 +92,8 @@ class PlanSeeder extends Seeder
                     ['name' => 'Advanced audit reports', 'tooltip' => 'Review deeper audit activity for important records and users.'],
                     ['name' => 'Priority support', 'tooltip' => 'Prioritized product support for larger operations.'],
                     ['name' => 'More monitoring users and devices', 'tooltip' => 'Higher limits for Monitoring App users and Shop or Client App devices.'],
+                    ['key' => 'module:services', 'name' => 'Services and Revenue Sharing', 'tooltip' => 'Enable service revenue-sharing settings and branch-level service allocation controls.', 'is_highlighted' => true],
+                    ['key' => 'module:shareholders', 'name' => 'Shareholders and Profit Distribution', 'tooltip' => 'Enable shareholder ownership, resolution, and profit-distribution settings.', 'is_highlighted' => true],
                 ],
             ),
         ];

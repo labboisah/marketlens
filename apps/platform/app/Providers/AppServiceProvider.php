@@ -4,6 +4,10 @@ namespace App\Providers;
 
 use App\Domain\Billing\Contracts\PaymentGateway;
 use App\Domain\Billing\Gateways\NullPaymentGateway;
+use App\Domain\Modules\Services\ModuleAccessService;
+use App\Domain\Tenancy\Models\Branch;
+use App\Domain\Tenancy\Models\Business;
+use Illuminate\Support\Facades\Blade;
 use App\Domain\Tenancy\Services\BranchContext;
 use App\Domain\Tenancy\Services\BusinessContext;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -37,6 +41,9 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('device', fn (Request $request) => Limit::perMinute(30)->by($request->ip()));
         RateLimiter::for('sync', fn (Request $request) => Limit::perMinute((int) config('marketlens.sync_rate_limit', 120))->by($request->user()?->id ?: $request->ip()));
         RateLimiter::for('monitoring', fn (Request $request) => Limit::perMinute(90)->by($request->user()?->id ?: $request->ip()));
+
+        Blade::if('moduleAvailable', fn (Business $business, string $module, ?Branch $branch = null): bool => app(ModuleAccessService::class)->available($business, $module, $branch));
+        Blade::if('moduleUnavailable', fn (Business $business, string $module, ?Branch $branch = null): bool => ! app(ModuleAccessService::class)->available($business, $module, $branch));
 
         $this->registerSlowQueryLogging();
     }

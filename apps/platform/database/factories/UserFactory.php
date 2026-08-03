@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Domain\Legal\Services\LegalDocumentService;
 use App\Enums\AccountStatus;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -36,6 +37,18 @@ class UserFactory extends Factory
             'privacy_accepted_at' => now(),
             'remember_token' => Str::random(10),
         ];
+    }
+
+    public function configure(): static
+    {
+        return $this->afterCreating(function (User $user): void {
+            if (! app()->runningUnitTests() || ! $user->hasActiveAccount() || ! $user->hasVerifiedEmail()) {
+                return;
+            }
+
+            $legal = app(LegalDocumentService::class);
+            $legal->acceptVersions($user, $legal->requiredVersionsFor($user)->pluck('id')->all());
+        });
     }
 
     /**

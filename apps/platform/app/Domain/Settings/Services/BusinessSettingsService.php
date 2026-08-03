@@ -11,6 +11,8 @@ use App\Domain\Tenancy\Models\Business;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Domain\Modules\Services\ModuleAccessService;
+use App\Enums\ServiceCalculationBasis;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -212,6 +214,40 @@ class BusinessSettingsService
         return $business->refresh();
     }
 
+    /**
+     * @param array<string, mixed> $settings
+     */
+    public function updateModules(Business $business, User $actor, array $settings): Business
+    {
+        $services = (array) ($settings['services'] ?? []);
+        $shareholders = (array) ($settings['shareholders'] ?? []);
+
+        if (($services['default_calculation_basis'] ?? null) !== ServiceCalculationBasis::FixedAmount->value) {
+            $total = (int) ($services['staff_percentage'] ?? 0)
+                + (int) ($services['business_percentage'] ?? 0)
+                + (int) ($services['expense_reserve_percentage'] ?? 0);
+
+            if ($total !== 100) {
+                throw ValidationException::withMessages([
+                    'moduleSettings.services.staff_percentage' => 'Services percentage components must total 100% unless fixed amounts are selected.',
+                ]);
+            }
+        }
+
+        $moduleSettings = array_merge($business->module_settings ?? [], [
+            'services' => $services,
+            'shareholders' => $shareholders,
+        ]);
+
+        $business->forceFill(['module_settings' => $moduleSettings])->save();
+        app(ModuleAccessService::class)->forget($business);
+
+        $this->audit($business, $actor, 'business_settings.modules_updated', $business, [
+            'modules' => ['services', 'shareholders'],
+        ]);
+
+        return $business->refresh();
+    }
     private function audit(Business $business, User $actor, string $action, object $subject, array $metadata = []): void
     {
         AuditLog::query()->create([

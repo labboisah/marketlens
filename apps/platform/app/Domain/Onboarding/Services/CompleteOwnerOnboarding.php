@@ -3,8 +3,10 @@
 namespace App\Domain\Onboarding\Services;
 
 use App\Domain\Audit\Models\AuditLog;
+use App\Domain\Billing\Models\BillingProfile;
 use App\Domain\Billing\Models\Plan;
 use App\Domain\Billing\Models\Subscription;
+use App\Domain\Billing\Services\BillingInvoiceService;
 use App\Domain\Onboarding\Models\OwnerOnboardingDraft;
 use App\Domain\Owners\Models\BusinessOwner;
 use App\Domain\Tenancy\Models\Branch;
@@ -18,6 +20,8 @@ use Illuminate\Validation\ValidationException;
 
 class CompleteOwnerOnboarding
 {
+    public function __construct(private readonly BillingInvoiceService $billingInvoiceService) {}
+
     public function handle(User $user, OwnerOnboardingDraft $draft): Business
     {
         $data = $draft->data ?? [];
@@ -81,12 +85,26 @@ class CompleteOwnerOnboarding
                 'status' => BranchStatus::Active,
             ]);
 
-            Subscription::query()->create([
+            BillingProfile::query()->create([
                 'business_id' => $business->id,
-                'plan_id' => $plan->id,
-                'status' => SubscriptionStatus::Trialing,
-                'starts_at' => now(),
-                'ends_at' => now()->addDays((int) $plan->trial_days),
+                'billing_name' => data_get($data, 'business.legal_name') ?: data_get($data, 'business.name'),
+                'billing_email' => data_get($data, 'business.email'),
+                'billing_phone' => data_get($data, 'business.phone'),
+                'billing_address' => data_get($data, 'business.address'),
+                'tax_number' => data_get($data, 'business.tax_number'),
+                'currency' => data_get($data, 'business.default_currency', 'NGN'),
+            ]);
+
+            $subscription = $this->billingInvoiceService->createPendingSubscription($business, $plan);
+
+            $this->billingInvoiceService->ensureBillingAccount($business);
+
+            $this->billingInvoiceService->createInvoiceForSubscription($business, $subscription, 'Initial invoice for subscription activation', [
+                [
+                    'description' => sprintf('Subscription plan %s (%s)', $plan->name, $plan->billing_label),
+                    'quantity' => 1,
+                    'unit_price_minor' => (int) $plan->getRawOriginal('price_minor'),
+                ],
             ]);
 
             $draft->forceFill([

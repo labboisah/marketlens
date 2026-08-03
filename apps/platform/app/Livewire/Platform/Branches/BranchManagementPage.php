@@ -2,12 +2,16 @@
 
 namespace App\Livewire\Platform\Branches;
 
+use App\Domain\Modules\Services\ModuleAccessService;
 use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Models\Business;
 use App\Domain\Tenancy\Services\BranchContext;
 use App\Domain\Tenancy\Services\BranchManagement;
 use App\Domain\Tenancy\Services\BusinessContext;
+use App\Enums\BranchModuleStatus;
 use App\Enums\BranchStatus;
+use App\Enums\BusinessModule;
+use App\Enums\SettlementFrequency;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
@@ -37,10 +41,13 @@ class BranchManagementPage extends Component
     public string $localGovernmentArea = '';
 
     public bool $isHeadOffice = false;
+    /** @var array<string, mixed> */
+    public array $moduleSettings = [];
 
     public function mount(BranchContext $branchContext): void
     {
         $this->selectedBranchId = $branchContext->id();
+        $this->moduleSettings = $this->defaultModuleSettings();
     }
 
     public function render(BusinessContext $businessContext, BranchManagement $branchManagement)
@@ -63,6 +70,11 @@ class BranchManagementPage extends Component
             'selectedBranch' => $selectedBranch,
             'maxBranches' => $branchManagement->maxBranches($business),
             'activeBranchCount' => $branches->where('status', '!=', BranchStatus::Archived)->count(),
+            'moduleAccess' => $selectedBranch ? app(ModuleAccessService::class)->resolveAll($business, $selectedBranch) : [],
+            'businessModuleAccess' => app(ModuleAccessService::class)->resolveAll($business),
+            'businessModules' => BusinessModule::cases(),
+            'branchModuleStatuses' => BranchModuleStatus::cases(),
+            'settlementFrequencies' => SettlementFrequency::cases(),
         ]);
     }
 
@@ -101,6 +113,7 @@ class BranchManagementPage extends Component
         $this->state = (string) $branch->state;
         $this->localGovernmentArea = (string) $branch->local_government_area;
         $this->isHeadOffice = (bool) $branch->is_head_office;
+        $this->moduleSettings = $this->defaultModuleSettings($branch);
     }
 
     public function updateBranch(BranchManagement $branchManagement): void
@@ -148,6 +161,30 @@ class BranchManagementPage extends Component
         $this->dispatch('notify', tone: 'danger', title: 'Branch archived', message: 'The branch is hidden from active operations, but synchronized history is preserved.');
     }
 
+
+    public function saveModuleSettings(BranchManagement $branchManagement): void
+    {
+        $branch = Branch::query()->findOrFail($this->selectedBranchId);
+        $this->authorize('manage', $branch);
+
+        $validated = $this->validate([
+            'moduleSettings.services.status' => ['required', Rule::enum(BranchModuleStatus::class)],
+            'moduleSettings.services.default_branch_rule' => ['nullable', 'string', 'max:160'],
+            'moduleSettings.services.require_manager_approval' => ['boolean'],
+            'moduleSettings.services.settlement_frequency' => ['required', Rule::enum(SettlementFrequency::class)],
+            'moduleSettings.services.branch_service_pricing' => ['boolean'],
+            'moduleSettings.shareholders.status' => ['required', Rule::enum(BranchModuleStatus::class)],
+            'moduleSettings.shareholders.default_branch_rule' => ['nullable', 'string', 'max:160'],
+            'moduleSettings.shareholders.require_manager_approval' => ['boolean'],
+            'moduleSettings.shareholders.settlement_frequency' => ['required', Rule::enum(SettlementFrequency::class)],
+            'moduleSettings.shareholders.branch_service_pricing' => ['boolean'],
+        ]);
+
+        $branchManagement->updateModuleSettings($branch, auth()->user(), $validated['moduleSettings']);
+        $this->moduleSettings = $this->defaultModuleSettings($branch->refresh());
+
+        $this->dispatch('notify', tone: 'success', title: 'Branch module settings saved', message: 'Branch module inheritance and overrides were updated.');
+    }
     public function cancelEdit(): void
     {
         $this->resetForm();
@@ -188,6 +225,27 @@ class BranchManagementPage extends Component
         ];
     }
 
+
+    /** @return array<string, mixed> */
+    private function defaultModuleSettings(?Branch $branch = null): array
+    {
+        return array_replace_recursive([
+            'services' => [
+                'status' => BranchModuleStatus::Inherit->value,
+                'default_branch_rule' => '',
+                'require_manager_approval' => false,
+                'settlement_frequency' => SettlementFrequency::Monthly->value,
+                'branch_service_pricing' => false,
+            ],
+            'shareholders' => [
+                'status' => BranchModuleStatus::Inherit->value,
+                'default_branch_rule' => '',
+                'require_manager_approval' => false,
+                'settlement_frequency' => SettlementFrequency::Monthly->value,
+                'branch_service_pricing' => false,
+            ],
+        ], $branch?->module_settings ?? []);
+    }
     private function resetForm(): void
     {
         $this->editingBranchId = null;

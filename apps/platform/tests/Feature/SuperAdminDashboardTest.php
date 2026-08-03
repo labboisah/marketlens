@@ -3,6 +3,7 @@
 use App\Domain\Billing\Models\Plan;
 use App\Domain\Billing\Models\Subscription;
 use App\Domain\Devices\Models\Device;
+use App\Domain\Legal\Services\LegalDocumentService;
 use App\Domain\Notifications\Models\PlatformNotification;
 use App\Domain\SuperAdmin\Models\SuperAdminActionConfirmation;
 use App\Domain\Support\Models\SupportTicket;
@@ -29,7 +30,7 @@ function superAdminFixture(): array
     $owner = User::factory()->create(['account_status' => AccountStatus::Active, 'email_verified_at' => now(), 'terms_accepted_at' => now(), 'privacy_accepted_at' => now()]);
     $superAdmin = User::factory()->create(['account_status' => AccountStatus::Active, 'email_verified_at' => now(), 'is_super_admin' => true, 'terms_accepted_at' => now(), 'privacy_accepted_at' => now()]);
 
-    $legalDocuments = app(\App\Domain\Legal\Services\LegalDocumentService::class);
+    $legalDocuments = app(LegalDocumentService::class);
     foreach ([$owner, $superAdmin] as $user) {
         $legalDocuments->acceptVersions($user, $legalDocuments->requiredVersionsFor($user)->pluck('id')->all());
     }
@@ -74,11 +75,16 @@ it('keeps super-admin area separate from business-owner navigation and denies no
     $this->actingAs($superAdmin)
         ->get(route('super-admin.dashboard'))
         ->assertOk()
-        ->assertSee('Admin account')
-        ->assertSee('Signed-in admin')
-        ->assertSee('Admin status')
+        ->assertSee('Admin')
+        ->assertSee('Business owners')
+        ->assertSee('Application versions')
+        ->assertSee('System health')
         ->assertSee('Manage business owner accounts')
         ->assertSee('Owner Account Review')
+        ->assertDontSee('Admin account')
+        ->assertDontSee('Signed-in admin')
+        ->assertDontSee('Admin status')
+        ->assertDontSee('Responsibility')
         ->assertDontSee('Administration modules')
         ->assertDontSee('Legal documents')
         ->assertDontSee('Remote Monitoring')
@@ -125,6 +131,3 @@ it('records sensitive action confirmation and rejects unrestricted impersonation
         ->get('/admin/platform/impersonate/'.$owner->id)
         ->assertNotFound();
 });
-
-
-

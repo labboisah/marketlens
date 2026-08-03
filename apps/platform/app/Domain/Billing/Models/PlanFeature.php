@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PlanFeature extends Model
 {
-    protected $fillable = ['plan_id', 'name', 'tooltip', 'is_highlighted', 'sort_order'];
+    protected $fillable = ['plan_id', 'key', 'name', 'tooltip', 'is_highlighted', 'sort_order'];
 
     protected function casts(): array
     {

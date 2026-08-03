@@ -298,6 +298,57 @@ class SubscriptionManagementService
         });
     }
 
+    public function approveRequest(SubscriptionChangeRequest $request, User $actor): SubscriptionChangeRequest
+    {
+        if ($request->status !== 'pending') {
+            throw ValidationException::withMessages(['request' => 'Only pending requests can be approved.']);
+        }
+
+        return DB::transaction(function () use ($request, $actor): SubscriptionChangeRequest {
+            if ($request->type === 'cancellation') {
+                $subscription = $request->subscription;
+
+                if ($subscription) {
+                    $subscription->forceFill([
+                        'status' => SubscriptionStatus::Cancelled->value,
+                        'ends_at' => now(),
+                    ])->save();
+                }
+
+                $this->audit($request->business, $actor, 'subscription.cancellation_approved', $request->id);
+            } else {
+                $subscription = $request->subscription;
+
+                if (! $subscription || ! $request->requestedPlan) {
+                    throw ValidationException::withMessages(['request' => 'Unable to approve request because subscription or requested plan is missing.']);
+                }
+
+                $subscription->forceFill(['plan_id' => $request->requestedPlan->id])->save();
+                $this->audit($request->business, $actor, 'subscription.change_approved', $request->id, [
+                    'requested_plan_id' => $request->requestedPlan->id,
+                ]);
+            }
+
+            $request->forceFill(['status' => 'approved', 'resolved_at' => now()])->save();
+
+            return $request;
+        });
+    }
+
+    public function rejectRequest(SubscriptionChangeRequest $request, User $actor): SubscriptionChangeRequest
+    {
+        if ($request->status !== 'pending') {
+            throw ValidationException::withMessages(['request' => 'Only pending requests can be rejected.']);
+        }
+
+        return DB::transaction(function () use ($request, $actor): SubscriptionChangeRequest {
+            $request->forceFill(['status' => 'rejected', 'resolved_at' => now()])->save();
+            $this->audit($request->business, $actor, 'subscription.change_rejected', $request->id);
+
+            return $request;
+        });
+    }
+
     /**
      * @param  array<string, mixed>  $data
      */

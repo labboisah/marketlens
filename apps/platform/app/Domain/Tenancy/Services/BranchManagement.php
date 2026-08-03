@@ -3,6 +3,7 @@
 namespace App\Domain\Tenancy\Services;
 
 use App\Domain\Audit\Models\AuditLog;
+use App\Domain\Modules\Services\ModuleAccessService;
 use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Models\Business;
 use App\Enums\BranchStatus;
@@ -144,6 +145,20 @@ class BranchManagement
         });
     }
 
+
+    /**
+     * @param array<string, mixed> $settings
+     */
+    public function updateModuleSettings(Branch $branch, User $actor, array $settings): Branch
+    {
+        app(ModuleAccessService::class)->validateBranchSettings($branch->business, $branch, $settings);
+
+        $branch->forceFill(['module_settings' => array_merge($branch->module_settings ?? [], $settings)])->save();
+        app(ModuleAccessService::class)->forget($branch->business_id, $branch);
+        $this->audit($actor, $branch, 'branch.modules_updated');
+
+        return $branch->refresh();
+    }
     public function maxBranches(Business $business): int
     {
         $featureNames = $business->currentSubscription?->plan?->features()

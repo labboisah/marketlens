@@ -177,11 +177,13 @@ class ReportCentreService
 
     public function signedDownloadUrl(ReportExport $export): ?string
     {
-        if ($export->status !== 'completed' || ! $export->expires_at || $export->expires_at->isPast()) {
+        $expiresAt = $export->expires_at ? Carbon::parse($export->expires_at) : null;
+
+        if ($export->status !== 'completed' || ! $expiresAt || $expiresAt->isPast()) {
             return null;
         }
 
-        return URL::temporarySignedRoute('platform.reports.download', $export->expires_at, ['export' => $export->uuid]);
+        return URL::temporarySignedRoute('platform.reports.download', $expiresAt, ['export' => $export->uuid]);
     }
 
     /**
@@ -290,8 +292,19 @@ class ReportCentreService
             ->when(($filters['cashier'] ?? null) && isset($columns['cashier']), fn (Builder $query) => $this->likeAny($query, $columns['cashier'], $filters['cashier']))
             ->when(($filters['customer'] ?? null) && isset($columns['customer']), fn (Builder $query) => $this->likeAny($query, $columns['customer'], $filters['customer']))
             ->when(($filters['supplier'] ?? null) && isset($columns['supplier']), fn (Builder $query) => $this->likeAny($query, $columns['supplier'], $filters['supplier']))
-            ->when(($filters['from'] ?? null) && isset($columns['date']), fn (Builder $query) => $query->where($columns['date'], '>=', Carbon::parse($filters['from'])->startOfDay()))
-            ->when(($filters['to'] ?? null) && isset($columns['date']), fn (Builder $query) => $query->where($columns['date'], '<=', Carbon::parse($filters['to'])->endOfDay()));
+            ->when(($filters['from'] ?? null) && isset($columns['date']), fn (Builder $query) => $query->where($columns['date'], '>=', $this->dateFilterValue($columns['date'], $filters['from'], 'from')))
+            ->when(($filters['to'] ?? null) && isset($columns['date']), fn (Builder $query) => $query->where($columns['date'], '<=', $this->dateFilterValue($columns['date'], $filters['to'], 'to')));
+    }
+
+    private function dateFilterValue(string $column, mixed $value, string $boundary): Carbon|string
+    {
+        $date = Carbon::parse($value);
+
+        if ($column === 'summary_date') {
+            return $date->toDateString();
+        }
+
+        return $boundary === 'from' ? $date->startOfDay() : $date->endOfDay();
     }
 
     /**
@@ -410,7 +423,7 @@ class ReportCentreService
             $pdf .= sprintf("%010d 00000 n \n", $offset);
         }
 
-        $pdf .= "trailer << /Size ".(count($objects) + 1)." /Root 1 0 R >>\n";
+        $pdf .= 'trailer << /Size '.(count($objects) + 1)." /Root 1 0 R >>\n";
         $pdf .= "startxref\n".$xrefOffset."\n%%EOF\n";
 
         return $pdf;
@@ -421,8 +434,3 @@ class ReportCentreService
         return str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $text);
     }
 }
-
-
-
-
-

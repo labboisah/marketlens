@@ -32,6 +32,8 @@ use App\Livewire\Platform\PermissionDeniedPage;
 use App\Livewire\Platform\Purchases\PurchaseMonitoringPage;
 use App\Livewire\Platform\Reports\ReportCentrePage;
 use App\Livewire\Platform\Settings\BusinessSettingsPage;
+use App\Livewire\Platform\Services\ServicesModulePage;
+use App\Livewire\Platform\Shareholders\ShareholdersModulePage;
 use App\Livewire\Platform\Subscriptions\SubscriptionManagementPage;
 use App\Livewire\Platform\Sales\SalesMonitoringPage;
 use App\Livewire\Platform\Staff\StaffPerformanceMonitoringPage;
@@ -44,6 +46,9 @@ use App\Livewire\PublicSite\PricingPage;
 use App\Livewire\PublicSite\ProductPage;
 use App\Livewire\PublicSite\WelcomePage;
 use App\Livewire\SuperAdmin\ApplicationVersionManagementPage;
+use App\Livewire\SuperAdmin\BillingInvoicesPage;
+use App\Livewire\SuperAdmin\BillingPlansPage;
+use App\Livewire\SuperAdmin\BillingSubscriptionsPage;
 use App\Livewire\SuperAdmin\SuperAdminDashboardPage;
 use App\Livewire\SuperAdmin\SystemHealthPage;
 use Illuminate\Support\Facades\Route;
@@ -98,6 +103,9 @@ Route::middleware(['auth', 'verified', 'account.active', 'legal.accepted', 'supe
     ->group(function (): void {
         Route::get('/', SuperAdminDashboardPage::class)->name('dashboard');
         Route::get('/application-versions', ApplicationVersionManagementPage::class)->name('application-versions');
+        Route::get('/plans', BillingPlansPage::class)->name('plans');
+        Route::get('/subscription-requests', BillingSubscriptionsPage::class)->name('subscription-requests');
+        Route::get('/invoices', BillingInvoicesPage::class)->name('invoices');
         Route::get('/system-health', SystemHealthPage::class)->name('system-health');
     });
 Route::middleware(['auth', 'verified', 'account.active', 'legal.accepted', 'onboarding.complete', 'platform.context'])->group(function (): void {
@@ -115,6 +123,8 @@ Route::middleware(['auth', 'verified', 'account.active', 'legal.accepted', 'onbo
     Route::get('/synchronization', SynchronizationMonitoringPage::class)->name('platform.synchronization');
     Route::get('/alerts', NotificationCentrePage::class)->name('platform.notifications');
     Route::get('/reports', ReportCentrePage::class)->name('platform.reports');
+    Route::get('/services', ServicesModulePage::class)->middleware('module.available:services')->name('platform.services');
+    Route::get('/shareholders', ShareholdersModulePage::class)->middleware('module.available:shareholders')->name('platform.shareholders');
     Route::get('/monitoring-users', MonitoringUserManagementPage::class)->name('platform.monitoring-users');
     Route::get('/subscription', SubscriptionManagementPage::class)->name('platform.subscription');
     Route::get('/settings', BusinessSettingsPage::class)->name('platform.settings');

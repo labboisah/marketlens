@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Domain\Tenancy\Models\Business;
+use App\Enums\BusinessModule;
 use App\Models\User;
 
 class BusinessPolicy
@@ -32,6 +33,11 @@ class BusinessPolicy
         return $user->isBusinessOwner($business) || $user->hasBusinessPermission($business, 'manage-monitoring-users');
     }
 
+
+    public function accessModule(User $user, Business $business, BusinessModule|string $module): bool
+    {
+        return $user->canAccessModule($business, $module);
+    }
     public function viewAudit(User $user, Business $business): bool
     {
         return $this->view($user, $business);

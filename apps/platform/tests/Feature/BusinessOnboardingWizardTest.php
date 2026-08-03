@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Audit\Models\AuditLog;
+use App\Domain\Billing\Models\Invoice;
 use App\Domain\Billing\Models\Plan;
 use App\Domain\Billing\Models\Subscription;
 use App\Domain\Onboarding\Models\OwnerOnboardingDraft;
@@ -126,10 +127,13 @@ it('creates business branch owner subscription and audit log transactionally', f
         ->call('complete')
         ->assertRedirect(route('onboarding.completed'));
 
+    $businessId = Business::query()->where('name', 'Ada Stores')->value('id');
+
     expect(Business::query()->where('name', 'Ada Stores')->exists())->toBeTrue()
         ->and(Branch::query()->where('name', 'Main Branch')->exists())->toBeTrue()
         ->and(BusinessOwner::query()->where('user_id', $user->id)->exists())->toBeTrue()
-        ->and(Subscription::query()->where('plan_id', $plan->id)->where('status', SubscriptionStatus::Trialing)->exists())->toBeTrue()
+        ->and(Subscription::query()->where('plan_id', $plan->id)->where('status', SubscriptionStatus::Pending)->exists())->toBeTrue()
+        ->and(Invoice::query()->where('business_id', $businessId)->exists())->toBeTrue()
         ->and(AuditLog::query()->where('action', 'business_owner.onboarding_completed')->exists())->toBeTrue();
 });
 

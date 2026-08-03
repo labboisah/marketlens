@@ -3,6 +3,7 @@
 namespace App\Livewire\Platform\Subscriptions;
 
 use App\Domain\Billing\Models\BillingProfile;
+use App\Domain\Billing\Models\Invoice;
 use App\Domain\Billing\Models\SubscriptionChangeRequest;
 use App\Domain\Billing\Models\SubscriptionPayment;
 use App\Domain\Billing\Services\SubscriptionManagementService;
@@ -63,11 +64,17 @@ class SubscriptionManagementPage extends Component
             'selectedPlan' => $selectedPlan,
             'selectedWarnings' => $selectedPlan ? $subscriptions->downgradeWarnings($business, $selectedPlan) : [],
             'billingProfile' => BillingProfile::query()->where('business_id', $business->id)->first(),
+            'billingAccount' => $business->billingAccount,
             'payments' => SubscriptionPayment::query()
                 ->whereHas('subscription', fn ($query) => $query->where('business_id', $business->id))
                 ->with('subscription.plan')
                 ->latest('paid_at')
                 ->latest()
+                ->limit(12)
+                ->get(),
+            'invoices' => Invoice::query()
+                ->where('business_id', $business->id)
+                ->latest('issued_at')
                 ->limit(12)
                 ->get(),
             'changeRequests' => SubscriptionChangeRequest::query()

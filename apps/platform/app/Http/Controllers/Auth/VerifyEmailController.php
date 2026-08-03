@@ -29,6 +29,6 @@ class VerifyEmailController extends Controller
             'subject_id' => $request->user()->id,
         ]);
 
-        return redirect()->intended(route('onboarding.wizard'));
+        return redirect()->route($request->user()->isSuperAdmin() ? 'super-admin.dashboard' : 'onboarding.wizard');
     }
 }
