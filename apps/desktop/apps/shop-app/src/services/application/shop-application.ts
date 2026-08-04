@@ -21,6 +21,7 @@ import { ActivationService } from '../domain/activation-service';
 import { SystemHealthService } from '../domain/system-health-service';
 import { SupplierService } from '../domain/supplier-service';
 import { PurchaseService } from '../domain/purchase-service';
+import { CustomerService } from '../domain/customer-service';
 import type { ShopEnvironment } from '../../shared/environment';
 import { SyncQueueRepository } from '../../repositories/sync-queue-repository';
 
@@ -83,6 +84,7 @@ export async function createShopApplication(environment: ShopEnvironment) {
       inventory: inventoryRepository,
       suppliers: supplierService,
       purchases: new PurchaseService(database.db, auditLogRepository, syncQueueRepository, environment, productRepository, inventoryRepository, supplierService),
+      customers: new CustomerService(database.sqlite, auditLogRepository, syncQueueRepository),
       roles: roleRepository,
       permissions: permissionRepository,
       sessions: sessionRepository,

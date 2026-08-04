@@ -340,6 +340,128 @@ export const purchaseItems = sqliteTable('purchase_items', {
   updatedAt: text('updated_at').notNull(),
 });
 
+export const customers = sqliteTable('customers', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  code: text('code').notNull().unique(),
+  name: text('name').notNull(),
+  type: text('type').notNull(),
+  phone: text('phone'),
+  address: text('address'),
+  status: text('status').notNull(),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+export const customerContacts = sqliteTable('customer_contacts', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  customerUuid: text('customer_uuid').notNull(),
+  name: text('name').notNull(),
+  phone: text('phone'),
+  email: text('email'),
+  role: text('role'),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+export const customerGuarantors = sqliteTable('customer_guarantors', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  customerUuid: text('customer_uuid').notNull(),
+  name: text('name').notNull(),
+  phone: text('phone'),
+  address: text('address'),
+  relationship: text('relationship'),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+export const customerCreditLimits = sqliteTable('customer_credit_limits', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  customerUuid: text('customer_uuid').notNull().unique(),
+  creditLimit: text('credit_limit').notNull(),
+  additionalCreditAllowed: text('additional_credit_allowed').notNull(),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+export const customerAccounts = sqliteTable('customer_accounts', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  customerUuid: text('customer_uuid').notNull().unique(),
+  currentBalance: text('current_balance').notNull(),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+export const customerAccountTransactions = sqliteTable('customer_account_transactions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  customerUuid: text('customer_uuid').notNull(),
+  transactionType: text('transaction_type').notNull(),
+  amount: text('amount').notNull(),
+  dueDate: text('due_date'),
+  reference: text('reference'),
+  reversalOfUuid: text('reversal_of_uuid'),
+  metadataJson: text('metadata_json'),
+  createdAt: text('created_at').notNull(),
+});
+
+export const customerPayments = sqliteTable('customer_payments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  customerUuid: text('customer_uuid').notNull(),
+  amount: text('amount').notNull(),
+  reference: text('reference'),
+  paymentMethod: text('payment_method'),
+  createdAt: text('created_at').notNull(),
+});
+
+export const customerPaymentAllocations = sqliteTable('customer_payment_allocations', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  paymentUuid: text('payment_uuid').notNull(),
+  accountTransactionUuid: text('account_transaction_uuid').notNull(),
+  amount: text('amount').notNull(),
+  createdAt: text('created_at').notNull(),
+});
+
+export const creditApprovals = sqliteTable('credit_approvals', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  customerUuid: text('customer_uuid').notNull(),
+  requestedAmount: text('requested_amount').notNull(),
+  approvedAmount: text('approved_amount').notNull(),
+  approvedByUserUuid: text('approved_by_user_uuid').notNull(),
+  reason: text('reason').notNull(),
+  status: text('status').notNull(),
+  createdAt: text('created_at').notNull(),
+});
+
+export const debtReminders = sqliteTable('debt_reminders', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  customerUuid: text('customer_uuid').notNull(),
+  accountTransactionUuid: text('account_transaction_uuid'),
+  reminderAt: text('reminder_at').notNull(),
+  channel: text('channel').notNull(),
+  status: text('status').notNull(),
+  createdAt: text('created_at').notNull(),
+});
+
+export const debtWriteOffs = sqliteTable('debt_write_offs', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  customerUuid: text('customer_uuid').notNull(),
+  accountTransactionUuid: text('account_transaction_uuid').notNull(),
+  amount: text('amount').notNull(),
+  approvedByUserUuid: text('approved_by_user_uuid').notNull(),
+  reason: text('reason').notNull(),
+  createdAt: text('created_at').notNull(),
+});
+
 export const warehouses = sqliteTable('warehouses', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   uuid: text('uuid').notNull().unique(),

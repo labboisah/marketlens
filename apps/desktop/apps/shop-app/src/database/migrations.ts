@@ -342,6 +342,130 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
       updated_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS customers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      code TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL,
+      phone TEXT,
+      address TEXT,
+      status TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS customer_contacts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      customer_uuid TEXT NOT NULL,
+      name TEXT NOT NULL,
+      phone TEXT,
+      email TEXT,
+      role TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS customer_guarantors (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      customer_uuid TEXT NOT NULL,
+      name TEXT NOT NULL,
+      phone TEXT,
+      address TEXT,
+      relationship TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS customer_credit_limits (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      customer_uuid TEXT NOT NULL UNIQUE,
+      credit_limit TEXT NOT NULL,
+      additional_credit_allowed TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS customer_accounts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      customer_uuid TEXT NOT NULL UNIQUE,
+      current_balance TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS customer_account_transactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      customer_uuid TEXT NOT NULL,
+      transaction_type TEXT NOT NULL,
+      amount TEXT NOT NULL,
+      due_date TEXT,
+      reference TEXT,
+      reversal_of_uuid TEXT,
+      metadata_json TEXT,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_customer_account_transactions_customer_date
+      ON customer_account_transactions (customer_uuid, created_at);
+
+    CREATE TABLE IF NOT EXISTS customer_payments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      customer_uuid TEXT NOT NULL,
+      amount TEXT NOT NULL,
+      reference TEXT,
+      payment_method TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS customer_payment_allocations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      payment_uuid TEXT NOT NULL,
+      account_transaction_uuid TEXT NOT NULL,
+      amount TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS credit_approvals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      customer_uuid TEXT NOT NULL,
+      requested_amount TEXT NOT NULL,
+      approved_amount TEXT NOT NULL,
+      approved_by_user_uuid TEXT NOT NULL,
+      reason TEXT NOT NULL,
+      status TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS debt_reminders (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      customer_uuid TEXT NOT NULL,
+      account_transaction_uuid TEXT,
+      reminder_at TEXT NOT NULL,
+      channel TEXT NOT NULL,
+      status TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS debt_write_offs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      customer_uuid TEXT NOT NULL,
+      account_transaction_uuid TEXT NOT NULL,
+      amount TEXT NOT NULL,
+      approved_by_user_uuid TEXT NOT NULL,
+      reason TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS warehouses (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       uuid TEXT NOT NULL UNIQUE,
@@ -534,6 +658,10 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
       ('perm-fin-approve-expense','finance.approve_expense','Approve expense','Finance',datetime('now'),datetime('now')),
       ('perm-fin-view-profit','finance.view_profit','View profit','Finance',datetime('now'),datetime('now')),
       ('perm-fin-manage-debt','finance.manage_customer_debt','Manage customer debt','Finance',datetime('now'),datetime('now')),
+      ('perm-customer-manage','customers.manage','Manage customer profiles','Customers',datetime('now'),datetime('now')),
+      ('perm-customer-record-payment','customers.record_payment','Record customer payments','Customers',datetime('now'),datetime('now')),
+      ('perm-customer-approve-credit','customers.approve_credit','Approve customer credit','Customers',datetime('now'),datetime('now')),
+      ('perm-customer-write-off','customers.write_off_debt','Write off customer debt','Customers',datetime('now'),datetime('now')),
       ('perm-fin-manage-supplier','finance.manage_supplier_balances','Manage supplier balances','Finance',datetime('now'),datetime('now')),
       ('perm-fin-settle-shifts','finance.settle_cashier_shifts','Settle cashier shifts','Finance',datetime('now'),datetime('now')),
       ('perm-svc-manage-services','services.manage_services','Manage services','Services',datetime('now'),datetime('now')),
