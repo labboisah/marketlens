@@ -28,7 +28,7 @@ const api: ShopPreloadApi = {
   backup: {
     create: (accessToken, type, destinationPath) => ipcRenderer.invoke('backup:create', { accessToken, type, destinationPath }) as Promise<Record<string, unknown>>,
     maintain: (accessToken) => ipcRenderer.invoke('backup:maintain', { accessToken }) as Promise<Record<string, unknown>>,
-    restore: (accessToken, backupUuid) => ipcRenderer.invoke('backup:restore', { accessToken, backupUuid }) as Promise<void>,
+    restore: (accessToken, backupUuid, confirmation) => ipcRenderer.invoke('backup:restore', { accessToken, backupUuid, confirmation }) as Promise<void>,
   },
 };
 

@@ -46,27 +46,32 @@ export class AuthenticationService {
 
   async login(input: LoginInput): Promise<LoginResult> {
     if (!input.username || !input.password) {
+      this.auditLogs.record({ action: 'user.login_failed', metadata: { reason: 'missing_credentials' } });
       return { authenticated: false, reason: 'Invalid username or password.' };
     }
     const normalizedUsername = input.username.trim().toLowerCase();
     const user = await this.users.findByUsername(normalizedUsername);
 
     if (!user) {
+      this.auditLogs.record({ action: 'user.login_failed', metadata: { username: normalizedUsername, reason: 'unknown_user' } });
       return { authenticated: false, reason: 'Invalid username or password.' };
     }
 
     if (user.status !== 'active') {
+      this.auditLogs.record({ actorUserUuid: user.uuid, action: 'user.login_failed', subjectType: 'user', subjectUuid: user.uuid, metadata: { reason: 'inactive' } });
       return { authenticated: false, reason: 'User is inactive.' };
     }
 
     const passwordOk = await verifyPassword(input.password, user.passwordHash);
     if (!passwordOk) {
+      this.auditLogs.record({ actorUserUuid: user.uuid, action: 'user.login_failed', subjectType: 'user', subjectUuid: user.uuid, metadata: { reason: 'invalid_password' } });
       return { authenticated: false, reason: 'Invalid username or password.' };
     }
 
     if (input.deviceUuid) {
       const device = await this.devices.findByUuid(input.deviceUuid);
       if (!device || device.status !== 'authorized' && device.status !== 'paired') {
+        this.auditLogs.record({ actorUserUuid: user.uuid, action: 'user.login_failed', subjectType: 'user', subjectUuid: user.uuid, metadata: { reason: 'device_not_authorized', deviceUuid: input.deviceUuid } });
         return { authenticated: false, reason: 'Device is not authorized.' };
       }
     }

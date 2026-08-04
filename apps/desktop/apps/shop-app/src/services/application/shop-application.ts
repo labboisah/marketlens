@@ -50,6 +50,7 @@ export async function createShopApplication(environment: ShopEnvironment) {
   const inventoryRepository = new InventoryRepository(database.db);
   const syncQueueRepository = new SyncQueueRepository(database.db);
   const supplierService = new SupplierService(database.db, auditLogRepository, syncQueueRepository, environment);
+  const synchronizationWorker = new SynchronizationWorker(environment, logger, database.sqlite);
 
   if (
     environment.SHOP_INITIAL_ADMIN_USERNAME &&
@@ -83,7 +84,7 @@ export async function createShopApplication(environment: ShopEnvironment) {
     logger,
     database,
     services: {
-      activation: new ActivationService(installationRepository, platformCredentialsRepository, auditLogRepository),
+      activation: new ActivationService(installationRepository, platformCredentialsRepository, auditLogRepository, environment),
       authentication: new AuthenticationService(userRepository, deviceRepository, sessionRepository, auditLogRepository, environment),
       users: userRepository,
       devices: new DevicePairingService(deviceRepository, auditLogRepository, environment.SHOP_DEVICE_PAIRING_CODE),
@@ -102,8 +103,8 @@ export async function createShopApplication(environment: ShopEnvironment) {
       permissions: permissionRepository,
       sessions: sessionRepository,
       loginLogs: loginLogRepository,
-      health: new SystemHealthService(environment),
-      sync: new SynchronizationWorker(environment, logger, database.sqlite),
+      health: new SystemHealthService(environment, database.sqlite, synchronizationWorker),
+      sync: synchronizationWorker,
       backup: new BackupService(environment, logger, database.sqlite, auditLogRepository),
     },
   };

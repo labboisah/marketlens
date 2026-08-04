@@ -56,7 +56,8 @@ ipcMain.handle('backup:maintain', (_event, input: { accessToken: string }) => {
   authorizeReporting(input.accessToken, 'admin.manage_backups');
   return shopApplication.services.backup.runMaintenance();
 });
-ipcMain.handle('backup:restore', async (_event, input: { accessToken: string; backupUuid: string }) => {
+ipcMain.handle('backup:restore', async (_event, input: { accessToken: string; backupUuid: string; confirmation: string }) => {
+  if (input.confirmation !== 'RESTORE') throw new Error('Restore requires explicit confirmation');
   const userUuid = authorizeReporting(input.accessToken, 'admin.manage_backups');
   const prepared = await shopApplication.services.backup.prepareRestore(input.backupUuid, userUuid);
   try {

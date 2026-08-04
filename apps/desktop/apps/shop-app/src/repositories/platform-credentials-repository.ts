@@ -22,4 +22,8 @@ export class PlatformCredentialsRepository extends DrizzleRepository {
 
     return uuid;
   }
+
+  revokeCredentials(installationUuid: string): void {
+    this.db.delete(platformCredentials).where(platformCredentials.installationUuid.eq(installationUuid)).run();
+  }
 }

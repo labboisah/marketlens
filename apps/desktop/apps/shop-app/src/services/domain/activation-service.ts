@@ -1,6 +1,8 @@
 import type { AuditLogRepository } from '../../repositories/audit-log-repository';
 import type { InstallationRepository, AppInstallationRecord } from '../../repositories/installation-repository';
 import type { PlatformCredentialsRepository } from '../../repositories/platform-credentials-repository';
+import type { ShopEnvironment } from '../../shared/environment';
+import { encryptSecret } from '../security/secret-encryption';
 
 export type ActivationInput = {
   activationCode: string;
@@ -47,6 +49,7 @@ export class ActivationService {
     private readonly installations: InstallationRepository,
     private readonly credentials: PlatformCredentialsRepository,
     private readonly auditLogs: AuditLogRepository,
+    private readonly environment: ShopEnvironment,
   ) {}
 
   async completeActivation(input: ActivationInput): Promise<ActivationResult> {
@@ -80,7 +83,7 @@ export class ActivationService {
     });
 
     if (platformResponse.deviceCredential) {
-      this.credentials.storeCredentials(updatedInstallation.uuid, platformResponse.deviceCredential);
+      this.credentials.storeCredentials(updatedInstallation.uuid, encryptSecret(platformResponse.deviceCredential, this.environment.SHOP_JWT_SECRET));
     }
 
     this.auditLogs.record({
@@ -117,6 +120,11 @@ export class ActivationService {
         : this.installations.findCurrent();
 
     return installation?.activationState ?? 'not_initialized';
+  }
+
+  revokePlatformCredentials(installationUuid: string, actorUserUuid?: string): void {
+    this.credentials.revokeCredentials(installationUuid);
+    this.auditLogs.record({ actorUserUuid, action: 'platform.credentials_revoked', subjectType: 'app_installation', subjectUuid: installationUuid });
   }
 
   async testConnection(platformBaseUrl: string): Promise<{ success: boolean; reason?: string }> {

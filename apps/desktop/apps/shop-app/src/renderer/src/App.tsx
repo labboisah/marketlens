@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from 'react';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { ServerConnectionIndicator, SynchronizationStatusIndicator } from '@marketlens/ui';
 import '../styles/app.css';
 
@@ -30,6 +30,7 @@ export function App() {
   const [performance, setPerformance] = useState<Array<Record<string, unknown>>>([]);
   const [reportRows, setReportRows] = useState<Array<Record<string, unknown>>>([]);
   const [synchronization, setSynchronization] = useState<Record<string, unknown>>({});
+  const inactivityTimer = useRef<ReturnType<typeof setTimeout>>();
   const today = new Date().toISOString().slice(0, 10);
 
   useEffect(() => {
@@ -46,6 +47,18 @@ export function App() {
       : window.marketlensShop.reporting.report(accessToken, reportTypeByLabel[selectedReport], filters).then(setReportRows);
     void request.catch((reason: unknown) => setError(reason instanceof Error ? reason.message : 'Report could not be loaded'));
   }, [accessToken, activeView, selectedReport, today]);
+
+  useEffect(() => {
+    if (!accessToken) return;
+    const resetLockTimer = () => {
+      if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+      inactivityTimer.current = setTimeout(() => { setAccessToken(undefined); setPassword(''); setError('Application locked after inactivity. Sign in to continue.'); }, 15 * 60 * 1000);
+    };
+    const events: Array<keyof WindowEventMap> = ['pointerdown', 'keydown', 'touchstart'];
+    events.forEach((event) => window.addEventListener(event, resetLockTimer));
+    resetLockTimer();
+    return () => { events.forEach((event) => window.removeEventListener(event, resetLockTimer)); if (inactivityTimer.current) clearTimeout(inactivityTimer.current); };
+  }, [accessToken]);
 
   async function login(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

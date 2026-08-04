@@ -9,6 +9,10 @@ export function createLogger(environment: Pick<ShopEnvironment, 'SHOP_APP_LOG_LE
       env: environment.SHOP_APP_ENV,
     },
     timestamp: pino.stdTimeFunctions.isoTime,
+    redact: {
+      paths: ['req.headers.authorization', 'req.headers.cookie', '*.password', '*.pin', '*.token', '*.refreshToken', '*.accessToken', '*.encryptedCredentials', '*.platformCredential', '*.cardNumber'],
+      censor: '[redacted]',
+    },
   });
 }
 
