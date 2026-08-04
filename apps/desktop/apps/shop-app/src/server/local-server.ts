@@ -6,6 +6,9 @@ import { registerAuthRoutes } from './routes/auth-routes';
 import { registerDatabaseRoutes } from './routes/database-routes';
 import { registerDeviceRoutes } from './routes/device-routes';
 import { registerHealthRoutes } from './routes/health-routes';
+import { registerInventoryRoutes } from './routes/inventory-routes';
+import { registerProductRoutes } from './routes/product-routes';
+import { registerPurchaseRoutes } from './routes/purchase-routes';
 import { registerSessionRoutes } from './routes/session-routes';
 import { registerSystemRoutes } from './routes/system-routes';
 import { socketEvents } from './socket-events';
@@ -60,6 +63,9 @@ export async function createLocalServer(app: ShopApplication) {
   await registerActivationRoutes(server, app);
   await registerAuthRoutes(server, app, io);
   await registerDeviceRoutes(server, app, io);
+  await registerProductRoutes(server, app);
+  await registerInventoryRoutes(server, app);
+  await registerPurchaseRoutes(server, app);
   await registerSessionRoutes(server);
 
   return {

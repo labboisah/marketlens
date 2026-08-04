@@ -155,5 +155,401 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS product_categories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      slug TEXT,
+      parent_uuid TEXT,
+      description TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS brands (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      description TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS units (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      code TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      is_base TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS products (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      sku TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      description TEXT,
+      category_uuid TEXT,
+      brand_uuid TEXT,
+      base_unit_uuid TEXT,
+      default_purchase_unit_uuid TEXT,
+      default_sales_unit_uuid TEXT,
+      is_service TEXT NOT NULL,
+      is_non_stock TEXT NOT NULL,
+      active TEXT NOT NULL,
+      min_selling_price TEXT,
+      reorder_level TEXT,
+      max_stock TEXT,
+      cost_price TEXT,
+      retail_price TEXT,
+      wholesale_price TEXT,
+      images_json TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS product_units (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      product_uuid TEXT NOT NULL,
+      unit_uuid TEXT NOT NULL,
+      to_base_multiplier TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS product_barcodes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      product_uuid TEXT NOT NULL,
+      barcode TEXT NOT NULL UNIQUE,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS product_prices (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      product_uuid TEXT NOT NULL,
+      price_type TEXT NOT NULL,
+      amount TEXT NOT NULL,
+      currency TEXT,
+      effective_from TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS product_price_histories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      product_uuid TEXT NOT NULL,
+      old_amount TEXT,
+      new_amount TEXT,
+      changed_at TEXT NOT NULL,
+      changed_by TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS product_branch_settings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      product_uuid TEXT NOT NULL,
+      branch_uuid TEXT NOT NULL,
+      branch_price_json TEXT,
+      branch_stock_settings_json TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS product_batches (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      product_uuid TEXT NOT NULL,
+      batch_number TEXT NOT NULL,
+      expiry_at TEXT,
+      quantity TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS product_serial_numbers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      product_uuid TEXT NOT NULL,
+      serial TEXT NOT NULL UNIQUE,
+      batch_uuid TEXT,
+      sold TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS suppliers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      code TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      contact_name TEXT,
+      contact_phone TEXT,
+      contact_email TEXT,
+      address TEXT,
+      preferred TEXT NOT NULL,
+      tax_number TEXT,
+      payment_terms TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS supplier_accounts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      supplier_uuid TEXT NOT NULL UNIQUE,
+      current_balance TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS purchases (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      supplier_uuid TEXT NOT NULL,
+      invoice_number TEXT,
+      invoice_date TEXT,
+      status TEXT NOT NULL,
+      currency TEXT NOT NULL,
+      transport_cost TEXT NOT NULL,
+      loading_cost TEXT NOT NULL,
+      other_landed_cost TEXT NOT NULL,
+      tax TEXT NOT NULL,
+      discount TEXT NOT NULL,
+      notes TEXT,
+      total_amount TEXT NOT NULL,
+      amount_paid TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS purchase_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      purchase_uuid TEXT NOT NULL,
+      product_uuid TEXT NOT NULL,
+      purchase_unit_uuid TEXT NOT NULL,
+      quantity TEXT NOT NULL,
+      unit_cost TEXT NOT NULL,
+      batch_number TEXT,
+      expiry_date TEXT,
+      serial_numbers_json TEXT,
+      base_unit_multiplier TEXT NOT NULL,
+      received_quantity TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS warehouses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      code TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      address TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS stocks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      product_uuid TEXT NOT NULL,
+      warehouse_uuid TEXT NOT NULL,
+      unit_uuid TEXT NOT NULL,
+      quantity TEXT NOT NULL,
+      reserved_quantity TEXT,
+      last_updated_at TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS stock_movements (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      product_uuid TEXT NOT NULL,
+      from_warehouse_uuid TEXT,
+      to_warehouse_uuid TEXT,
+      quantity_base TEXT NOT NULL,
+      unit_uuid TEXT NOT NULL,
+      movement_type TEXT NOT NULL,
+      reference TEXT,
+      metadata_json TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS roles (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL UNIQUE,
+      description TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS permissions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      key TEXT NOT NULL UNIQUE,
+      description TEXT,
+      group_name TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS role_permissions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      role_uuid TEXT NOT NULL,
+      permission_uuid TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS user_roles (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      user_uuid TEXT NOT NULL,
+      role_uuid TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS user_branches (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      user_uuid TEXT NOT NULL,
+      branch_uuid TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS user_sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      user_uuid TEXT NOT NULL,
+      device_uuid TEXT,
+      access_token_hash TEXT NOT NULL,
+      refresh_token_hash TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      revoked_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS login_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      user_uuid TEXT,
+      username TEXT,
+      success TEXT NOT NULL,
+      device_uuid TEXT,
+      ip_address TEXT,
+      reason TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS client_devices (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      kind TEXT NOT NULL,
+      status TEXT NOT NULL,
+      pairing_code_uuid TEXT,
+      paired_at TEXT,
+      last_seen_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS device_pairing_codes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      code TEXT NOT NULL UNIQUE,
+      device_uuid TEXT,
+      status TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS device_connection_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      device_uuid TEXT NOT NULL,
+      connection_type TEXT,
+      success TEXT NOT NULL,
+      details_json TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS password_reset_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      user_uuid TEXT NOT NULL,
+      token_hash TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      used_at TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    -- Seed default roles and a minimal set of permissions (idempotent)
+    INSERT OR IGNORE INTO roles (uuid, name, description, created_at, updated_at)
+    VALUES
+      ('00000000-0000-0000-0000-000000000001','Owner','Owner role',datetime('now'),datetime('now')),
+      ('00000000-0000-0000-0000-000000000002','Administrator','Administrator role',datetime('now'),datetime('now')),
+      ('00000000-0000-0000-0000-000000000003','Manager','Manager role',datetime('now'),datetime('now')),
+      ('00000000-0000-0000-0000-000000000004','Cashier','Cashier role',datetime('now'),datetime('now')),
+      ('00000000-0000-0000-0000-000000000005','Storekeeper','Storekeeper role',datetime('now'),datetime('now')),
+      ('00000000-0000-0000-0000-000000000006','Accountant','Accountant role',datetime('now'),datetime('now')),
+      ('00000000-0000-0000-0000-000000000007','Service Staff','Service Staff role',datetime('now'),datetime('now')),
+      ('00000000-0000-0000-0000-000000000008','Supervisor','Supervisor role',datetime('now'),datetime('now')),
+      ('00000000-0000-0000-0000-000000000009','Read-Only Auditor','Read-Only Auditor role',datetime('now'),datetime('now'));
+
+    INSERT OR IGNORE INTO permissions (uuid, key, description, group_name, created_at, updated_at)
+    VALUES
+      ('perm-admin-manage-users','admin.manage_users','Manage users','Administration',datetime('now'),datetime('now')),
+      ('perm-admin-manage-roles','admin.manage_roles','Manage roles','Administration',datetime('now'),datetime('now')),
+      ('perm-admin-manage-permissions','admin.manage_permissions','Manage permissions','Administration',datetime('now'),datetime('now')),
+      ('perm-admin-authorize-devices','admin.authorize_devices','Authorize Client App devices','Administration',datetime('now'),datetime('now')),
+      ('perm-admin-manage-config','admin.manage_config','Manage local configuration','Administration',datetime('now'),datetime('now')),
+      ('perm-admin-view-audit','admin.view_audit','View audit logs','Administration',datetime('now'),datetime('now')),
+      ('perm-admin-manage-backups','admin.manage_backups','Manage backups','Administration',datetime('now'),datetime('now')),
+      ('perm-sales-create-sale','sales.create_sale','Create sale','Sales',datetime('now'),datetime('now')),
+      ('perm-sales-apply-discount','sales.apply_discount','Apply discount','Sales',datetime('now'),datetime('now')),
+      ('perm-sales-approve-discount','sales.approve_discount','Approve discount','Sales',datetime('now'),datetime('now')),
+      ('perm-sales-cancel-sale','sales.cancel_sale','Cancel sale','Sales',datetime('now'),datetime('now')),
+      ('perm-sales-approve-cancel','sales.approve_cancel','Approve cancellation','Sales',datetime('now'),datetime('now')),
+      ('perm-sales-process-return','sales.process_return','Process return','Sales',datetime('now'),datetime('now')),
+      ('perm-sales-approve-return','sales.approve_return','Approve return','Sales',datetime('now'),datetime('now')),
+      ('perm-sales-view-cost','sales.view_cost','View cost price','Sales',datetime('now'),datetime('now')),
+      ('perm-sales-view-reports','sales.view_reports','View sales reports','Sales',datetime('now'),datetime('now')),
+      ('perm-inv-manage-products','inventory.manage_products','Manage products','Inventory',datetime('now'),datetime('now')),
+      ('perm-inv-manage-prices','inventory.manage_prices','Manage prices','Inventory',datetime('now'),datetime('now')),
+      ('perm-inv-record-purchases','inventory.record_purchases','Record purchases','Inventory',datetime('now'),datetime('now')),
+      ('perm-inv-receive-stock','inventory.receive_stock','Receive stock','Inventory',datetime('now'),datetime('now')),
+      ('perm-inv-adjust-stock','inventory.adjust_stock','Adjust stock','Inventory',datetime('now'),datetime('now')),
+      ('perm-inv-approve-adjustment','inventory.approve_adjustment','Approve stock adjustment','Inventory',datetime('now'),datetime('now')),
+      ('perm-inv-conduct-count','inventory.conduct_count','Conduct stock count','Inventory',datetime('now'),datetime('now')),
+      ('perm-inv-transfer-stock','inventory.transfer_stock','Transfer stock','Inventory',datetime('now'),datetime('now')),
+      ('perm-inv-record-damage','inventory.record_damage','Record damage or expiry','Inventory',datetime('now'),datetime('now')),
+      ('perm-fin-record-expense','finance.record_expense','Record expense','Finance',datetime('now'),datetime('now')),
+      ('perm-fin-approve-expense','finance.approve_expense','Approve expense','Finance',datetime('now'),datetime('now')),
+      ('perm-fin-view-profit','finance.view_profit','View profit','Finance',datetime('now'),datetime('now')),
+      ('perm-fin-manage-debt','finance.manage_customer_debt','Manage customer debt','Finance',datetime('now'),datetime('now')),
+      ('perm-fin-manage-supplier','finance.manage_supplier_balances','Manage supplier balances','Finance',datetime('now'),datetime('now')),
+      ('perm-fin-settle-shifts','finance.settle_cashier_shifts','Settle cashier shifts','Finance',datetime('now'),datetime('now')),
+      ('perm-svc-manage-services','services.manage_services','Manage services','Services',datetime('now'),datetime('now')),
+      ('perm-svc-create-order','services.create_service_order','Create service order','Services',datetime('now'),datetime('now')),
+      ('perm-svc-assign-staff','services.assign_service_staff','Assign service staff','Services',datetime('now'),datetime('now')),
+      ('perm-svc-complete-service','services.complete_service','Complete service','Services',datetime('now'),datetime('now')),
+      ('perm-svc-record-expense','services.record_service_expense','Record service expense','Services',datetime('now'),datetime('now')),
+      ('perm-svc-generate-allocation','services.generate_revenue_allocation','Generate revenue allocation','Services',datetime('now'),datetime('now')),
+      ('perm-svc-approve-allocation','services.approve_allocation','Approve allocation','Services',datetime('now'),datetime('now')),
+      ('perm-svc-view-staff-earnings','services.view_staff_earnings','View staff earnings','Services',datetime('now'),datetime('now')),
+      ('perm-svc-settle-staff-earnings','services.settle_staff_earnings','Settle staff earnings','Services',datetime('now'),datetime('now')),
+      ('perm-sh-view-shareholders','shareholders.view_info','View shareholder information','Shareholders',datetime('now'),datetime('now')),
+      ('perm-sh-record-approved-payment','shareholders.record_approved_payment','Record approved shareholder payment','Shareholders',datetime('now'),datetime('now')),
+      ('perm-sh-record-capital','shareholders.record_capital_contribution','Record capital contribution','Shareholders',datetime('now'),datetime('now')),
+      ('perm-sh-record-loan','shareholders.record_loan','Record shareholder loan','Shareholders',datetime('now'),datetime('now')),
+      ('perm-sh-view-statements','shareholders.view_statements','View shareholder statements','Shareholders',datetime('now'),datetime('now'));
+
   `);
 }

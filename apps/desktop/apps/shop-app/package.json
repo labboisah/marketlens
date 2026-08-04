@@ -25,6 +25,8 @@
     "@marketlens/ui": "workspace:*",
     "@marketlens/validation": "workspace:*",
     "better-sqlite3": "latest",
+    "argon2": "latest",
+    "jsonwebtoken": "latest",
     "dotenv": "latest",
     "drizzle-orm": "latest",
     "fastify": "latest",

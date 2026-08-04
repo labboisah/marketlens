@@ -49,7 +49,7 @@ describe('Shop App authentication and pairing', () => {
   });
 
   it('creates an initial admin user and allows login without a device', () => {
-    const app = createShopApplication(testEnvironment);
+    const app = await createShopApplication(testEnvironment);
 
     const result = app.services.authentication.login({
       username: 'admin',
@@ -67,7 +67,7 @@ describe('Shop App authentication and pairing', () => {
   });
 
   it('rejects device pairing with an invalid code and accepts the correct pairing code', async () => {
-    const app = createShopApplication(testEnvironment);
+    const app = await createShopApplication(testEnvironment);
 
     const invalid = await app.services.devices.pair({
       deviceName: 'Client Terminal',
@@ -94,7 +94,7 @@ describe('Shop App authentication and pairing', () => {
   });
 
   it('allows admin login from an authorized paired device', async () => {
-    const app = createShopApplication(testEnvironment);
+    const app = await createShopApplication(testEnvironment);
 
     const pairing = await app.services.devices.pair({
       deviceName: 'Client Terminal',

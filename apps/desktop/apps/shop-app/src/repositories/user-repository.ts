@@ -53,4 +53,9 @@ export class UserRepository extends DrizzleRepository {
     const allUsers = this.db.select().from(users).all();
     return allUsers.length;
   }
+
+  updatePassword(userUuid: string, passwordHash: string) {
+    const updatedAt = new Date().toISOString();
+    this.db.update(users).set({ passwordHash, updatedAt }).where(users.uuid.eq(userUuid)).run();
+  }
 }

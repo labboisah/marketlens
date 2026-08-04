@@ -3,6 +3,13 @@ export const socketEvents = {
   deviceConnected: 'device.connected',
   deviceDisconnected: 'device.disconnected',
   userLoggedIn: 'user.logged_in',
+  userLoggedOut: 'user.logged_out',
+  devicePairingRequested: 'device.pairing_requested',
+  deviceAuthorized: 'device.authorized',
+  deviceRevoked: 'device.revoked',
+  purchaseCreated: 'purchase.created',
+  purchaseReceived: 'purchase.received',
+  purchasePaymentRecorded: 'purchase.payment_recorded',
   syncStatus: 'sync.status',
 } as const;
 

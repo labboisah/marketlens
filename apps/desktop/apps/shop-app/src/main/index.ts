@@ -7,7 +7,7 @@ import { loadShopEnvironment } from '../shared/environment';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const environment = loadShopEnvironment();
-const shopApplication = createShopApplication(environment);
+const shopApplication = await createShopApplication(environment);
 const localServer = await createLocalServer(shopApplication);
 
 ipcMain.handle('system:ping', () => 'pong');

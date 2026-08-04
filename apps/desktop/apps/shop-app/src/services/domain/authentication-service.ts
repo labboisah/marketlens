@@ -1,7 +1,11 @@
-import { randomUUID, scryptSync, timingSafeEqual } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
+import argon2 from 'argon2';
 import type { AuditLogRepository } from '../../repositories/audit-log-repository';
 import type { DeviceRepository } from '../../repositories/device-repository';
 import type { UserRepository } from '../../repositories/user-repository';
+import type { SessionRepository } from '../../repositories/session-repository';
+import { signAccessToken, createRefreshToken } from '../security/token-service';
+import type { ShopEnvironment } from '../../shared/environment';
 
 export type LoginInput = {
   username: string;
@@ -12,49 +16,38 @@ export type LoginInput = {
 export type LoginResult = {
   authenticated: boolean;
   reason?: string;
+  accessToken?: string;
+  refreshToken?: string;
   sessionUuid?: string;
   userUuid?: string;
   permissions?: string[];
 };
 
-const PASSWORD_HASH_SEPARATOR = '$';
-
-export function hashPassword(password: string): string {
-  const salt = randomUUID();
-  const derived = scryptSync(password, salt, 64).toString('hex');
-  return `${salt}${PASSWORD_HASH_SEPARATOR}${derived}`;
+export async function hashPassword(password: string): Promise<string> {
+  return argon2.hash(password);
 }
 
-export function verifyPassword(password: string, storedHash: string): boolean {
-  const [salt, derivedHash] = storedHash.split(PASSWORD_HASH_SEPARATOR);
-
-  if (!salt || !derivedHash) {
+export async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
+  try {
+    return await argon2.verify(storedHash, password);
+  } catch (err) {
     return false;
   }
-
-  const attempted = scryptSync(password, salt, 64).toString('hex');
-  const attemptedBuffer = Buffer.from(attempted, 'hex');
-  const storedBuffer = Buffer.from(derivedHash, 'hex');
-
-  if (attemptedBuffer.length !== storedBuffer.length) {
-    return false;
-  }
-
-  return timingSafeEqual(attemptedBuffer, storedBuffer);
 }
 
 export class AuthenticationService {
   constructor(
     private readonly users: UserRepository,
     private readonly devices: DeviceRepository,
+    private readonly sessions: SessionRepository,
     private readonly auditLogs: AuditLogRepository,
+    private readonly environment: ShopEnvironment,
   ) {}
 
   async login(input: LoginInput): Promise<LoginResult> {
     if (!input.username || !input.password) {
-      return { authenticated: false, reason: 'Missing credentials.' };
+      return { authenticated: false, reason: 'Invalid username or password.' };
     }
-
     const normalizedUsername = input.username.trim().toLowerCase();
     const user = await this.users.findByUsername(normalizedUsername);
 
@@ -66,18 +59,31 @@ export class AuthenticationService {
       return { authenticated: false, reason: 'User is inactive.' };
     }
 
-    if (!verifyPassword(input.password, user.passwordHash)) {
+    const passwordOk = await verifyPassword(input.password, user.passwordHash);
+    if (!passwordOk) {
       return { authenticated: false, reason: 'Invalid username or password.' };
     }
 
     if (input.deviceUuid) {
       const device = await this.devices.findByUuid(input.deviceUuid);
-      if (!device || device.status !== 'paired') {
+      if (!device || device.status !== 'authorized' && device.status !== 'paired') {
         return { authenticated: false, reason: 'Device is not authorized.' };
       }
     }
 
     const sessionUuid = randomUUID();
+
+    // Create tokens
+    const accessToken = signAccessToken({ sub: user.uuid, session: sessionUuid }, this.environment.SHOP_JWT_SECRET, this.environment.SHOP_JWT_ACCESS_EXPIRES_SECONDS);
+    const refreshToken = createRefreshToken();
+
+    // Hash refresh token for storage
+    const refreshHash = await argon2.hash(refreshToken);
+    const accessHash = await argon2.hash(accessToken);
+
+    const expiresAt = new Date(Date.now() + this.environment.SHOP_JWT_REFRESH_EXPIRES_DAYS * 24 * 60 * 60 * 1000).toISOString();
+
+    this.sessions.create(user.uuid, input.deviceUuid ?? null, accessHash, refreshHash, expiresAt);
 
     this.auditLogs.record({
       actorUserUuid: user.uuid,
@@ -91,9 +97,24 @@ export class AuthenticationService {
 
     return {
       authenticated: true,
+      accessToken,
+      refreshToken,
       sessionUuid,
       userUuid: user.uuid,
       permissions: ['pos.access'],
     };
+  }
+
+  async changePassword(userUuid: string, oldPassword: string, newPassword: string) {
+    const user = await this.users.findByUuid(userUuid);
+    if (!user) return false;
+
+    const ok = await verifyPassword(oldPassword, user.passwordHash);
+    if (!ok) return false;
+
+    const newHash = await hashPassword(newPassword);
+    this.users.updatePassword(userUuid, newHash);
+    this.auditLogs.record({ action: 'user.change_password', subjectType: 'user', subjectUuid: userUuid });
+    return true;
   }
 }
