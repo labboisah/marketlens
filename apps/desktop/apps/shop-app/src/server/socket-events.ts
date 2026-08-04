@@ -15,6 +15,13 @@ export const socketEvents = {
   cashierSettlementVerified: 'cashier.settlement_verified',
   expenseRecorded: 'expense.recorded',
   expenseApproved: 'expense.approved',
+  saleCompleted: 'sale.completed',
+  saleCancelled: 'sale.cancelled',
+  saleReturned: 'sale.returned',
+  stockUpdated: 'stock.updated',
+  shiftUpdated: 'shift.updated',
+  approvalRequested: 'approval.requested',
+  approvalResolved: 'approval.resolved',
   syncStatus: 'sync.status',
 } as const;
 

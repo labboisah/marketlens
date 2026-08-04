@@ -11,6 +11,7 @@ import { registerProductRoutes } from './routes/product-routes';
 import { registerPurchaseRoutes } from './routes/purchase-routes';
 import { registerCustomerRoutes } from './routes/customer-routes';
 import { registerCashierRoutes } from './routes/cashier-routes';
+import { registerSalesRoutes } from './routes/sales-routes';
 import { registerSessionRoutes } from './routes/session-routes';
 import { registerSystemRoutes } from './routes/system-routes';
 import { socketEvents } from './socket-events';
@@ -70,6 +71,7 @@ export async function createLocalServer(app: ShopApplication) {
   await registerPurchaseRoutes(server, app);
   await registerCustomerRoutes(server, app);
   await registerCashierRoutes(server, app);
+  await registerSalesRoutes(server, app);
   await registerSessionRoutes(server);
 
   return {

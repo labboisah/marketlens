@@ -642,6 +642,17 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
       created_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS payment_methods (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, code TEXT NOT NULL UNIQUE, name TEXT NOT NULL, type TEXT NOT NULL, active TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS sales (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, sale_number TEXT NOT NULL UNIQUE, idempotency_key TEXT NOT NULL UNIQUE, shift_uuid TEXT NOT NULL, warehouse_uuid TEXT NOT NULL, customer_uuid TEXT, status TEXT NOT NULL, subtotal TEXT NOT NULL, discount_amount TEXT NOT NULL, total_amount TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS sale_items (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, sale_uuid TEXT NOT NULL, product_uuid TEXT NOT NULL, unit_uuid TEXT NOT NULL, quantity TEXT NOT NULL, unit_price TEXT NOT NULL, line_total TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS sale_payments (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, sale_uuid TEXT NOT NULL, payment_method_uuid TEXT NOT NULL, amount TEXT NOT NULL, reference TEXT, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS sale_discounts (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, sale_uuid TEXT NOT NULL, amount TEXT NOT NULL, reason TEXT, approved_by_user_uuid TEXT, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS sale_cancellations (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, sale_uuid TEXT NOT NULL UNIQUE, reason TEXT NOT NULL, approved_by_user_uuid TEXT, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS sale_returns (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, sale_uuid TEXT NOT NULL, status TEXT NOT NULL, refund_amount TEXT NOT NULL, reason TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS sale_return_items (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, sale_return_uuid TEXT NOT NULL, sale_item_uuid TEXT NOT NULL, quantity TEXT NOT NULL, amount TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS receipts (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, sale_uuid TEXT NOT NULL UNIQUE, format TEXT NOT NULL, receipt_number TEXT NOT NULL UNIQUE, print_count INTEGER NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS receipt_reprints (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, receipt_uuid TEXT NOT NULL, reason TEXT NOT NULL, approved_by_user_uuid TEXT, created_at TEXT NOT NULL);
+
     CREATE TABLE IF NOT EXISTS warehouses (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       uuid TEXT NOT NULL UNIQUE,
