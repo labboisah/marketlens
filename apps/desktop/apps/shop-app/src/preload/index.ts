@@ -30,6 +30,12 @@ const api: ShopPreloadApi = {
     maintain: (accessToken) => ipcRenderer.invoke('backup:maintain', { accessToken }) as Promise<Record<string, unknown>>,
     restore: (accessToken, backupUuid, confirmation) => ipcRenderer.invoke('backup:restore', { accessToken, backupUuid, confirmation }) as Promise<void>,
   },
+  deployment: {
+    networkStatus: (accessToken) => ipcRenderer.invoke('deployment:network-status', { accessToken }) as Promise<Record<string, unknown>>,
+    testNetwork: (accessToken) => ipcRenderer.invoke('deployment:test-network', { accessToken }) as Promise<Record<string, unknown>>,
+    checkUpdates: (accessToken) => ipcRenderer.invoke('deployment:check-updates', { accessToken }) as Promise<Record<string, unknown>>,
+    shutdown: (accessToken, confirmation) => ipcRenderer.invoke('deployment:shutdown', { accessToken, confirmation }) as Promise<void>,
+  },
 };
 
 contextBridge.exposeInMainWorld('marketlensShop', api);

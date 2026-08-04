@@ -27,6 +27,8 @@ import { SalesService } from '../domain/sales-service';
 import { ServiceRevenueService } from '../domain/service-revenue-service';
 import { ShareholderOperationsService } from '../domain/shareholder-operations-service';
 import { LocalReportingService } from '../domain/local-reporting-service';
+import { NetworkConfigurationService } from './network-configuration-service';
+import { UpdateService } from './update-service';
 import type { ShopEnvironment } from '../../shared/environment';
 import { SyncQueueRepository } from '../../repositories/sync-queue-repository';
 
@@ -106,6 +108,8 @@ export async function createShopApplication(environment: ShopEnvironment) {
       health: new SystemHealthService(environment, database.sqlite, synchronizationWorker),
       sync: synchronizationWorker,
       backup: new BackupService(environment, logger, database.sqlite, auditLogRepository),
+      network: new NetworkConfigurationService(environment),
+      updates: new UpdateService(environment, new BackupService(environment, logger, database.sqlite, auditLogRepository)),
     },
   };
 }

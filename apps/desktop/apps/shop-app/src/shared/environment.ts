@@ -44,9 +44,14 @@ export const shopEnvironmentSchema = z.object({
   BACKUP_SCHEDULE_INTERVAL_HOURS: numberFromEnv.default(24),
   CLOUD_BACKUP_UPLOAD_URL: z.string().url().optional().default(''),
   CLOUD_BACKUP_ENCRYPTION_KEY: z.string().optional().default(''),
+  SHOP_WINDOWS_STARTUP_ENABLED: booleanFromEnv.default('false'),
+  SHOP_UPDATE_CHANNEL: z.enum(['stable', 'beta']).default('stable'),
+  SHOP_UPDATE_MANIFEST_URL: z.string().url().optional().default(''),
 });
 
-export type ShopEnvironment = z.infer<typeof shopEnvironmentSchema>;
+type ParsedShopEnvironment = z.infer<typeof shopEnvironmentSchema>;
+type DeploymentEnvironmentSettings = Pick<ParsedShopEnvironment, 'SHOP_WINDOWS_STARTUP_ENABLED' | 'SHOP_UPDATE_CHANNEL' | 'SHOP_UPDATE_MANIFEST_URL'>;
+export type ShopEnvironment = Omit<ParsedShopEnvironment, keyof DeploymentEnvironmentSettings> & Partial<DeploymentEnvironmentSettings>;
 
 export function loadShopEnvironment(): ShopEnvironment {
   return shopEnvironmentSchema.parse(process.env);

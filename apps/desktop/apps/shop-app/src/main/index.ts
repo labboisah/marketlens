@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, nativeImage, shell, Tray } from 'electron';
 import { copyFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,6 +12,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const environment = loadShopEnvironment();
 const shopApplication = await createShopApplication(environment);
 const localServer = await createLocalServer(shopApplication);
+let tray: Tray | undefined;
 
 ipcMain.handle('system:ping', () => 'pong');
 ipcMain.handle('authentication:login', async (_event, input: { username: string; password: string }) => {
@@ -71,6 +72,10 @@ ipcMain.handle('backup:restore', async (_event, input: { accessToken: string; ba
     throw error;
   }
 });
+ipcMain.handle('deployment:network-status', (_event, input: { accessToken: string }) => { authorizeReporting(input.accessToken, 'admin.manage_config'); return shopApplication.services.network.status(); });
+ipcMain.handle('deployment:test-network', async (_event, input: { accessToken: string }) => { authorizeReporting(input.accessToken, 'admin.manage_config'); return shopApplication.services.network.testConnection(); });
+ipcMain.handle('deployment:check-updates', async (_event, input: { accessToken: string }) => { authorizeReporting(input.accessToken, 'admin.manage_config'); return shopApplication.services.updates.check(); });
+ipcMain.handle('deployment:shutdown', async (_event, input: { accessToken: string; confirmation: string }) => { if (input.confirmation !== 'SHUTDOWN') throw new Error('Shutdown requires explicit confirmation'); authorizeReporting(input.accessToken, 'admin.manage_config'); await localServer.stop(); app.quit(); });
 
 function authorizeReporting(accessToken: string, permission: string): string {
   const payload = verifyAccessToken(accessToken, environment.SHOP_JWT_SECRET);
@@ -120,6 +125,15 @@ async function createMainWindow(): Promise<BrowserWindow> {
   return mainWindow;
 }
 
+function createTray(): void {
+  tray = new Tray(nativeImage.createEmpty());
+  tray.setToolTip('MarketLens Shop App');
+  tray.setContextMenu(Menu.buildFromTemplate([
+    { label: `Shop server: ${environment.SHOP_LOCAL_API_PORT}`, enabled: false },
+    { label: 'Open MarketLens Shop App', click: () => BrowserWindow.getAllWindows()[0]?.show() },
+  ]));
+}
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
@@ -131,11 +145,13 @@ app.on('before-quit', () => {
 });
 
 await app.whenReady();
+if (process.platform === 'win32') app.setLoginItemSettings({ openAtLogin: environment.SHOP_WINDOWS_STARTUP_ENABLED, openAsHidden: environment.SHOP_WINDOWS_STARTUP_ENABLED });
 if (shopApplication.services.backup.integrityCheck() !== 'ok') {
   throw new Error('SQLite integrity check failed; local services will not start.');
 }
 await localServer.start();
 shopApplication.services.backup.startScheduledBackups();
+createTray();
 await createMainWindow();
 
 app.on('activate', () => {

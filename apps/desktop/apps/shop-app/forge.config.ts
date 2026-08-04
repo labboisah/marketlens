@@ -5,10 +5,24 @@ const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
     executableName: 'MarketLens Shop App',
+    win32metadata: {
+      CompanyName: 'MarketLens',
+      ProductName: 'MarketLens Shop App',
+      FileDescription: 'MarketLens local shop server',
+      OriginalFilename: 'MarketLens Shop App.exe',
+    },
   },
   rebuildConfig: {},
   makers: [
-    { name: '@electron-forge/maker-squirrel' },
+    {
+      name: '@electron-forge/maker-squirrel',
+      config: {
+        name: 'marketlens_shop_app',
+        authors: 'MarketLens',
+        description: 'MarketLens local Shop App server and administration console',
+        setupIcon: undefined,
+      },
+    },
     { name: '@electron-forge/maker-zip', platforms: ['darwin'] },
     { name: '@electron-forge/maker-deb' },
     { name: '@electron-forge/maker-rpm' },

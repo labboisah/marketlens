@@ -27,4 +27,10 @@ export type ShopPreloadApi = {
     readonly maintain: (accessToken: string) => Promise<Record<string, unknown>>;
     readonly restore: (accessToken: string, backupUuid: string, confirmation: 'RESTORE') => Promise<void>;
   };
+  readonly deployment: {
+    readonly networkStatus: (accessToken: string) => Promise<Record<string, unknown>>;
+    readonly testNetwork: (accessToken: string) => Promise<Record<string, unknown>>;
+    readonly checkUpdates: (accessToken: string) => Promise<Record<string, unknown>>;
+    readonly shutdown: (accessToken: string, confirmation: 'SHUTDOWN') => Promise<void>;
+  };
 };
