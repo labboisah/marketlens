@@ -21,6 +21,10 @@ const api: ShopPreloadApi = {
     report: (accessToken, type, filters) => ipcRenderer.invoke('reporting:report', { accessToken, type, filters }) as Promise<Array<Record<string, unknown>>>,
     export: (accessToken, type, filters, format) => ipcRenderer.invoke('reporting:export', { accessToken, type, filters, format }) as Promise<{ uuid: string; status: string }>,
   },
+  synchronization: {
+    status: (accessToken) => ipcRenderer.invoke('synchronization:status', { accessToken }) as Promise<Record<string, unknown>>,
+    retry: (accessToken, queueUuid) => ipcRenderer.invoke('synchronization:retry', { accessToken, queueUuid }) as Promise<void>,
+  },
 };
 
 contextBridge.exposeInMainWorld('marketlensShop', api);

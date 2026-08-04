@@ -103,7 +103,7 @@ export async function createShopApplication(environment: ShopEnvironment) {
       sessions: sessionRepository,
       loginLogs: loginLogRepository,
       health: new SystemHealthService(environment),
-      sync: new SynchronizationWorker(environment, logger),
+      sync: new SynchronizationWorker(environment, logger, database.sqlite),
       backup: new BackupService(environment, logger),
     },
   };

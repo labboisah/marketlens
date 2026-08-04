@@ -54,7 +54,101 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
       status TEXT NOT NULL,
       idempotency_key TEXT NOT NULL UNIQUE,
       attempts INTEGER NOT NULL DEFAULT 0,
+      batch_uuid TEXT,
+      next_attempt_at TEXT,
+      last_error_code TEXT,
+      last_error_detail TEXT,
       created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS sync_batches (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      direction TEXT NOT NULL,
+      protocol_version TEXT NOT NULL,
+      idempotency_key TEXT NOT NULL UNIQUE,
+      record_count INTEGER NOT NULL,
+      status TEXT NOT NULL,
+      request_hash TEXT,
+      acknowledged_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS sync_batch_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      batch_uuid TEXT NOT NULL,
+      queue_uuid TEXT NOT NULL,
+      status TEXT NOT NULL,
+      acknowledgement_json TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      UNIQUE(batch_uuid, queue_uuid)
+    );
+
+    CREATE TABLE IF NOT EXISTS sync_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      direction TEXT NOT NULL,
+      event TEXT NOT NULL,
+      batch_uuid TEXT,
+      detail_json TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS sync_failures (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      queue_uuid TEXT,
+      batch_uuid TEXT,
+      error_code TEXT NOT NULL,
+      redacted_detail TEXT,
+      retryable TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS sync_conflicts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      queue_uuid TEXT,
+      aggregate_type TEXT NOT NULL,
+      aggregate_uuid TEXT NOT NULL,
+      rule TEXT NOT NULL,
+      local_payload_json TEXT,
+      platform_payload_json TEXT,
+      status TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      resolved_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS sync_checkpoints (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      direction TEXT NOT NULL UNIQUE,
+      cursor TEXT,
+      last_successful_at TEXT,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS record_versions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      aggregate_type TEXT NOT NULL,
+      aggregate_uuid TEXT NOT NULL,
+      version INTEGER NOT NULL,
+      source TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      UNIQUE(aggregate_type, aggregate_uuid)
+    );
+
+    CREATE TABLE IF NOT EXISTS platform_pull_checkpoints (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      resource_type TEXT NOT NULL UNIQUE,
+      cursor TEXT,
+      last_pulled_at TEXT,
       updated_at TEXT NOT NULL
     );
 
@@ -950,4 +1044,37 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
       ('role-perm-admin-staff','00000000-0000-0000-0000-000000000002','perm-staff-performance-view',datetime('now'));
 
   `);
+
+  ensureColumn(sqlite, 'sync_queue', 'batch_uuid', 'TEXT');
+  ensureColumn(sqlite, 'sync_queue', 'next_attempt_at', 'TEXT');
+  ensureColumn(sqlite, 'sync_queue', 'last_error_code', 'TEXT');
+  ensureColumn(sqlite, 'sync_queue', 'last_error_detail', 'TEXT');
+
+  const outboxTables = [
+    'users', 'products', 'sales', 'sale_items', 'sale_payments', 'expenses', 'stocks', 'purchases',
+    'customer_accounts', 'customer_account_transactions', 'cashier_shifts', 'cashier_settlements',
+    'service_orders', 'service_staff_assignments', 'service_payments', 'service_expenses',
+    'service_revenue_allocations', 'staff_earning_transactions', 'staff_settlements',
+    'shareholder_payments', 'daily_report_summaries',
+  ];
+  for (const table of outboxTables) {
+    sqlite.exec(`
+      CREATE TRIGGER IF NOT EXISTS sync_outbox_${table}_insert
+      AFTER INSERT ON ${table}
+      BEGIN
+        INSERT OR IGNORE INTO sync_queue (
+          uuid, aggregate_type, aggregate_uuid, payload_json, status, idempotency_key, attempts, created_at, updated_at
+        ) VALUES (
+          lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))), 2) || '-a' || substr(lower(hex(randomblob(2))), 2) || '-' || lower(hex(randomblob(6))),
+          '${table}', NEW.uuid, json_object('recordUuid', NEW.uuid, 'aggregateType', '${table}'), 'pending',
+          'outbox:${table}:' || NEW.uuid, 0, datetime('now'), datetime('now')
+        );
+      END;
+    `);
+  }
+}
+
+function ensureColumn(sqlite: BetterSqliteDatabase, table: string, column: string, definition: string): void {
+  const columns = sqlite.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
+  if (!columns.some((item) => item.name === column)) sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
 }

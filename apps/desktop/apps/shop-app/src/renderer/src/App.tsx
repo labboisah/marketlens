@@ -20,7 +20,7 @@ const reportTypeByLabel: Record<string, string> = {
 };
 
 export function App() {
-  const [activeView, setActiveView] = useState<'dashboard' | 'performance' | 'reports'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'performance' | 'reports' | 'synchronization'>('dashboard');
   const [selectedReport, setSelectedReport] = useState(reports[0]);
   const [accessToken, setAccessToken] = useState<string>();
   const [username, setUsername] = useState('');
@@ -29,6 +29,7 @@ export function App() {
   const [dashboard, setDashboard] = useState<Record<string, unknown>>({});
   const [performance, setPerformance] = useState<Array<Record<string, unknown>>>([]);
   const [reportRows, setReportRows] = useState<Array<Record<string, unknown>>>([]);
+  const [synchronization, setSynchronization] = useState<Record<string, unknown>>({});
   const today = new Date().toISOString().slice(0, 10);
 
   useEffect(() => {
@@ -38,6 +39,7 @@ export function App() {
 
   useEffect(() => {
     if (!accessToken || activeView === 'dashboard') return;
+    if (activeView === 'synchronization') { void window.marketlensShop.synchronization.status(accessToken).then(setSynchronization).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : 'Synchronization status could not be loaded')); return; }
     const filters = { from: today, to: today };
     const request = activeView === 'performance'
       ? window.marketlensShop.reporting.staffPerformance(accessToken, filters).then(setPerformance)
@@ -77,6 +79,7 @@ export function App() {
               ['dashboard', 'Overview'],
               ['performance', 'Staff performance'],
               ['reports', 'Reports'],
+              ['synchronization', 'Synchronization'],
             ] as const).map(([view, label]) => (
               <button key={view} className={`rounded-md px-3 py-2 text-left text-sm font-medium ${activeView === view ? 'bg-teal-700 text-white' : 'hover:bg-surface-muted'}`} onClick={() => setActiveView(view)}>
                 {label}
@@ -94,6 +97,7 @@ export function App() {
           {activeView === 'dashboard' && <Dashboard data={dashboard} />}
           {activeView === 'performance' && <StaffPerformance rows={performance} />}
           {activeView === 'reports' && <Reports accessToken={accessToken} rows={reportRows} selectedReport={selectedReport} onSelectReport={setSelectedReport} />}
+          {activeView === 'synchronization' && <Synchronization accessToken={accessToken} data={synchronization} onRefresh={() => window.marketlensShop.synchronization.status(accessToken).then(setSynchronization)} />}
         </section>
       </div>
     </main>
@@ -139,6 +143,14 @@ function Reports({ accessToken, rows, selectedReport, onSelectReport }: { access
       <article className="rounded-md border border-border bg-surface p-4"><div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-semibold">{selectedReport}</h3><div className="flex gap-2"><button onClick={() => exportReport('csv')} className="rounded-md border border-border px-3 py-2 text-sm">Export CSV</button><button onClick={() => exportReport('pdf')} className="rounded-md border border-border px-3 py-2 text-sm">Queue PDF</button></div></div>{rows.length === 0 ? <p className="mt-10 text-center text-sm text-muted">No records match this report filter.</p> : <pre className="mt-4 max-h-[28rem] overflow-auto bg-surface-muted p-3 text-xs">{JSON.stringify(rows, null, 2)}</pre>}</article>
     </div>
   </>;
+}
+
+function Synchronization({ accessToken, data, onRefresh }: { accessToken: string; data: Record<string, unknown>; onRefresh: () => Promise<void> }) {
+  const retry = async (queueUuid?: string) => { await window.marketlensShop.synchronization.retry(accessToken, queueUuid); await onRefresh(); };
+  const metrics = [['Platform status', data.platformConnectivity], ['Last successful sync', data.lastSynchronization], ['Last push', data.lastPush], ['Last pull', data.lastPull], ['Pending records', data.pendingRecords], ['Failed records', data.failedRecords], ['Conflict records', data.conflictRecords], ['Protocol version', data.protocolVersion], ['Device status', data.deviceStatus]];
+  const failures = Array.isArray(data.failures) ? data.failures as Array<Record<string, unknown>> : [];
+  const conflicts = Array.isArray(data.conflicts) ? data.conflicts as Array<Record<string, unknown>> : [];
+  return <><div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-lg font-bold">Synchronization</h2><p className="text-sm text-muted">Signed, queued synchronization with the Platform.</p></div><button onClick={() => void retry()} className="rounded-md border border-border px-3 py-2 text-sm">Retry eligible records</button></div><div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{metrics.map(([label, value]) => <article key={label} className="rounded-md border border-border bg-surface p-4"><p className="text-sm text-muted">{label}</p><p className="mt-2 font-semibold">{display(value)}</p></article>)}</div><div className="mt-5 grid gap-4 xl:grid-cols-2"><article className="rounded-md border border-border bg-surface p-4"><h3 className="font-semibold">Recent failures</h3>{failures.length === 0 ? <p className="mt-3 text-sm text-muted">No failed synchronization records.</p> : failures.map((failure) => <div key={String(failure.queueUuid)} className="mt-3 border-t border-border pt-3 text-sm"><p>{display(failure.errorCode)}</p><p className="text-muted">{display(failure.detail)}</p><button onClick={() => void retry(String(failure.queueUuid))} className="mt-2 text-teal-700">Retry record</button></div>)}</article><article className="rounded-md border border-border bg-surface p-4"><h3 className="font-semibold">Open conflicts</h3>{conflicts.length === 0 ? <p className="mt-3 text-sm text-muted">No open conflicts.</p> : conflicts.map((conflict) => <div key={String(conflict.uuid)} className="mt-3 border-t border-border pt-3 text-sm"><p>{display(conflict.aggregateType)} / {display(conflict.aggregateUuid)}</p><p className="text-muted">{display(conflict.rule)}</p></div>)}</article></div></>;
 }
 
 function DateRange() { return <div className="flex gap-2"><input aria-label="From date" className="rounded-md border border-border bg-surface px-3 py-2 text-sm" type="date" /><input aria-label="To date" className="rounded-md border border-border bg-surface px-3 py-2 text-sm" type="date" /></div>; }

@@ -35,6 +35,8 @@ export const shopEnvironmentSchema = z.object({
   PLATFORM_SYNC_ENABLED: booleanFromEnv,
   PLATFORM_SYNC_BASE_URL: z.string().url().default('http://localhost:8000/api'),
   PLATFORM_SYNC_DEVICE_TOKEN: z.string().optional().default(''),
+  PLATFORM_SYNC_HMAC_SECRET: z.string().min(16).default('development-sync-secret-change-me'),
+  PLATFORM_SYNC_PROTOCOL_VERSION: z.string().default('2026-08-04.v1'),
   PLATFORM_SYNC_INTERVAL_SECONDS: numberFromEnv.default(60),
   LOCAL_BACKUP_PATH: z.string().default('./data/backups'),
   LOCAL_EXPORT_PATH: z.string().default('./data/exports'),

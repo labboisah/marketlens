@@ -18,4 +18,8 @@ export type ShopPreloadApi = {
     readonly report: (accessToken: string, type: string, filters: { from: string; to: string }) => Promise<Array<Record<string, unknown>>>;
     readonly export: (accessToken: string, type: string, filters: { from: string; to: string }, format: 'csv' | 'pdf') => Promise<{ uuid: string; status: string }>;
   };
+  readonly synchronization: {
+    readonly status: (accessToken: string) => Promise<Record<string, unknown>>;
+    readonly retry: (accessToken: string, queueUuid?: string) => Promise<void>;
+  };
 };

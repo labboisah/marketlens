@@ -37,6 +37,16 @@ ipcMain.handle('reporting:export', (_event, input: { accessToken: string; type: 
   setImmediate(() => { try { shopApplication.services.reporting.processReportJob(job.uuid); } catch (error) { shopApplication.logger.error({ error, reportJobUuid: job.uuid }, 'Local report job failed'); } });
   return { uuid: job.uuid, status: 'queued' };
 });
+ipcMain.handle('synchronization:status', (_event, input: { accessToken: string }) => {
+  authorizeReporting(input.accessToken, 'admin.manage_config');
+  const failures = shopApplication.database.sqlite.prepare("SELECT queue_uuid AS queueUuid, error_code AS errorCode, redacted_detail AS detail, created_at AS createdAt FROM sync_failures ORDER BY id DESC LIMIT 10").all();
+  const conflicts = shopApplication.database.sqlite.prepare("SELECT uuid, aggregate_type AS aggregateType, aggregate_uuid AS aggregateUuid, rule, status, created_at AS createdAt FROM sync_conflicts WHERE status = 'open' ORDER BY id DESC LIMIT 10").all();
+  return { ...shopApplication.services.sync.status(), failures, conflicts };
+});
+ipcMain.handle('synchronization:retry', (_event, input: { accessToken: string; queueUuid?: string }) => {
+  authorizeReporting(input.accessToken, 'admin.manage_config');
+  shopApplication.services.sync.retry(input.queueUuid);
+});
 
 function authorizeReporting(accessToken: string, permission: string): string {
   const payload = verifyAccessToken(accessToken, environment.SHOP_JWT_SECRET);

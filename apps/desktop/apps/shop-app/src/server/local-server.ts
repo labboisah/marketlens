@@ -63,6 +63,12 @@ export async function createLocalServer(app: ShopApplication) {
     });
   });
 
+  app.services.sync.onEvent((event, payload) => {
+    io.emit(event, payload);
+    io.emit(socketEvents.syncStatus, app.services.sync.status());
+    if (event === 'sync.completed' || event === 'sync.failed') io.emit(socketEvents.platformStatusChanged, app.services.sync.status());
+  });
+
   await registerHealthRoutes(server, app);
   await registerSystemRoutes(server, app, io);
   await registerDatabaseRoutes(server, app);
@@ -92,6 +98,7 @@ export async function createLocalServer(app: ShopApplication) {
       io.emit(socketEvents.serverStatus, app.services.health.status());
     },
     async stop() {
+      app.services.sync.stop();
       await io.close();
       await server.close();
     },

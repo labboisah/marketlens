@@ -29,6 +29,14 @@ export const socketEvents = {
   shareholderPaymentRecorded: 'shareholder.payment_recorded',
   shareholderTransactionReversed: 'shareholder.transaction_reversed',
   syncStatus: 'sync.status',
+  syncStarted: 'sync.started',
+  syncProgress: 'sync.progress',
+  syncCompleted: 'sync.completed',
+  syncFailed: 'sync.failed',
+  syncConflict: 'sync.conflict',
+  platformStatusChanged: 'platform.status_changed',
+  moduleSettingsUpdated: 'module.settings_updated',
+  subscriptionStatusChanged: 'subscription.status_changed',
 } as const;
 
 export type ShopSocketEvent = (typeof socketEvents)[keyof typeof socketEvents];
