@@ -28,12 +28,19 @@ Describe the change and why it is needed.
 
 Describe tests run and business rules covered.
 
+- [ ] No critical business rule is left untested.
+- [ ] Synchronization changes include compatibility tests.
+- [ ] API contract changes include versioning or are backward-compatible.
+
 ## Documentation
 
 List documentation updated, or explain why no documentation change is needed.
+
+- [ ] Production migrations include rollback review notes, if applicable.
 
 ## Security
 
 - [ ] No secrets, generated credentials, production environment values, or local
       databases are committed.
 - [ ] Input validation and authorization boundaries are preserved.
+- [ ] CI is expected to pass before merge.

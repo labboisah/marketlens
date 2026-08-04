@@ -8,8 +8,7 @@ export class SystemHealthService {
       status: 'ok',
       service: 'marketlens-shop-app',
       mode: this.environment.SHOP_APP_ENV,
-      databasePath: this.environment.SHOP_SQLITE_PATH,
-      syncEnabled: this.environment.PLATFORM_SYNC_ENABLED,
+      activationStatus: this.environment.SHOP_ACTIVATION_STATUS,
       timestamp: new Date().toISOString(),
     };
   }

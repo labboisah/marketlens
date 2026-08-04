@@ -17,35 +17,37 @@ install: platform-install desktop-install monitoring-install
 
 platform-install:
 	cd apps/platform && composer install --ignore-platform-req=ext-pcntl --ignore-platform-req=ext-posix
+	cd apps/platform && npm install
 
 desktop-install:
 	cd apps/desktop && pnpm install
 
 monitoring-install:
-	@echo "Monitoring app is not scaffolded yet. When pubspec.yaml exists, run flutter pub get in apps/monitoring-app."
+	cd apps/monitoring-app && flutter pub get
 
 test:
 	cd apps/platform && php artisan test
 	cd apps/desktop && pnpm test
-	@echo "Monitoring test suite is not scaffolded yet."
+	cd apps/monitoring-app && flutter test
 
 lint:
 	cd apps/platform && vendor/bin/phpstan analyse
 	cd apps/desktop && pnpm lint
-	@echo "Monitoring linter is not scaffolded yet."
+	cd apps/monitoring-app && flutter analyze
 
 format:
 	cd apps/platform && vendor/bin/pint
 	cd apps/desktop && pnpm format
-	@echo "Monitoring formatter is not scaffolded yet."
+	cd apps/monitoring-app && dart format .
 
 build:
-	cd apps/platform && pnpm build
+	cd apps/platform && npm run build
 	cd apps/desktop && pnpm build
-	@echo "Monitoring build target is not scaffolded yet."
+	cd apps/monitoring-app && flutter build apk --debug
 
 clean:
-	@echo "No generated application artifacts are scaffolded yet."
+	cd apps/desktop && pnpm clean
+	cd apps/monitoring-app && flutter clean
 
 docs:
 	@echo "Start with README.md, docs/architecture/system-overview.md, and docs/product/development-environment.md."

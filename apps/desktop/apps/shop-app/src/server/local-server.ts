@@ -1,6 +1,9 @@
 import Fastify from 'fastify';
+import { randomUUID } from 'node:crypto';
 import { Server as SocketServer } from 'socket.io';
+import { registerActivationRoutes } from './routes/activation-routes';
 import { registerAuthRoutes } from './routes/auth-routes';
+import { registerDatabaseRoutes } from './routes/database-routes';
 import { registerDeviceRoutes } from './routes/device-routes';
 import { registerHealthRoutes } from './routes/health-routes';
 import { registerSessionRoutes } from './routes/session-routes';
@@ -32,6 +35,12 @@ export async function createLocalServer(app: ShopApplication) {
     },
   });
 
+  server.addHook('onRequest', async (request, reply) => {
+    const providedCorrelationId = request.headers['x-correlation-id'];
+    const correlationId = typeof providedCorrelationId === 'string' && providedCorrelationId.length > 0 ? providedCorrelationId : randomUUID();
+    reply.header('x-correlation-id', correlationId);
+  });
+
   io.on('connection', (socket) => {
     app.logger.info({ socketId: socket.id }, 'Client socket connected');
     io.emit(socketEvents.deviceConnected, { socketId: socket.id });
@@ -47,6 +56,8 @@ export async function createLocalServer(app: ShopApplication) {
 
   await registerHealthRoutes(server, app);
   await registerSystemRoutes(server, app, io);
+  await registerDatabaseRoutes(server, app);
+  await registerActivationRoutes(server, app);
   await registerAuthRoutes(server, app, io);
   await registerDeviceRoutes(server, app, io);
   await registerSessionRoutes(server);

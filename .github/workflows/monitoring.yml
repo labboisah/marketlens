@@ -1,0 +1,30 @@
+name: Monitoring lint and tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  monitoring:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/monitoring-app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test

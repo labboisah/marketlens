@@ -8,3 +8,6 @@ visibility through synchronized Platform data.
 
 - [Development Tooling and Installation Guide](development-environment.md)
 - [MarketLens Design System and Styling Foundation](design-system.md)
+- [Product Roadmap](roadmap.md)
+- [MVP Scope](mvp-scope.md)
+- [Out of Scope](out-of-scope.md)

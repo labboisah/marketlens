@@ -1,0 +1,82 @@
+name: Platform lint and tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  platform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/platform
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: marketlens_test
+          POSTGRES_USER: marketlens
+          POSTGRES_PASSWORD: marketlens
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U marketlens -d marketlens_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: bcmath, ctype, curl, dom, fileinfo, filter, mbstring, openssl, pdo, pdo_pgsql, tokenizer, xml, zip, redis
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare environment
+        run: cp .env.example .env
+
+      - name: Generate app key
+        run: php artisan key:generate
+
+      - name: Run migrations
+        run: php artisan migrate --force
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: marketlens_test
+          DB_USERNAME: marketlens
+          DB_PASSWORD: marketlens
+          REDIS_HOST: 127.0.0.1
+
+      - name: Laravel Pint
+        run: vendor/bin/pint --test
+
+      - name: Larastan
+        run: vendor/bin/phpstan analyse --memory-limit=1G
+
+      - name: Platform tests
+        run: php artisan test
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: marketlens_test
+          DB_USERNAME: marketlens
+          DB_PASSWORD: marketlens
+          REDIS_HOST: 127.0.0.1

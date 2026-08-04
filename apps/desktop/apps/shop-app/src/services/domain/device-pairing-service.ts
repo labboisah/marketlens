@@ -1,3 +1,4 @@
+import type { AuditLogRepository } from '../../repositories/audit-log-repository';
 import type { DeviceRepository } from '../../repositories/device-repository';
 
 export type PairDeviceInput = {
@@ -6,11 +7,19 @@ export type PairDeviceInput = {
 };
 
 export class DevicePairingService {
-  constructor(private readonly devices: DeviceRepository) {}
+  constructor(
+    private readonly devices: DeviceRepository,
+    private readonly auditLogs: AuditLogRepository,
+    private readonly expectedPairingCode: string,
+  ) {}
 
   async pair(input: PairDeviceInput) {
     if (!input.pairingCode) {
       return { paired: false, reason: 'Pairing code is required.' };
+    }
+
+    if (input.pairingCode !== this.expectedPairingCode) {
+      return { paired: false, reason: 'The pairing code is invalid.' };
     }
 
     const device = await this.devices.registerPlaceholderDevice({
@@ -18,10 +27,22 @@ export class DevicePairingService {
       kind: 'client_app',
     });
 
+    await this.devices.approveDevice(device.uuid);
+
+    this.auditLogs.record({
+      action: 'device.paired',
+      subjectType: 'device',
+      subjectUuid: device.uuid,
+      metadata: {
+        name: input.deviceName,
+        kind: 'client_app',
+      },
+    });
+
     return {
-      paired: false,
-      reason: 'Device approval workflow is not implemented yet.',
+      paired: true,
       deviceUuid: device.uuid,
+      reason: 'Device paired successfully.',
     };
   }
 }

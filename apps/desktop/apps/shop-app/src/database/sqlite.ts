@@ -16,6 +16,7 @@ export function openSqliteDatabase(databasePath: string) {
   sqlite.pragma('synchronous = NORMAL');
   sqlite.pragma('foreign_keys = ON');
   sqlite.pragma('busy_timeout = 10000');
+  sqlite.pragma('temp_store = MEMORY');
 
   return {
     sqlite,

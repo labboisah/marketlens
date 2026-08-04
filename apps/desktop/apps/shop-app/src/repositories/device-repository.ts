@@ -30,4 +30,18 @@ export class DeviceRepository extends DrizzleRepository {
 
     return device;
   }
+
+  async findByUuid(deviceUuid: string) {
+    return this.db.select().from(devices).where(devices.uuid.eq(deviceUuid)).get();
+  }
+
+  async approveDevice(deviceUuid: string) {
+    const now = new Date().toISOString();
+
+    this.db
+      .update(devices)
+      .set({ status: 'paired', pairedAt: now, updatedAt: now })
+      .where(devices.uuid.eq(deviceUuid))
+      .run();
+  }
 }
