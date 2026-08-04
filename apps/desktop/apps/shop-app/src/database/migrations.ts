@@ -62,6 +62,63 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
       updated_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS backups (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      type TEXT NOT NULL,
+      file_path TEXT NOT NULL,
+      file_size INTEGER NOT NULL,
+      checksum TEXT NOT NULL,
+      encryption_status TEXT NOT NULL,
+      application_version TEXT NOT NULL,
+      database_schema_version INTEGER NOT NULL,
+      verification_status TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      verified_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS backup_schedules (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      type TEXT NOT NULL,
+      interval_hours INTEGER NOT NULL,
+      destination_path TEXT,
+      enabled TEXT NOT NULL,
+      last_run_at TEXT,
+      next_run_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS backup_restore_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      backup_uuid TEXT NOT NULL,
+      requested_by_user_uuid TEXT NOT NULL,
+      status TEXT NOT NULL,
+      safety_backup_uuid TEXT,
+      detail TEXT,
+      created_at TEXT NOT NULL,
+      completed_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS maintenance_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      operation TEXT NOT NULL,
+      status TEXT NOT NULL,
+      detail_json TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS database_integrity_checks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      result TEXT NOT NULL,
+      detail TEXT,
+      checked_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS sync_batches (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       uuid TEXT NOT NULL UNIQUE,

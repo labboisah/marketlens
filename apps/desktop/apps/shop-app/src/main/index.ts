@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
-import { dirname, join } from 'node:path';
+import { copyFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createLocalServer } from '../server/local-server';
 import { createShopApplication } from '../services/application/shop-application';
@@ -46,6 +47,28 @@ ipcMain.handle('synchronization:status', (_event, input: { accessToken: string }
 ipcMain.handle('synchronization:retry', (_event, input: { accessToken: string; queueUuid?: string }) => {
   authorizeReporting(input.accessToken, 'admin.manage_config');
   shopApplication.services.sync.retry(input.queueUuid);
+});
+ipcMain.handle('backup:create', async (_event, input: { accessToken: string; type?: 'manual' | 'external_drive'; destinationPath?: string }) => {
+  authorizeReporting(input.accessToken, 'admin.manage_backups');
+  return shopApplication.services.backup.createBackup(input.type ?? 'manual', input.destinationPath);
+});
+ipcMain.handle('backup:maintain', (_event, input: { accessToken: string }) => {
+  authorizeReporting(input.accessToken, 'admin.manage_backups');
+  return shopApplication.services.backup.runMaintenance();
+});
+ipcMain.handle('backup:restore', async (_event, input: { accessToken: string; backupUuid: string }) => {
+  const userUuid = authorizeReporting(input.accessToken, 'admin.manage_backups');
+  const prepared = await shopApplication.services.backup.prepareRestore(input.backupUuid, userUuid);
+  try {
+    await localServer.stop();
+    shopApplication.database.sqlite.close();
+    copyFileSync(prepared.backupPath, resolve(environment.SHOP_SQLITE_PATH));
+    app.relaunch();
+    app.exit(0);
+  } catch (error) {
+    shopApplication.services.backup.completeRestore(prepared.restoreLogUuid, 'failed', error instanceof Error ? error.message : 'Restore failed');
+    throw error;
+  }
 });
 
 function authorizeReporting(accessToken: string, permission: string): string {
@@ -107,7 +130,11 @@ app.on('before-quit', () => {
 });
 
 await app.whenReady();
+if (shopApplication.services.backup.integrityCheck() !== 'ok') {
+  throw new Error('SQLite integrity check failed; local services will not start.');
+}
 await localServer.start();
+shopApplication.services.backup.startScheduledBackups();
 await createMainWindow();
 
 app.on('activate', () => {

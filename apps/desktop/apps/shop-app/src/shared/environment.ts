@@ -40,6 +40,10 @@ export const shopEnvironmentSchema = z.object({
   PLATFORM_SYNC_INTERVAL_SECONDS: numberFromEnv.default(60),
   LOCAL_BACKUP_PATH: z.string().default('./data/backups'),
   LOCAL_EXPORT_PATH: z.string().default('./data/exports'),
+  BACKUP_SCHEDULE_ENABLED: booleanFromEnv.default('true'),
+  BACKUP_SCHEDULE_INTERVAL_HOURS: numberFromEnv.default(24),
+  CLOUD_BACKUP_UPLOAD_URL: z.string().url().optional().default(''),
+  CLOUD_BACKUP_ENCRYPTION_KEY: z.string().optional().default(''),
 });
 
 export type ShopEnvironment = z.infer<typeof shopEnvironmentSchema>;

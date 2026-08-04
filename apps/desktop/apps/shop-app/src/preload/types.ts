@@ -22,4 +22,9 @@ export type ShopPreloadApi = {
     readonly status: (accessToken: string) => Promise<Record<string, unknown>>;
     readonly retry: (accessToken: string, queueUuid?: string) => Promise<void>;
   };
+  readonly backup: {
+    readonly create: (accessToken: string, type?: 'manual' | 'external_drive', destinationPath?: string) => Promise<Record<string, unknown>>;
+    readonly maintain: (accessToken: string) => Promise<Record<string, unknown>>;
+    readonly restore: (accessToken: string, backupUuid: string) => Promise<void>;
+  };
 };
