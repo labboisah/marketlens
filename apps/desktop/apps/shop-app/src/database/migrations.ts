@@ -466,6 +466,182 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
       created_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS terminals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      code TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      status TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS cash_accounts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      code TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      current_balance TEXT NOT NULL,
+      active TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS bank_accounts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      code TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      bank_name TEXT,
+      account_number_masked TEXT,
+      current_balance TEXT NOT NULL,
+      active TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS cashier_shifts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      terminal_uuid TEXT NOT NULL,
+      cash_account_uuid TEXT NOT NULL,
+      cashier_user_uuid TEXT NOT NULL,
+      status TEXT NOT NULL,
+      opening_cash TEXT NOT NULL,
+      expected_cash TEXT,
+      actual_cash TEXT,
+      variance TEXT,
+      opened_at TEXT NOT NULL,
+      closed_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS cashier_shift_payments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      shift_uuid TEXT NOT NULL,
+      type TEXT NOT NULL,
+      amount TEXT NOT NULL,
+      reference TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS cashier_shift_adjustments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      shift_uuid TEXT NOT NULL,
+      amount TEXT NOT NULL,
+      reason TEXT NOT NULL,
+      created_by_user_uuid TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS cashier_settlements (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      shift_uuid TEXT NOT NULL UNIQUE,
+      expected_cash TEXT NOT NULL,
+      actual_cash TEXT NOT NULL,
+      variance TEXT NOT NULL,
+      status TEXT NOT NULL,
+      verified_by_user_uuid TEXT,
+      verified_at TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS expense_categories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL UNIQUE,
+      requires_approval TEXT NOT NULL,
+      active TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS expenses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      category_uuid TEXT NOT NULL,
+      cash_account_uuid TEXT,
+      bank_account_uuid TEXT,
+      shift_uuid TEXT,
+      amount TEXT NOT NULL,
+      payment_method TEXT NOT NULL,
+      description TEXT NOT NULL,
+      receipt_attachment_path TEXT,
+      status TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS expense_approvals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      expense_uuid TEXT NOT NULL UNIQUE,
+      approved_by_user_uuid TEXT NOT NULL,
+      status TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS cash_transactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      cash_account_uuid TEXT NOT NULL,
+      transaction_type TEXT NOT NULL,
+      amount TEXT NOT NULL,
+      reference_type TEXT,
+      reference_uuid TEXT,
+      metadata_json TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS bank_transactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      bank_account_uuid TEXT NOT NULL,
+      transaction_type TEXT NOT NULL,
+      amount TEXT NOT NULL,
+      reference_type TEXT,
+      reference_uuid TEXT,
+      metadata_json TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS fund_transfers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      from_account_type TEXT NOT NULL,
+      from_account_uuid TEXT NOT NULL,
+      to_account_type TEXT NOT NULL,
+      to_account_uuid TEXT NOT NULL,
+      amount TEXT NOT NULL,
+      reference TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS owner_withdrawals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      type TEXT NOT NULL,
+      cash_account_uuid TEXT,
+      amount TEXT,
+      reason TEXT NOT NULL,
+      status TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS owner_withdrawal_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      owner_withdrawal_uuid TEXT NOT NULL,
+      product_uuid TEXT,
+      quantity TEXT,
+      description TEXT,
+      created_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS warehouses (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       uuid TEXT NOT NULL UNIQUE,
@@ -658,6 +834,14 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
       ('perm-fin-approve-expense','finance.approve_expense','Approve expense','Finance',datetime('now'),datetime('now')),
       ('perm-fin-view-profit','finance.view_profit','View profit','Finance',datetime('now'),datetime('now')),
       ('perm-fin-manage-debt','finance.manage_customer_debt','Manage customer debt','Finance',datetime('now'),datetime('now')),
+      ('perm-fin-manage-cash','finance.manage_cash_accounts','Manage cash and bank accounts','Finance',datetime('now'),datetime('now')),
+      ('perm-fin-open-shift','finance.open_cashier_shift','Open cashier shifts','Finance',datetime('now'),datetime('now')),
+      ('perm-fin-close-shift','finance.close_cashier_shift','Close cashier shifts','Finance',datetime('now'),datetime('now')),
+      ('perm-fin-verify-settlement','finance.verify_cashier_settlement','Verify cashier settlements','Finance',datetime('now'),datetime('now')),
+      ('perm-fin-record-expense-payment','finance.record_cash_expense','Record cash or bank expense','Finance',datetime('now'),datetime('now')),
+      ('perm-fin-approve-expense-payment','finance.approve_cash_expense','Approve cash or bank expense','Finance',datetime('now'),datetime('now')),
+      ('perm-fin-transfer-funds','finance.transfer_funds','Transfer funds between accounts','Finance',datetime('now'),datetime('now')),
+      ('perm-fin-record-owner-withdrawal','finance.record_owner_withdrawal','Record owner withdrawal','Finance',datetime('now'),datetime('now')),
       ('perm-customer-manage','customers.manage','Manage customer profiles','Customers',datetime('now'),datetime('now')),
       ('perm-customer-record-payment','customers.record_payment','Record customer payments','Customers',datetime('now'),datetime('now')),
       ('perm-customer-approve-credit','customers.approve_credit','Approve customer credit','Customers',datetime('now'),datetime('now')),

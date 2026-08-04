@@ -10,6 +10,11 @@ export const socketEvents = {
   purchaseCreated: 'purchase.created',
   purchaseReceived: 'purchase.received',
   purchasePaymentRecorded: 'purchase.payment_recorded',
+  cashierShiftOpened: 'cashier.shift_opened',
+  cashierShiftClosed: 'cashier.shift_closed',
+  cashierSettlementVerified: 'cashier.settlement_verified',
+  expenseRecorded: 'expense.recorded',
+  expenseApproved: 'expense.approved',
   syncStatus: 'sync.status',
 } as const;
 

@@ -462,6 +462,182 @@ export const debtWriteOffs = sqliteTable('debt_write_offs', {
   createdAt: text('created_at').notNull(),
 });
 
+export const terminals = sqliteTable('terminals', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  code: text('code').notNull().unique(),
+  name: text('name').notNull(),
+  status: text('status').notNull(),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+export const cashAccounts = sqliteTable('cash_accounts', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  code: text('code').notNull().unique(),
+  name: text('name').notNull(),
+  currentBalance: text('current_balance').notNull(),
+  active: text('active').notNull(),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+export const bankAccounts = sqliteTable('bank_accounts', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  code: text('code').notNull().unique(),
+  name: text('name').notNull(),
+  bankName: text('bank_name'),
+  accountNumberMasked: text('account_number_masked'),
+  currentBalance: text('current_balance').notNull(),
+  active: text('active').notNull(),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+export const cashierShifts = sqliteTable('cashier_shifts', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  terminalUuid: text('terminal_uuid').notNull(),
+  cashAccountUuid: text('cash_account_uuid').notNull(),
+  cashierUserUuid: text('cashier_user_uuid').notNull(),
+  status: text('status').notNull(),
+  openingCash: text('opening_cash').notNull(),
+  expectedCash: text('expected_cash'),
+  actualCash: text('actual_cash'),
+  variance: text('variance'),
+  openedAt: text('opened_at').notNull(),
+  closedAt: text('closed_at'),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+export const cashierShiftPayments = sqliteTable('cashier_shift_payments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  shiftUuid: text('shift_uuid').notNull(),
+  type: text('type').notNull(),
+  amount: text('amount').notNull(),
+  reference: text('reference'),
+  createdAt: text('created_at').notNull(),
+});
+
+export const cashierShiftAdjustments = sqliteTable('cashier_shift_adjustments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  shiftUuid: text('shift_uuid').notNull(),
+  amount: text('amount').notNull(),
+  reason: text('reason').notNull(),
+  createdByUserUuid: text('created_by_user_uuid').notNull(),
+  createdAt: text('created_at').notNull(),
+});
+
+export const cashierSettlements = sqliteTable('cashier_settlements', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  shiftUuid: text('shift_uuid').notNull().unique(),
+  expectedCash: text('expected_cash').notNull(),
+  actualCash: text('actual_cash').notNull(),
+  variance: text('variance').notNull(),
+  status: text('status').notNull(),
+  verifiedByUserUuid: text('verified_by_user_uuid'),
+  verifiedAt: text('verified_at'),
+  createdAt: text('created_at').notNull(),
+});
+
+export const expenseCategories = sqliteTable('expense_categories', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  name: text('name').notNull().unique(),
+  requiresApproval: text('requires_approval').notNull(),
+  active: text('active').notNull(),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+export const expenses = sqliteTable('expenses', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  categoryUuid: text('category_uuid').notNull(),
+  cashAccountUuid: text('cash_account_uuid'),
+  bankAccountUuid: text('bank_account_uuid'),
+  shiftUuid: text('shift_uuid'),
+  amount: text('amount').notNull(),
+  paymentMethod: text('payment_method').notNull(),
+  description: text('description').notNull(),
+  receiptAttachmentPath: text('receipt_attachment_path'),
+  status: text('status').notNull(),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+export const expenseApprovals = sqliteTable('expense_approvals', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  expenseUuid: text('expense_uuid').notNull().unique(),
+  approvedByUserUuid: text('approved_by_user_uuid').notNull(),
+  status: text('status').notNull(),
+  createdAt: text('created_at').notNull(),
+});
+
+export const cashTransactions = sqliteTable('cash_transactions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  cashAccountUuid: text('cash_account_uuid').notNull(),
+  transactionType: text('transaction_type').notNull(),
+  amount: text('amount').notNull(),
+  referenceType: text('reference_type'),
+  referenceUuid: text('reference_uuid'),
+  metadataJson: text('metadata_json'),
+  createdAt: text('created_at').notNull(),
+});
+
+export const bankTransactions = sqliteTable('bank_transactions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  bankAccountUuid: text('bank_account_uuid').notNull(),
+  transactionType: text('transaction_type').notNull(),
+  amount: text('amount').notNull(),
+  referenceType: text('reference_type'),
+  referenceUuid: text('reference_uuid'),
+  metadataJson: text('metadata_json'),
+  createdAt: text('created_at').notNull(),
+});
+
+export const fundTransfers = sqliteTable('fund_transfers', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  fromAccountType: text('from_account_type').notNull(),
+  fromAccountUuid: text('from_account_uuid').notNull(),
+  toAccountType: text('to_account_type').notNull(),
+  toAccountUuid: text('to_account_uuid').notNull(),
+  amount: text('amount').notNull(),
+  reference: text('reference'),
+  createdAt: text('created_at').notNull(),
+});
+
+export const ownerWithdrawals = sqliteTable('owner_withdrawals', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  type: text('type').notNull(),
+  cashAccountUuid: text('cash_account_uuid'),
+  amount: text('amount'),
+  reason: text('reason').notNull(),
+  status: text('status').notNull(),
+  createdAt: text('created_at').notNull(),
+});
+
+export const ownerWithdrawalItems = sqliteTable('owner_withdrawal_items', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  ownerWithdrawalUuid: text('owner_withdrawal_uuid').notNull(),
+  productUuid: text('product_uuid'),
+  quantity: text('quantity'),
+  description: text('description'),
+  createdAt: text('created_at').notNull(),
+});
+
 export const warehouses = sqliteTable('warehouses', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   uuid: text('uuid').notNull().unique(),
