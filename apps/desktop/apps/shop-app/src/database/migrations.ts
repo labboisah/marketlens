@@ -653,6 +653,24 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
     CREATE TABLE IF NOT EXISTS receipts (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, sale_uuid TEXT NOT NULL UNIQUE, format TEXT NOT NULL, receipt_number TEXT NOT NULL UNIQUE, print_count INTEGER NOT NULL, created_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS receipt_reprints (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, receipt_uuid TEXT NOT NULL, reason TEXT NOT NULL, approved_by_user_uuid TEXT, created_at TEXT NOT NULL);
 
+    CREATE TABLE IF NOT EXISTS service_categories (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, name TEXT NOT NULL UNIQUE, active TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS services (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, category_uuid TEXT NOT NULL, code TEXT NOT NULL UNIQUE, name TEXT NOT NULL, active TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS service_branch_settings (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, service_uuid TEXT NOT NULL, branch_uuid TEXT NOT NULL, enabled TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS service_prices (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, service_uuid TEXT NOT NULL, branch_uuid TEXT, amount TEXT NOT NULL, active TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS service_price_histories (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, service_price_uuid TEXT NOT NULL, old_amount TEXT, new_amount TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS service_revenue_share_rules (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, service_uuid TEXT, branch_uuid TEXT, basis TEXT NOT NULL, fixed_amount TEXT, requires_approval TEXT NOT NULL, active TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS service_revenue_share_rule_components (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, rule_uuid TEXT NOT NULL, type TEXT NOT NULL, percentage TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS service_orders (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, order_number TEXT NOT NULL UNIQUE, customer_uuid TEXT, branch_uuid TEXT NOT NULL, status TEXT NOT NULL, discount_amount TEXT NOT NULL, created_at TEXT NOT NULL, completed_at TEXT);
+    CREATE TABLE IF NOT EXISTS service_order_items (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, order_uuid TEXT NOT NULL, service_uuid TEXT NOT NULL, quantity TEXT NOT NULL, unit_price TEXT NOT NULL, line_total TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS service_staff_assignments (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, order_item_uuid TEXT NOT NULL, staff_user_uuid TEXT NOT NULL, contribution_percentage TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS service_payments (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, order_uuid TEXT NOT NULL, amount TEXT NOT NULL, payment_method TEXT NOT NULL, reference TEXT, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS service_expenses (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, order_uuid TEXT NOT NULL, amount TEXT NOT NULL, description TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS service_revenue_allocations (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, order_uuid TEXT NOT NULL, rule_uuid TEXT NOT NULL, component_type TEXT NOT NULL, staff_user_uuid TEXT, amount TEXT NOT NULL, status TEXT NOT NULL, reversal_of_uuid TEXT, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS staff_earning_accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, staff_user_uuid TEXT NOT NULL UNIQUE, current_balance TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS staff_earning_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, staff_user_uuid TEXT NOT NULL, type TEXT NOT NULL, amount TEXT NOT NULL, reference_uuid TEXT, reversal_of_uuid TEXT, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS staff_settlements (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, staff_user_uuid TEXT NOT NULL, amount TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS staff_settlement_items (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, settlement_uuid TEXT NOT NULL, earning_transaction_uuid TEXT NOT NULL, amount TEXT NOT NULL, created_at TEXT NOT NULL);
+
     CREATE TABLE IF NOT EXISTS warehouses (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       uuid TEXT NOT NULL UNIQUE,

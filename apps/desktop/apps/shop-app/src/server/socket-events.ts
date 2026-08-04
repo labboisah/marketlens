@@ -22,6 +22,10 @@ export const socketEvents = {
   shiftUpdated: 'shift.updated',
   approvalRequested: 'approval.requested',
   approvalResolved: 'approval.resolved',
+  serviceOrderCreated: 'service.order_created',
+  serviceOrderCompleted: 'service.order_completed',
+  serviceAllocationCreated: 'service.allocation_created',
+  staffSettlementRecorded: 'staff.settlement_recorded',
   syncStatus: 'sync.status',
 } as const;
 
