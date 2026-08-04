@@ -667,6 +667,17 @@ export const staffEarningTransactions = sqliteTable('staff_earning_transactions'
 export const staffSettlements = sqliteTable('staff_settlements', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), staffUserUuid: text('staff_user_uuid').notNull(), amount: text('amount').notNull(), status: text('status').notNull(), createdAt: text('created_at').notNull() });
 export const staffSettlementItems = sqliteTable('staff_settlement_items', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), settlementUuid: text('settlement_uuid').notNull(), earningTransactionUuid: text('earning_transaction_uuid').notNull(), amount: text('amount').notNull(), createdAt: text('created_at').notNull() });
 
+export const platformShareholders = sqliteTable('platform_shareholders', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), name: text('name').notNull(), status: text('status').notNull(), syncedAt: text('synced_at').notNull() });
+export const platformShareClasses = sqliteTable('platform_share_classes', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), name: text('name').notNull(), syncedAt: text('synced_at').notNull() });
+export const platformShareholdings = sqliteTable('platform_shareholdings', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), shareholderUuid: text('shareholder_uuid').notNull(), shareClassUuid: text('share_class_uuid').notNull(), units: text('units').notNull(), syncedAt: text('synced_at').notNull() });
+export const platformProfitPeriods = sqliteTable('platform_profit_periods', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), status: text('status').notNull(), approvedAt: text('approved_at'), syncedAt: text('synced_at').notNull() });
+export const platformShareholderDistributions = sqliteTable('platform_shareholder_distributions', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), shareholderUuid: text('shareholder_uuid').notNull(), profitPeriodUuid: text('profit_period_uuid').notNull(), approvedEntitlement: text('approved_entitlement').notNull(), status: text('status').notNull(), syncedAt: text('synced_at').notNull() });
+export const shareholderPayments = sqliteTable('shareholder_payments', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), platformDistributionUuid: text('platform_distribution_uuid').notNull(), shareholderUuid: text('shareholder_uuid').notNull(), amount: text('amount').notNull(), paymentMethod: text('payment_method').notNull(), reference: text('reference'), createdAt: text('created_at').notNull() });
+export const shareholderCapitalContributions = sqliteTable('shareholder_capital_contributions', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), shareholderUuid: text('shareholder_uuid').notNull(), amount: text('amount').notNull(), reference: text('reference'), createdAt: text('created_at').notNull() });
+export const shareholderLoans = sqliteTable('shareholder_loans', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), shareholderUuid: text('shareholder_uuid').notNull(), principalAmount: text('principal_amount').notNull(), outstandingBalance: text('outstanding_balance').notNull(), reference: text('reference'), createdAt: text('created_at').notNull() });
+export const shareholderLoanPayments = sqliteTable('shareholder_loan_payments', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), loanUuid: text('loan_uuid').notNull(), amount: text('amount').notNull(), reference: text('reference'), createdAt: text('created_at').notNull() });
+export const shareholderAccountTransactions = sqliteTable('shareholder_account_transactions', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), shareholderUuid: text('shareholder_uuid').notNull(), transactionType: text('transaction_type').notNull(), amount: text('amount').notNull(), referenceUuid: text('reference_uuid'), reversalOfUuid: text('reversal_of_uuid'), metadataJson: text('metadata_json'), createdAt: text('created_at').notNull() });
+
 export const warehouses = sqliteTable('warehouses', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   uuid: text('uuid').notNull().unique(),
@@ -813,4 +824,31 @@ export const passwordResetRequests = sqliteTable('password_reset_requests', {
   expiresAt: text('expires_at').notNull(),
   usedAt: text('used_at'),
   createdAt: text('created_at').notNull(),
+});
+
+export const dailyReportSummaries = sqliteTable('daily_report_summaries', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  branchUuid: text('branch_uuid').notNull(),
+  reportDate: text('report_date').notNull(),
+  salesTotal: text('sales_total').notNull(),
+  expensesTotal: text('expenses_total').notNull(),
+  grossProfit: text('gross_profit').notNull(),
+  netProfit: text('net_profit').notNull(),
+  paymentBreakdownJson: text('payment_breakdown_json').notNull(),
+  generatedAt: text('generated_at').notNull(),
+});
+
+export const reportJobs = sqliteTable('report_jobs', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  reportType: text('report_type').notNull(),
+  requestedByUserUuid: text('requested_by_user_uuid').notNull(),
+  filtersJson: text('filters_json').notNull(),
+  format: text('format').notNull(),
+  status: text('status').notNull(),
+  resultPath: text('result_path'),
+  errorMessage: text('error_message'),
+  createdAt: text('created_at').notNull(),
+  completedAt: text('completed_at'),
 });

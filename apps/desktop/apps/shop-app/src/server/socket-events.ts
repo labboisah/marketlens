@@ -26,6 +26,8 @@ export const socketEvents = {
   serviceOrderCompleted: 'service.order_completed',
   serviceAllocationCreated: 'service.allocation_created',
   staffSettlementRecorded: 'staff.settlement_recorded',
+  shareholderPaymentRecorded: 'shareholder.payment_recorded',
+  shareholderTransactionReversed: 'shareholder.transaction_reversed',
   syncStatus: 'sync.status',
 } as const;
 

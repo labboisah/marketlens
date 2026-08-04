@@ -9,4 +9,13 @@ export type ShopPreloadApi = {
   readonly system: {
     readonly ping: () => Promise<string>;
   };
+  readonly authentication: {
+    readonly login: (username: string, password: string) => Promise<{ accessToken?: string; authenticated: boolean }>;
+  };
+  readonly reporting: {
+    readonly dashboard: (accessToken: string, date?: string) => Promise<Record<string, unknown>>;
+    readonly staffPerformance: (accessToken: string, filters: { from: string; to: string }) => Promise<Array<Record<string, unknown>>>;
+    readonly report: (accessToken: string, type: string, filters: { from: string; to: string }) => Promise<Array<Record<string, unknown>>>;
+    readonly export: (accessToken: string, type: string, filters: { from: string; to: string }, format: 'csv' | 'pdf') => Promise<{ uuid: string; status: string }>;
+  };
 };

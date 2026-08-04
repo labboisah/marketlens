@@ -671,6 +671,17 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
     CREATE TABLE IF NOT EXISTS staff_settlements (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, staff_user_uuid TEXT NOT NULL, amount TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS staff_settlement_items (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, settlement_uuid TEXT NOT NULL, earning_transaction_uuid TEXT NOT NULL, amount TEXT NOT NULL, created_at TEXT NOT NULL);
 
+    CREATE TABLE IF NOT EXISTS platform_shareholders (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, name TEXT NOT NULL, status TEXT NOT NULL, synced_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS platform_share_classes (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, name TEXT NOT NULL, synced_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS platform_shareholdings (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, shareholder_uuid TEXT NOT NULL, share_class_uuid TEXT NOT NULL, units TEXT NOT NULL, synced_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS platform_profit_periods (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, status TEXT NOT NULL, approved_at TEXT, synced_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS platform_shareholder_distributions (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, shareholder_uuid TEXT NOT NULL, profit_period_uuid TEXT NOT NULL, approved_entitlement TEXT NOT NULL, status TEXT NOT NULL, synced_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS shareholder_payments (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, platform_distribution_uuid TEXT NOT NULL, shareholder_uuid TEXT NOT NULL, amount TEXT NOT NULL, payment_method TEXT NOT NULL, reference TEXT, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS shareholder_capital_contributions (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, shareholder_uuid TEXT NOT NULL, amount TEXT NOT NULL, reference TEXT, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS shareholder_loans (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, shareholder_uuid TEXT NOT NULL, principal_amount TEXT NOT NULL, outstanding_balance TEXT NOT NULL, reference TEXT, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS shareholder_loan_payments (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, loan_uuid TEXT NOT NULL, amount TEXT NOT NULL, reference TEXT, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS shareholder_account_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, shareholder_uuid TEXT NOT NULL, transaction_type TEXT NOT NULL, amount TEXT NOT NULL, reference_uuid TEXT, reversal_of_uuid TEXT, metadata_json TEXT, created_at TEXT NOT NULL);
+
     CREATE TABLE IF NOT EXISTS warehouses (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       uuid TEXT NOT NULL UNIQUE,
@@ -819,6 +830,34 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
       created_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS daily_report_summaries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      branch_uuid TEXT NOT NULL,
+      report_date TEXT NOT NULL,
+      sales_total TEXT NOT NULL,
+      expenses_total TEXT NOT NULL,
+      gross_profit TEXT NOT NULL,
+      net_profit TEXT NOT NULL,
+      payment_breakdown_json TEXT NOT NULL,
+      generated_at TEXT NOT NULL,
+      UNIQUE(branch_uuid, report_date)
+    );
+
+    CREATE TABLE IF NOT EXISTS report_jobs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      report_type TEXT NOT NULL,
+      requested_by_user_uuid TEXT NOT NULL,
+      filters_json TEXT NOT NULL,
+      format TEXT NOT NULL,
+      status TEXT NOT NULL,
+      result_path TEXT,
+      error_message TEXT,
+      created_at TEXT NOT NULL,
+      completed_at TEXT
+    );
+
     -- Seed default roles and a minimal set of permissions (idempotent)
     INSERT OR IGNORE INTO roles (uuid, name, description, created_at, updated_at)
     VALUES
@@ -850,6 +889,11 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
       ('perm-sales-approve-return','sales.approve_return','Approve return','Sales',datetime('now'),datetime('now')),
       ('perm-sales-view-cost','sales.view_cost','View cost price','Sales',datetime('now'),datetime('now')),
       ('perm-sales-view-reports','sales.view_reports','View sales reports','Sales',datetime('now'),datetime('now')),
+      ('perm-dashboard-view','dashboard.view','View local administrative dashboard','Reporting',datetime('now'),datetime('now')),
+      ('perm-reports-view','reports.view','View local operational reports','Reporting',datetime('now'),datetime('now')),
+      ('perm-reports-export','reports.export','Export local operational reports','Reporting',datetime('now'),datetime('now')),
+      ('perm-reports-manage-jobs','reports.manage_jobs','Process local report jobs','Reporting',datetime('now'),datetime('now')),
+      ('perm-staff-performance-view','staff.performance.view','View staff performance','Reporting',datetime('now'),datetime('now')),
       ('perm-inv-manage-products','inventory.manage_products','Manage products','Inventory',datetime('now'),datetime('now')),
       ('perm-inv-manage-prices','inventory.manage_prices','Manage prices','Inventory',datetime('now'),datetime('now')),
       ('perm-inv-record-purchases','inventory.record_purchases','Record purchases','Inventory',datetime('now'),datetime('now')),
@@ -891,6 +935,19 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
       ('perm-sh-record-capital','shareholders.record_capital_contribution','Record capital contribution','Shareholders',datetime('now'),datetime('now')),
       ('perm-sh-record-loan','shareholders.record_loan','Record shareholder loan','Shareholders',datetime('now'),datetime('now')),
       ('perm-sh-view-statements','shareholders.view_statements','View shareholder statements','Shareholders',datetime('now'),datetime('now'));
+
+    INSERT OR IGNORE INTO role_permissions (uuid, role_uuid, permission_uuid, created_at)
+    VALUES
+      ('role-perm-owner-dashboard','00000000-0000-0000-0000-000000000001','perm-dashboard-view',datetime('now')),
+      ('role-perm-owner-reports','00000000-0000-0000-0000-000000000001','perm-reports-view',datetime('now')),
+      ('role-perm-owner-export','00000000-0000-0000-0000-000000000001','perm-reports-export',datetime('now')),
+      ('role-perm-owner-jobs','00000000-0000-0000-0000-000000000001','perm-reports-manage-jobs',datetime('now')),
+      ('role-perm-owner-staff','00000000-0000-0000-0000-000000000001','perm-staff-performance-view',datetime('now')),
+      ('role-perm-admin-dashboard','00000000-0000-0000-0000-000000000002','perm-dashboard-view',datetime('now')),
+      ('role-perm-admin-reports','00000000-0000-0000-0000-000000000002','perm-reports-view',datetime('now')),
+      ('role-perm-admin-export','00000000-0000-0000-0000-000000000002','perm-reports-export',datetime('now')),
+      ('role-perm-admin-jobs','00000000-0000-0000-0000-000000000002','perm-reports-manage-jobs',datetime('now')),
+      ('role-perm-admin-staff','00000000-0000-0000-0000-000000000002','perm-staff-performance-view',datetime('now'));
 
   `);
 }

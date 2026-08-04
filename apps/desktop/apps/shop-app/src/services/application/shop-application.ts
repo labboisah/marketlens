@@ -25,6 +25,8 @@ import { CustomerService } from '../domain/customer-service';
 import { CashierService } from '../domain/cashier-service';
 import { SalesService } from '../domain/sales-service';
 import { ServiceRevenueService } from '../domain/service-revenue-service';
+import { ShareholderOperationsService } from '../domain/shareholder-operations-service';
+import { LocalReportingService } from '../domain/local-reporting-service';
 import type { ShopEnvironment } from '../../shared/environment';
 import { SyncQueueRepository } from '../../repositories/sync-queue-repository';
 
@@ -63,6 +65,9 @@ export async function createShopApplication(environment: ShopEnvironment) {
       status: 'active',
     });
 
+    database.sqlite.prepare('INSERT OR IGNORE INTO user_roles (uuid, user_uuid, role_uuid, created_at) VALUES (?, ?, ?, ?)')
+      .run(crypto.randomUUID(), adminUser.uuid, '00000000-0000-0000-0000-000000000002', new Date().toISOString());
+
     auditLogRepository.record({
       action: 'user.setup',
       subjectType: 'user',
@@ -91,6 +96,8 @@ export async function createShopApplication(environment: ShopEnvironment) {
       cashier: new CashierService(database.sqlite, auditLogRepository, syncQueueRepository),
       sales: new SalesService(database.sqlite, auditLogRepository, syncQueueRepository),
       serviceRevenue: new ServiceRevenueService(database.sqlite, auditLogRepository, syncQueueRepository),
+      shareholderOperations: new ShareholderOperationsService(database.sqlite, auditLogRepository, syncQueueRepository),
+      reporting: new LocalReportingService(database.sqlite, environment.SHOP_BRANCH_UUID, environment.LOCAL_EXPORT_PATH),
       roles: roleRepository,
       permissions: permissionRepository,
       sessions: sessionRepository,
