@@ -26,6 +26,7 @@ export function LoginScreen() {
   const setCurrentUser = useClientUiStore((state) => state.setCurrentUser);
   const setConnectionState = useClientUiStore((state) => state.setConnectionState);
   const setSessionState = useClientUiStore((state) => state.setSessionState);
+  const setShiftStatus = useClientUiStore((state) => state.setShiftStatus);
   const notify = useClientUiStore((state) => state.notify);
   const form = useForm<LoginForm>({
     defaultValues: {
@@ -47,6 +48,7 @@ export function LoginScreen() {
       setAccountStatus(session.accountStatus);
       setPasswordChangeRequired(session.passwordChangeRequired);
       setCurrentUser(session.user);
+      setShiftStatus('open');
       await window.marketlensClient.session.save({
         shopBaseUrl,
         userUuid: session.userUuid,

@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 export interface ClientPreferencesRecord {
   shopBaseUrl: string;
   lastDeviceName: string;
-  preferredRole: 'cashier' | 'storekeeper' | 'manager' | 'accountant';
+  preferredRole: 'owner' | 'administrator' | 'manager' | 'cashier' | 'storekeeper' | 'accountant' | 'service_staff' | 'supervisor' | 'auditor';
 }
 
 const defaultPreferences: ClientPreferencesRecord = {

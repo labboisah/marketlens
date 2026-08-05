@@ -4,10 +4,11 @@ import type { ClientApplicationState } from '../services/application-state-servi
 
 export type ClientScreen = 'connection' | 'pairing' | 'login' | 'workspace' | 'session_expired' | 'account_disabled' | 'password_change' | 'lock';
 export type ConnectionState = 'connected' | 'connecting' | 'disconnected';
-export type ClientRole = Extract<ContractClientRole, 'cashier' | 'storekeeper' | 'manager' | 'accountant'>;
+export type ClientRole = ContractClientRole;
 export type NotificationTone = 'success' | 'warning' | 'danger' | 'information';
 export type DeviceAuthorizationState = 'unpaired' | 'pending' | 'paired' | 'authorized' | 'revoked' | 'unknown';
 export type SessionState = 'missing' | 'active' | 'expired';
+export type ShiftStatus = 'open' | 'closing' | 'closed';
 
 export interface ClientNotification {
   id: string;
@@ -38,6 +39,8 @@ interface ClientUiState {
   currentVersion: string;
   updateRequired: boolean;
   currentUser?: ShopUserSummary;
+  shiftStatus: ShiftStatus;
+  activeNavigationId: string;
   notifications: ClientNotification[];
   setScreen(screen: ClientScreen): void;
   setConnectionState(state: ConnectionState): void;
@@ -60,6 +63,8 @@ interface ClientUiState {
   setCurrentVersion(version: string): void;
   setUpdateRequired(required: boolean): void;
   setCurrentUser(user?: ShopUserSummary): void;
+  setShiftStatus(status: ShiftStatus): void;
+  setActiveNavigationId(id: string): void;
   bootstrap(input: {
     shopBaseUrl: string;
     activeRole: ClientRole;
@@ -81,6 +86,8 @@ interface ClientUiState {
     updateRequired?: boolean;
     currentUser?: ShopUserSummary;
     connectionState?: ConnectionState;
+    shiftStatus?: ShiftStatus;
+    activeNavigationId?: string;
   }): void;
   resetSession(): void;
   notify(notification: Omit<ClientNotification, 'id'>): void;
@@ -106,6 +113,8 @@ export const useClientUiStore = create<ClientUiState>((set) => ({
   lastSuccessfulConnectionAt: undefined,
   currentVersion: '0.0.0',
   updateRequired: false,
+  shiftStatus: 'closed',
+  activeNavigationId: 'dashboard-home',
   notifications: [],
   setScreen: (screen) => set({ screen }),
   setConnectionState: (connectionState) => set({ connectionState }),
@@ -128,6 +137,8 @@ export const useClientUiStore = create<ClientUiState>((set) => ({
   setCurrentVersion: (currentVersion) => set({ currentVersion }),
   setUpdateRequired: (updateRequired) => set({ updateRequired }),
   setCurrentUser: (currentUser) => set({ currentUser }),
+  setShiftStatus: (shiftStatus) => set({ shiftStatus }),
+  setActiveNavigationId: (activeNavigationId) => set({ activeNavigationId }),
   bootstrap: (input) =>
     set({
       shopBaseUrl: input.shopBaseUrl,
@@ -150,6 +161,8 @@ export const useClientUiStore = create<ClientUiState>((set) => ({
       updateRequired: input.updateRequired ?? false,
       currentUser: input.currentUser,
       connectionState: input.connectionState ?? 'disconnected',
+      shiftStatus: input.shiftStatus ?? 'closed',
+      activeNavigationId: input.activeNavigationId ?? 'dashboard-home',
     }),
   resetSession: () =>
     set({
@@ -163,6 +176,8 @@ export const useClientUiStore = create<ClientUiState>((set) => ({
       sessionState: 'expired',
       currentUser: undefined,
       lockReason: undefined,
+      shiftStatus: 'closed',
+      activeNavigationId: 'dashboard-home',
     }),
   notify: (notification) =>
     set((state) => ({

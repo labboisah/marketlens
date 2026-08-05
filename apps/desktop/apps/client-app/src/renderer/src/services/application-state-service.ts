@@ -38,11 +38,29 @@ export interface ResolvedApplicationState {
   connected: boolean;
 }
 
-const roleModules: Record<ClientRole, string[]> = {
-  cashier: ['sales', 'cashier_shifts'],
-  storekeeper: ['inventory', 'purchases'],
-  manager: ['sales', 'reporting'],
-  accountant: ['reporting', 'customers', 'purchases'],
+const permissionModuleMap: Array<{ prefix: string; module: string }> = [
+  { prefix: 'sales.', module: 'sales' },
+  { prefix: 'pos.', module: 'sales' },
+  { prefix: 'products.', module: 'inventory' },
+  { prefix: 'inventory.', module: 'inventory' },
+  { prefix: 'stock.', module: 'inventory' },
+  { prefix: 'purchases.', module: 'purchases' },
+  { prefix: 'suppliers.', module: 'suppliers' },
+  { prefix: 'customers.', module: 'customers' },
+  { prefix: 'expenses.', module: 'expenses' },
+  { prefix: 'services.', module: 'services' },
+  { prefix: 'staff_earnings.', module: 'staff_earnings' },
+  { prefix: 'cashier_shifts.', module: 'cashier_shifts' },
+  { prefix: 'approvals.', module: 'approvals' },
+  { prefix: 'reports.', module: 'reporting' },
+  { prefix: 'dashboard.', module: 'reporting' },
+  { prefix: 'view-sales', module: 'sales' },
+  { prefix: 'view-inventory', module: 'inventory' },
+  { prefix: 'view-suppliers', module: 'suppliers' },
+  { prefix: 'view-expenses', module: 'expenses' },
+  { prefix: 'view-customer-debts', module: 'customers' },
+  { prefix: 'view-cashiers', module: 'cashier_shifts' },
+  { prefix: 'export-reports', module: 'reporting' },
 };
 
 function routeForState(state: ClientApplicationState): ResolvedApplicationState['screen'] {
@@ -98,7 +116,7 @@ function messageForState(state: ClientApplicationState, context: ApplicationStat
     case 'subscription_expired':
       return 'The connected shop subscription is expired. Operational access is restricted.';
     case 'module_disabled':
-      return `The ${context.activeRole} workstation is blocked because required Shop App modules are disabled.`;
+      return 'This workstation is blocked because required Shop App modules are disabled for current permissions.';
     case 'update_required':
       return `Client App version ${context.currentVersion} requires an update before this workstation can continue.`;
     case 'ready':
@@ -106,12 +124,19 @@ function messageForState(state: ClientApplicationState, context: ApplicationStat
   }
 }
 
-function hasRequiredModules(activeRole: ClientRole, shopStatus?: ShopSystemStatus): boolean {
+function hasRequiredModules(permissions: string[], shopStatus?: ShopSystemStatus): boolean {
   if (!shopStatus) {
     return true;
   }
 
-  const requiredModules = roleModules[activeRole];
+  const requiredModules = [...new Set(
+    permissions.flatMap((permission) =>
+      permissionModuleMap
+        .filter((mapping) => permission === mapping.prefix || permission.startsWith(mapping.prefix))
+        .map((mapping) => mapping.module),
+    ),
+  )];
+
   if (requiredModules.length === 0) {
     return true;
   }
@@ -145,7 +170,7 @@ export function resolveApplicationState(context: ApplicationStateContext): Resol
   } else if (context.deviceAuthorizationState === 'paired' || context.deviceAuthorizationState === 'authorized') {
     if (context.sessionState !== 'active') {
       state = 'paired';
-    } else if (!hasRequiredModules(context.activeRole, context.shopStatus)) {
+    } else if (!hasRequiredModules(context.permissions, context.shopStatus)) {
       state = 'module_disabled';
     } else if (context.permissions.length === 0) {
       state = 'authenticated';

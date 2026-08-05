@@ -35,15 +35,56 @@ These states are derived from Shop App connectivity, device authorization,
 session validity, subscription and module status, application version, update
 requirements, and the current role or permission context.
 
-## Supported Roles
+## Starting Roles
 
-- Cashier: POS, cart, customer selection, payment dialog, receipt, shift opening,
-  and shift closing shells.
-- Storekeeper: products, stock, purchases, stock counts, and damaged goods
-  shells.
-- Manager: approvals, returns, expenses, cashier settlement, and reports shells.
-- Accountant: customer debts, supplier balances, expenses, reconciliation, and
-  profit reports shells.
+The Client App ships as one executable with a role-based shell. It does not
+split roles into separate desktop executables.
+
+Supported starting role presets:
+
+- Owner
+- Administrator
+- Manager
+- Cashier
+- Storekeeper
+- Accountant
+- Service Staff
+- Supervisor
+- Read-Only Auditor
+
+Role presets influence shell emphasis only. Authorization remains permission
+driven and enforced by Shop App APIs.
+
+## Main Navigation Groups
+
+The shared workstation shell includes these primary groups:
+
+- Dashboard
+- Sales
+- Products
+- Inventory
+- Purchases
+- Customers
+- Suppliers
+- Expenses
+- Services
+- Staff Earnings
+- Cashier Shifts
+- Approvals
+- Reports
+- Settings
+- Connection
+
+Module visibility and action visibility are derived from:
+
+- User permissions
+- Business settings
+- Branch settings
+- Subscription plan state
+- Shop App module state
+
+The Shop App remains the final authorization boundary for every direct API
+request.
 
 ## Shop App Connection
 
@@ -188,6 +229,22 @@ The typed preload bridge currently exposes controlled APIs for:
 - Local network information.
 - Controlled export-path selection.
 - Update status checks.
+
+## Shell Layout
+
+The workstation shell includes:
+
+- Sidebar navigation grouped by module.
+- Top navigation with business and branch display.
+- User menu.
+- Shift status indicator.
+- Server connection status.
+- Synchronization indicator.
+- Application update indicator.
+- Theme selector.
+- Notification center.
+- Breadcrumb foundation.
+- Global search foundation.
 
 ## Testing
 

@@ -1,48 +1,112 @@
+import { useEffect } from 'react';
 import { Button, StatusBadge } from '@marketlens/ui';
-import { roleShells, canSeeItem } from '../features/roles/role-shells';
+import {
+  resolveVisibleShellNavigation,
+  roleLabel,
+  shellNavigationGroupLabels,
+  startingRolePresets,
+} from '../features/navigation/application-shell-navigation';
 import { useClientUiStore } from '../state/client-ui-store';
 import { ConnectionStatusIndicator } from './ConnectionStatusIndicator';
 
 export function PermissionAwareNavigation() {
   const activeRole = useClientUiStore((state) => state.activeRole);
+  const activeNavigationId = useClientUiStore((state) => state.activeNavigationId);
   const permissions = useClientUiStore((state) => state.permissions);
+  const shopStatus = useClientUiStore((state) => state.shopStatus);
+  const shiftStatus = useClientUiStore((state) => state.shiftStatus);
+  const username = useClientUiStore((state) => state.username);
+  const setActiveNavigationId = useClientUiStore((state) => state.setActiveNavigationId);
   const setActiveRole = useClientUiStore((state) => state.setActiveRole);
-  const activeShell = roleShells.find((shell) => shell.role === activeRole) ?? roleShells[0];
-  const visibleItems = activeShell.items.filter((item) => canSeeItem(permissions, item));
+
+  const visibleItems = resolveVisibleShellNavigation({
+    permissions,
+    shopStatus,
+    shiftStatus,
+  }).filter((item) => item.visible);
+
+  const visibleGroups = Object.entries(shellNavigationGroupLabels)
+    .map(([groupId, label]) => ({
+      groupId,
+      label,
+      items: visibleItems.filter((item) => item.group === groupId),
+    }))
+    .filter((group) => group.items.length > 0);
+
+  useEffect(() => {
+    if (visibleItems.length === 0) {
+      return;
+    }
+
+    const activeStillVisible = visibleItems.some((item) => item.id === activeNavigationId);
+    if (!activeStillVisible) {
+      setActiveNavigationId(visibleItems[0].id);
+    }
+  }, [activeNavigationId, setActiveNavigationId, visibleItems]);
 
   return (
-    <aside className="border-r border-border bg-surface p-4">
+    <aside className="flex min-h-screen flex-col border-r border-border bg-surface p-4">
       <div className="mb-4">
         <h1 className="text-lg font-bold">MarketLens Client</h1>
-        <p className="text-sm text-muted">Role-based workstation</p>
+        <p className="text-sm text-muted">Permission-driven workstation shell</p>
       </div>
 
       <ConnectionStatusIndicator />
 
-      <div className="mt-5 grid gap-2">
-        {roleShells.map((shell) => (
-          <Button
-            key={shell.role}
-            variant={shell.role === activeRole ? 'primary' : 'ghost'}
-            className="justify-start"
-            onClick={() => setActiveRole(shell.role)}
-          >
-            {shell.label}
-          </Button>
-        ))}
+      <div className="mt-4 rounded-md border border-border p-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted">Starting role</p>
+        <p className="mt-1 text-sm text-muted">Changes preferred shell emphasis only.</p>
+        <select
+          className="mt-2 w-full rounded-md border border-border bg-background px-2 py-2 text-sm"
+          value={activeRole}
+          onChange={async (event) => {
+            const nextRole = event.target.value as typeof activeRole;
+            setActiveRole(nextRole);
+            const preferences = await window.marketlensClient.preferences.load();
+            await window.marketlensClient.preferences.save({
+              ...preferences,
+              preferredRole: nextRole,
+            });
+          }}
+        >
+          {startingRolePresets.map((preset) => (
+            <option key={preset.value} value={preset.value}>{preset.label}</option>
+          ))}
+        </select>
       </div>
 
-      <nav className="mt-6 grid gap-2" aria-label={`${activeShell.label} navigation`}>
-        {visibleItems.length > 0 ? (
-          visibleItems.map((item) => (
-            <a key={item.id} className="rounded-md px-3 py-2 text-sm font-medium hover:bg-surface-muted" href={`#${item.id}`}>
-              {item.label}
-            </a>
+      <nav className="mt-5 flex-1 space-y-4 overflow-y-auto" aria-label="Main navigation groups">
+        {visibleGroups.length > 0 ? (
+          visibleGroups.map((group) => (
+            <section key={group.groupId}>
+              <p className="px-2 text-xs font-semibold uppercase tracking-wide text-muted">{group.label}</p>
+              <div className="mt-1 grid gap-1">
+                {group.items.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`w-full rounded-md px-3 py-2 text-left text-sm ${item.id === activeNavigationId ? 'bg-primary text-white' : 'hover:bg-surface-muted'}`}
+                    onClick={() => setActiveNavigationId(item.id)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </section>
           ))
         ) : (
-          <StatusBadge tone="warning">No visible features</StatusBadge>
+          <StatusBadge tone="warning">No modules are available for current permissions and settings.</StatusBadge>
         )}
       </nav>
+
+      <div className="mt-4 rounded-md border border-border p-3 text-xs text-muted">
+        <p className="font-semibold text-foreground">{username ?? 'Workstation user'}</p>
+        <p>Role preset: {roleLabel(activeRole)}</p>
+      </div>
+
+      <div className="mt-3 grid gap-2">
+        <Button variant="ghost" onClick={() => setActiveNavigationId('dashboard-home')}>Go to dashboard</Button>
+      </div>
     </aside>
   );
 }

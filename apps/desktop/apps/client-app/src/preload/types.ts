@@ -16,7 +16,7 @@ export interface ClientSession {
 export interface ClientPreferences {
   shopBaseUrl: string;
   lastDeviceName: string;
-  preferredRole: 'cashier' | 'storekeeper' | 'manager' | 'accountant';
+  preferredRole: 'owner' | 'administrator' | 'manager' | 'cashier' | 'storekeeper' | 'accountant' | 'service_staff' | 'supervisor' | 'auditor';
 }
 
 export interface ShopServerIdentity {

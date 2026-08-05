@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clientAppBoundary, roleShells } from '../src';
+import { clientAppBoundary, shellNavigationItems, startingRolePresets } from '../src';
 
 describe('Client App boundary', () => {
   it('never opens SQLite directly', () => {
@@ -10,30 +10,34 @@ describe('Client App boundary', () => {
     expect(clientAppBoundary.rendererHasUnrestrictedNodeAccess).toBe(false);
   });
 
-  it('scaffolds the requested role-based application shells', () => {
-    expect(roleShells.map((shell) => shell.role)).toEqual(['cashier', 'storekeeper', 'manager', 'accountant']);
-    expect(roleShells.flatMap((shell) => shell.items.map((item) => item.label))).toEqual([
-      'POS',
-      'Cart',
-      'Customer selection',
-      'Payment dialog',
-      'Receipt',
-      'Shift opening and closing',
-      'Products',
-      'Stock',
-      'Purchases',
-      'Stock counts',
-      'Damaged goods',
-      'Approvals',
-      'Returns',
-      'Expenses',
-      'Cashier settlement',
-      'Reports',
-      'Customer debts',
-      'Supplier balances',
-      'Expenses',
-      'Reconciliation',
-      'Profit reports',
+  it('scaffolds one permission-driven application shell with required starting roles', () => {
+    expect(startingRolePresets.map((preset) => preset.value)).toEqual([
+      'owner',
+      'administrator',
+      'manager',
+      'cashier',
+      'storekeeper',
+      'accountant',
+      'service_staff',
+      'supervisor',
+      'auditor',
+    ]);
+    expect(shellNavigationItems.map((item) => item.group)).toEqual([
+      'dashboard',
+      'sales',
+      'products',
+      'inventory',
+      'purchases',
+      'customers',
+      'suppliers',
+      'expenses',
+      'services',
+      'staff_earnings',
+      'cashier_shifts',
+      'approvals',
+      'reports',
+      'settings',
+      'connection',
     ]);
   });
 });

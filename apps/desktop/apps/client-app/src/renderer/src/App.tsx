@@ -83,6 +83,7 @@ export function App() {
             screen: 'connection',
             deviceAuthorizationState: 'unpaired',
             sessionState: 'missing',
+            shiftStatus: 'closed',
           });
           return;
         }
@@ -136,6 +137,7 @@ export function App() {
             deviceUuid: session.deviceUuid,
             deviceAuthorizationState: resolvedDeviceAuthorizationState,
             sessionState: 'expired',
+            shiftStatus: 'closed',
           });
           return;
         }
@@ -159,6 +161,7 @@ export function App() {
           updateRequired: updateStatus.updateAvailable,
           currentUser: authState.user,
           connectionState: confirmedStatus ? 'connected' : 'disconnected',
+          shiftStatus: 'open',
         });
       } catch (error) {
         await window.marketlensClient.session.clear();

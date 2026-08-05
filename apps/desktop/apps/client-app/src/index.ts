@@ -8,4 +8,4 @@ export const clientAppBoundary = {
 } as const;
 
 export type { ClientPreloadApi } from './preload-contract';
-export { roleShells } from './renderer/src/features/roles/role-shells';
+export { shellNavigationItems, startingRolePresets } from './renderer/src/features/navigation/application-shell-navigation';
