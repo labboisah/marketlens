@@ -38,9 +38,11 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       uuid TEXT NOT NULL UNIQUE,
       username TEXT NOT NULL UNIQUE,
+      staff_code TEXT,
       display_name TEXT NOT NULL,
       password_hash TEXT NOT NULL,
       status TEXT NOT NULL,
+      force_password_change TEXT NOT NULL DEFAULT '0',
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -1106,6 +1108,8 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
   ensureColumn(sqlite, 'sync_queue', 'next_attempt_at', 'TEXT');
   ensureColumn(sqlite, 'sync_queue', 'last_error_code', 'TEXT');
   ensureColumn(sqlite, 'sync_queue', 'last_error_detail', 'TEXT');
+  ensureColumn(sqlite, 'users', 'staff_code', 'TEXT');
+  ensureColumn(sqlite, 'users', 'force_password_change', "TEXT NOT NULL DEFAULT '0'");
 
   const outboxTables = [
     'users', 'products', 'sales', 'sale_items', 'sale_payments', 'expenses', 'stocks', 'purchases',

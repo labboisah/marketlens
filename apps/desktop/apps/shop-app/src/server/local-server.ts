@@ -109,7 +109,7 @@ export async function createLocalServer(app: ShopApplication) {
   await registerServiceRoutes(server, app);
   await registerShareholderRoutes(server, app);
   await registerReportingRoutes(server, app);
-  await registerSessionRoutes(server);
+  await registerSessionRoutes(server, app);
 
   return {
     server,

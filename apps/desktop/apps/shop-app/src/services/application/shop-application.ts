@@ -66,6 +66,7 @@ export async function createShopApplication(environment: ShopEnvironment) {
       displayName: 'Shop Administrator',
       passwordHash,
       status: 'active',
+      forcePasswordChange: true,
     });
 
     database.sqlite.prepare('INSERT OR IGNORE INTO user_roles (uuid, user_uuid, role_uuid, created_at) VALUES (?, ?, ?, ?)')

@@ -36,9 +36,11 @@ export const users = sqliteTable('users', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   uuid: text('uuid').notNull().unique(),
   username: text('username').notNull().unique(),
+  staffCode: text('staff_code'),
   displayName: text('display_name').notNull(),
   passwordHash: text('password_hash').notNull(),
   status: text('status').notNull(),
+  forcePasswordChange: text('force_password_change').notNull().default('0'),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
 });

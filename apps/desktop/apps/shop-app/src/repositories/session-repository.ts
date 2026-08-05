@@ -21,6 +21,24 @@ export class SessionRepository extends DrizzleRepository {
     this.db.update(userSessions).set({ revokedAt: now, updatedAt: now }).where(userSessions.uuid.eq(sessionUuid)).run();
   }
 
+  revokeByUser(userUuid: string) {
+    const now = new Date().toISOString();
+    this.db.update(userSessions).set({ revokedAt: now, updatedAt: now }).where(userSessions.userUuid.eq(userUuid)).run();
+  }
+
+  findByUuid(sessionUuid: string) {
+    return this.db.select().from(userSessions).where(userSessions.uuid.eq(sessionUuid)).get();
+  }
+
+  rotateRefreshToken(sessionUuid: string, refreshTokenHash: string, expiresAt: string) {
+    const now = new Date().toISOString();
+    this.db
+      .update(userSessions)
+      .set({ refreshTokenHash, expiresAt, updatedAt: now, revokedAt: null })
+      .where(userSessions.uuid.eq(sessionUuid))
+      .run();
+  }
+
   async findByRefreshToken(token: string) {
     const all = this.db.select().from(userSessions).all();
     for (const s of all) {

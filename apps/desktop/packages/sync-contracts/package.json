@@ -16,7 +16,7 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
-    "@marketlens/shared-types": "workspace:*",
+    "@marketlens/shared-types": "file:../shared-types",
     "zod": "latest"
   }
 }

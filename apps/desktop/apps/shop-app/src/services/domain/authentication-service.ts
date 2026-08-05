@@ -8,18 +8,23 @@ import { signAccessToken, createRefreshToken } from '../security/token-service';
 import type { ShopEnvironment } from '../../shared/environment';
 
 export type LoginInput = {
-  username: string;
+  identity: string;
   password: string;
   deviceUuid?: string;
+  rememberDevice?: boolean;
 };
 
 export type LoginResult = {
   authenticated: boolean;
   reason?: string;
+  reasonCode?: 'AUTH_FAILED' | 'ACCOUNT_DISABLED';
   accessToken?: string;
   refreshToken?: string;
+  expiresAt?: string;
   sessionUuid?: string;
   userUuid?: string;
+  accountStatus?: 'active' | 'inactive' | 'suspended' | 'disabled';
+  passwordChangeRequired?: boolean;
   permissions?: string[];
 };
 
@@ -45,34 +50,40 @@ export class AuthenticationService {
   ) {}
 
   async login(input: LoginInput): Promise<LoginResult> {
-    if (!input.username || !input.password) {
+    if (!input.identity || !input.password) {
       this.auditLogs.record({ action: 'user.login_failed', metadata: { reason: 'missing_credentials' } });
-      return { authenticated: false, reason: 'Invalid username or password.' };
+      return { authenticated: false, reason: 'Authentication failed.', reasonCode: 'AUTH_FAILED' };
     }
-    const normalizedUsername = input.username.trim().toLowerCase();
-    const user = await this.users.findByUsername(normalizedUsername);
+
+    const normalizedIdentity = input.identity.trim().toLowerCase();
+    const user = await this.users.findByIdentity(normalizedIdentity);
 
     if (!user) {
-      this.auditLogs.record({ action: 'user.login_failed', metadata: { username: normalizedUsername, reason: 'unknown_user' } });
-      return { authenticated: false, reason: 'Invalid username or password.' };
+      this.auditLogs.record({ action: 'user.login_failed', metadata: { identity: normalizedIdentity, reason: 'unknown_user' } });
+      return { authenticated: false, reason: 'Authentication failed.', reasonCode: 'AUTH_FAILED' };
     }
 
     if (user.status !== 'active') {
       this.auditLogs.record({ actorUserUuid: user.uuid, action: 'user.login_failed', subjectType: 'user', subjectUuid: user.uuid, metadata: { reason: 'inactive' } });
-      return { authenticated: false, reason: 'User is inactive.' };
+      return {
+        authenticated: false,
+        reason: 'Authentication failed.',
+        reasonCode: 'ACCOUNT_DISABLED',
+        accountStatus: user.status as LoginResult['accountStatus'],
+      };
     }
 
     const passwordOk = await verifyPassword(input.password, user.passwordHash);
     if (!passwordOk) {
       this.auditLogs.record({ actorUserUuid: user.uuid, action: 'user.login_failed', subjectType: 'user', subjectUuid: user.uuid, metadata: { reason: 'invalid_password' } });
-      return { authenticated: false, reason: 'Invalid username or password.' };
+      return { authenticated: false, reason: 'Authentication failed.', reasonCode: 'AUTH_FAILED' };
     }
 
     if (input.deviceUuid) {
       const device = await this.devices.findByUuid(input.deviceUuid);
       if (!device || device.status !== 'authorized' && device.status !== 'paired') {
         this.auditLogs.record({ actorUserUuid: user.uuid, action: 'user.login_failed', subjectType: 'user', subjectUuid: user.uuid, metadata: { reason: 'device_not_authorized', deviceUuid: input.deviceUuid } });
-        return { authenticated: false, reason: 'Device is not authorized.' };
+        return { authenticated: false, reason: 'Authentication failed.', reasonCode: 'AUTH_FAILED' };
       }
     }
 
@@ -86,7 +97,10 @@ export class AuthenticationService {
     const refreshHash = await argon2.hash(refreshToken);
     const accessHash = await argon2.hash(accessToken);
 
-    const expiresAt = new Date(Date.now() + this.environment.SHOP_JWT_REFRESH_EXPIRES_DAYS * 24 * 60 * 60 * 1000).toISOString();
+    const refreshExpiryMs = input.rememberDevice
+      ? this.environment.SHOP_JWT_REFRESH_EXPIRES_DAYS * 24 * 60 * 60 * 1000
+      : 24 * 60 * 60 * 1000;
+    const expiresAt = new Date(Date.now() + refreshExpiryMs).toISOString();
 
     this.sessions.create(user.uuid, input.deviceUuid ?? null, accessHash, refreshHash, expiresAt);
 
@@ -104,8 +118,11 @@ export class AuthenticationService {
       authenticated: true,
       accessToken,
       refreshToken,
+      expiresAt,
       sessionUuid,
       userUuid: user.uuid,
+      accountStatus: user.status as LoginResult['accountStatus'],
+      passwordChangeRequired: user.forcePasswordChange === '1',
       permissions: ['pos.access'],
     };
   }

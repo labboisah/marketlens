@@ -3,6 +3,7 @@ import { mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createShopApplication } from '../src/services/application/shop-application';
+import { createLocalServer } from '../src/server/local-server';
 import type { ShopEnvironment } from '../src/shared/environment';
 
 const tempDir = join(tmpdir(), 'marketlens-shop-app-tests');
@@ -48,15 +49,15 @@ describe('Shop App authentication and pairing', () => {
     rmSync(tempDir, { recursive: true, force: true });
   });
 
-  it('creates an initial admin user and allows login without a device', () => {
+  it('creates an initial admin user and allows login without a device', async () => {
     const app = await createShopApplication(testEnvironment);
 
-    const result = app.services.authentication.login({
-      username: 'admin',
+    const result = await app.services.authentication.login({
+      identity: 'admin',
       password: 'test-password',
     });
 
-    expect(result).resolves.toEqual(
+    expect(result).toEqual(
       expect.objectContaining({
         authenticated: true,
         userUuid: expect.any(String),
@@ -105,7 +106,7 @@ describe('Shop App authentication and pairing', () => {
     expect(pairing.deviceUuid).toBeDefined();
 
     const loginResult = await app.services.authentication.login({
-      username: 'admin',
+      identity: 'admin',
       password: 'test-password',
       deviceUuid: pairing.deviceUuid,
     });
@@ -113,5 +114,46 @@ describe('Shop App authentication and pairing', () => {
     expect(loginResult.authenticated).toBe(true);
     expect(loginResult.userUuid).toBeDefined();
     expect(loginResult.sessionUuid).toBeDefined();
+  });
+
+  it('returns authenticated session details from the local API after confirmed login', async () => {
+    const app = await createShopApplication(testEnvironment);
+    const localServer = await createLocalServer(app);
+
+    const pairing = await app.services.devices.pair({
+      deviceName: 'Client Terminal',
+      pairingCode: 'test-pairing-code',
+    });
+
+    const loginResult = await app.services.authentication.login({
+      identity: 'admin',
+      password: 'test-password',
+      deviceUuid: pairing.deviceUuid,
+    });
+
+    const response = await localServer.server.inject({
+      method: 'GET',
+      url: '/api/v1/session/me',
+      headers: {
+        authorization: `Bearer ${loginResult.accessToken}`,
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      success: true,
+      data: expect.objectContaining({
+        authenticated: true,
+        user: expect.objectContaining({
+          uuid: loginResult.userUuid,
+          username: 'admin',
+        }),
+        permissions: expect.arrayContaining(['pos.access']),
+        roles: expect.any(Array),
+      }),
+      meta: {},
+    });
+
+    await localServer.stop();
   });
 });

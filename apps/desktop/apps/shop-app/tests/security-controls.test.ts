@@ -24,7 +24,7 @@ describe('Shop App security controls', () => {
 
   it('records failed login attempts without storing passwords', async () => {
     const app = await createShopApplication(environment);
-    await app.services.authentication.login({ username: 'admin', password: 'incorrect-password' });
+    await app.services.authentication.login({ identity: 'admin', password: 'incorrect-password' });
     const audit = app.database.sqlite.prepare("SELECT action, metadata_json AS metadataJson FROM audit_logs WHERE action = 'user.login_failed' ORDER BY id DESC LIMIT 1").get() as { action: string; metadataJson: string };
     expect(audit.action).toBe('user.login_failed');
     expect(audit.metadataJson).not.toContain('incorrect-password');
