@@ -53,19 +53,79 @@ const receivePurchaseSchema = z.object({
 const paymentSchema = z.object({
   amount: z.string().min(1),
   reference: z.string().optional(),
+  paymentMethod: z.string().optional(),
+});
+
+const supplierSearchSchema = z.object({
+  search: z.string().optional(),
+});
+
+const purchaseSearchSchema = z.object({
+  search: z.string().optional(),
+  supplierUuid: z.string().uuid().optional(),
+  status: z.enum(['draft', 'completed', 'received', 'paid', 'partially_paid']).optional(),
+});
+
+const paymentSearchSchema = z.object({
+  supplierUuid: z.string().uuid().optional(),
+  purchaseUuid: z.string().uuid().optional(),
+});
+
+const purchaseReturnSchema = z.object({
+  warehouseUuid: z.string().uuid(),
+  reason: z.string().optional(),
+  note: z.string().optional(),
+  items: z.array(z.object({
+    productUuid: z.string().uuid(),
+    quantity: z.string().min(1),
+    unitUuid: z.string().uuid().optional(),
+  })).min(1),
 });
 
 export async function registerPurchaseRoutes(server: FastifyInstance, app: ShopApplication): Promise<void> {
+  server.get('/api/v1/suppliers', async (request) => {
+    const query = supplierSearchSchema.parse(request.query ?? {});
+    const suppliers = app.services.suppliers.listSuppliers(query.search);
+    return { success: true, data: suppliers, meta: {} };
+  });
+
   server.post('/api/v1/suppliers', async (request) => {
     const input = createSupplierSchema.parse(request.body);
     const supplier = await app.services.suppliers.createSupplier(input);
     return { success: true, data: supplier, meta: {} };
   });
 
+  server.get('/api/v1/suppliers/balances', async (request) => {
+    const query = supplierSearchSchema.parse(request.query ?? {});
+    const balances = app.services.suppliers.listSupplierBalances(query.search);
+    return { success: true, data: balances, meta: {} };
+  });
+
+  server.get('/api/v1/suppliers/:supplierUuid/statement', async (request) => {
+    const { supplierUuid } = request.params as { supplierUuid: string };
+    const statement = app.services.purchases.getSupplierStatement(supplierUuid);
+    return { success: true, data: statement, meta: {} };
+  });
+
   server.get('/api/v1/suppliers/:supplierUuid/account', async (request) => {
     const { supplierUuid } = request.params as { supplierUuid: string };
     const account = app.services.suppliers.getSupplierAccount(supplierUuid);
     return { success: true, data: account, meta: {} };
+  });
+
+  server.get('/api/v1/purchases', async (request) => {
+    const query = purchaseSearchSchema.parse(request.query ?? {});
+    const purchaseRows = app.services.purchases.listPurchases(query);
+    return { success: true, data: purchaseRows, meta: {} };
+  });
+
+  server.get('/api/v1/purchases/:purchaseUuid', async (request, reply) => {
+    const { purchaseUuid } = request.params as { purchaseUuid: string };
+    const purchase = app.services.purchases.getPurchaseDetails(purchaseUuid);
+    if (!purchase) {
+      return reply.code(404).send({ success: false, error: { code: 'NOT_FOUND', message: 'Purchase not found' } });
+    }
+    return { success: true, data: purchase, meta: {} };
   });
 
   server.post('/api/v1/purchases', async (request) => {
@@ -86,5 +146,24 @@ export async function registerPurchaseRoutes(server: FastifyInstance, app: ShopA
     const input = paymentSchema.parse(request.body);
     const purchase = await app.services.purchases.recordPayment(purchaseUuid, input);
     return { success: true, data: purchase, meta: {} };
+  });
+
+  server.get('/api/v1/purchase-payments', async (request) => {
+    const query = paymentSearchSchema.parse(request.query ?? {});
+    const payments = app.services.purchases.listPurchasePayments(query);
+    return { success: true, data: payments, meta: {} };
+  });
+
+  server.post('/api/v1/purchases/:purchaseUuid/returns', async (request) => {
+    const { purchaseUuid } = request.params as { purchaseUuid: string };
+    const input = purchaseReturnSchema.parse(request.body);
+    const result = await app.services.purchases.returnPurchase(purchaseUuid, input);
+    return { success: true, data: result, meta: {} };
+  });
+
+  server.get('/api/v1/purchase-returns', async (request) => {
+    const query = paymentSearchSchema.parse(request.query ?? {});
+    const returns = app.services.purchases.listPurchaseReturns(query);
+    return { success: true, data: returns, meta: {} };
   });
 }

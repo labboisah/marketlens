@@ -310,7 +310,8 @@ export function resolveVisibleShellNavigation(input: {
     const itemVisible =
       (item.group === 'connection' || canOperate) &&
       hasPermission(input.permissions, item.requiredPermissions) &&
-      hasModuleAccess(input.shopStatus, item.moduleKeys);
+      hasModuleAccess(input.shopStatus, item.moduleKeys) &&
+      (item.group !== 'sales' || input.shiftStatus === 'open');
 
     const visibleActions = item.actions.map((action) => ({
       ...action,

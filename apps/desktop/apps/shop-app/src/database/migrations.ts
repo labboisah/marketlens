@@ -495,6 +495,39 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
       updated_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS purchase_payments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      purchase_uuid TEXT NOT NULL,
+      supplier_uuid TEXT NOT NULL,
+      amount TEXT NOT NULL,
+      reference TEXT,
+      payment_method TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_purchase_payments_purchase_date
+      ON purchase_payments (purchase_uuid, created_at);
+
+    CREATE TABLE IF NOT EXISTS purchase_returns (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      purchase_uuid TEXT NOT NULL,
+      supplier_uuid TEXT NOT NULL,
+      warehouse_uuid TEXT NOT NULL,
+      product_uuid TEXT NOT NULL,
+      unit_uuid TEXT NOT NULL,
+      quantity TEXT NOT NULL,
+      unit_cost TEXT NOT NULL,
+      amount TEXT NOT NULL,
+      reason TEXT,
+      note TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_purchase_returns_purchase_date
+      ON purchase_returns (purchase_uuid, created_at);
+
     CREATE TABLE IF NOT EXISTS customers (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       uuid TEXT NOT NULL UNIQUE,
@@ -661,6 +694,7 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
       cashier_user_uuid TEXT NOT NULL,
       status TEXT NOT NULL,
       opening_cash TEXT NOT NULL,
+      notes TEXT,
       expected_cash TEXT,
       actual_cash TEXT,
       variance TEXT,
@@ -698,6 +732,9 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
       actual_cash TEXT NOT NULL,
       variance TEXT NOT NULL,
       status TEXT NOT NULL,
+      notes TEXT,
+      cash_denominations_json TEXT,
+      supporting_explanation TEXT,
       verified_by_user_uuid TEXT,
       verified_at TEXT,
       created_at TEXT NOT NULL
@@ -717,6 +754,12 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       uuid TEXT NOT NULL UNIQUE,
       category_uuid TEXT NOT NULL,
+      approval_requested TEXT,
+      created_by_user_uuid TEXT,
+      created_by_name TEXT,
+      approved_by_user_uuid TEXT,
+      reversed_by_user_uuid TEXT,
+      reversed_at TEXT,
       cash_account_uuid TEXT,
       bank_account_uuid TEXT,
       shift_uuid TEXT,
@@ -728,6 +771,23 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS expense_reversal_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      expense_uuid TEXT NOT NULL,
+      requested_by_user_uuid TEXT,
+      approved_by_user_uuid TEXT,
+      rejected_by_user_uuid TEXT,
+      reason TEXT NOT NULL,
+      rejection_reason TEXT,
+      status TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      processed_at TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_expense_reversal_requests_expense
+      ON expense_reversal_requests (expense_uuid, created_at);
 
     CREATE TABLE IF NOT EXISTS expense_approvals (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -798,10 +858,10 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
     CREATE TABLE IF NOT EXISTS payment_methods (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, code TEXT NOT NULL UNIQUE, name TEXT NOT NULL, type TEXT NOT NULL, active TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS sales (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, sale_number TEXT NOT NULL UNIQUE, idempotency_key TEXT NOT NULL UNIQUE, shift_uuid TEXT NOT NULL, warehouse_uuid TEXT NOT NULL, customer_uuid TEXT, status TEXT NOT NULL, subtotal TEXT NOT NULL, discount_amount TEXT NOT NULL, total_amount TEXT NOT NULL, created_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS sale_items (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, sale_uuid TEXT NOT NULL, product_uuid TEXT NOT NULL, unit_uuid TEXT NOT NULL, quantity TEXT NOT NULL, unit_price TEXT NOT NULL, line_total TEXT NOT NULL, created_at TEXT NOT NULL);
-    CREATE TABLE IF NOT EXISTS sale_payments (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, sale_uuid TEXT NOT NULL, payment_method_uuid TEXT NOT NULL, amount TEXT NOT NULL, reference TEXT, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS sale_payments (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, sale_uuid TEXT NOT NULL, payment_method_uuid TEXT NOT NULL, amount TEXT NOT NULL, amount_tendered TEXT, reference TEXT, transfer_verified TEXT, credit_amount TEXT, customer_credit_selection TEXT, created_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS sale_discounts (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, sale_uuid TEXT NOT NULL, amount TEXT NOT NULL, reason TEXT, approved_by_user_uuid TEXT, created_at TEXT NOT NULL);
-    CREATE TABLE IF NOT EXISTS sale_cancellations (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, sale_uuid TEXT NOT NULL UNIQUE, reason TEXT NOT NULL, approved_by_user_uuid TEXT, created_at TEXT NOT NULL);
-    CREATE TABLE IF NOT EXISTS sale_returns (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, sale_uuid TEXT NOT NULL, status TEXT NOT NULL, refund_amount TEXT NOT NULL, reason TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS sale_cancellations (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, sale_uuid TEXT NOT NULL UNIQUE, reason TEXT NOT NULL, approved_by_user_uuid TEXT, approval_state TEXT, refund_state TEXT, refund_method TEXT, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS sale_returns (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, sale_uuid TEXT NOT NULL, status TEXT NOT NULL, refund_amount TEXT NOT NULL, reason TEXT NOT NULL, refund_method TEXT, approval_requested TEXT, approved_by_user_uuid TEXT, created_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS sale_return_items (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, sale_return_uuid TEXT NOT NULL, sale_item_uuid TEXT NOT NULL, quantity TEXT NOT NULL, amount TEXT NOT NULL, created_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS receipts (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, sale_uuid TEXT NOT NULL UNIQUE, format TEXT NOT NULL, receipt_number TEXT NOT NULL UNIQUE, print_count INTEGER NOT NULL, created_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS receipt_reprints (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, receipt_uuid TEXT NOT NULL, reason TEXT NOT NULL, approved_by_user_uuid TEXT, created_at TEXT NOT NULL);
@@ -813,11 +873,11 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
     CREATE TABLE IF NOT EXISTS service_price_histories (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, service_price_uuid TEXT NOT NULL, old_amount TEXT, new_amount TEXT NOT NULL, created_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS service_revenue_share_rules (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, service_uuid TEXT, branch_uuid TEXT, basis TEXT NOT NULL, fixed_amount TEXT, requires_approval TEXT NOT NULL, active TEXT NOT NULL, created_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS service_revenue_share_rule_components (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, rule_uuid TEXT NOT NULL, type TEXT NOT NULL, percentage TEXT NOT NULL, created_at TEXT NOT NULL);
-    CREATE TABLE IF NOT EXISTS service_orders (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, order_number TEXT NOT NULL UNIQUE, customer_uuid TEXT, branch_uuid TEXT NOT NULL, status TEXT NOT NULL, discount_amount TEXT NOT NULL, created_at TEXT NOT NULL, completed_at TEXT);
+    CREATE TABLE IF NOT EXISTS service_orders (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, order_number TEXT NOT NULL UNIQUE, customer_uuid TEXT, branch_uuid TEXT NOT NULL, status TEXT NOT NULL, discount_amount TEXT NOT NULL, payment_confirmed_at TEXT, allocation_requested_at TEXT, approved_by_user_uuid TEXT, cancelled_at TEXT, refunded_at TEXT, created_at TEXT NOT NULL, completed_at TEXT);
     CREATE TABLE IF NOT EXISTS service_order_items (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, order_uuid TEXT NOT NULL, service_uuid TEXT NOT NULL, quantity TEXT NOT NULL, unit_price TEXT NOT NULL, line_total TEXT NOT NULL, created_at TEXT NOT NULL);
-    CREATE TABLE IF NOT EXISTS service_staff_assignments (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, order_item_uuid TEXT NOT NULL, staff_user_uuid TEXT NOT NULL, contribution_percentage TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS service_staff_assignments (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, order_item_uuid TEXT NOT NULL, staff_user_uuid TEXT NOT NULL, contribution_percentage TEXT NOT NULL, assignment_role TEXT, started_at TEXT, completed_at TEXT, notes TEXT, created_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS service_payments (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, order_uuid TEXT NOT NULL, amount TEXT NOT NULL, payment_method TEXT NOT NULL, reference TEXT, created_at TEXT NOT NULL);
-    CREATE TABLE IF NOT EXISTS service_expenses (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, order_uuid TEXT NOT NULL, amount TEXT NOT NULL, description TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS service_expenses (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, order_uuid TEXT NOT NULL, category TEXT, amount TEXT NOT NULL, description TEXT NOT NULL, paid_by TEXT, payment_method TEXT, receipt_attachment_path TEXT, approval_status TEXT NOT NULL DEFAULT 'pending', expense_scope TEXT NOT NULL DEFAULT 'direct_service', created_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS service_revenue_allocations (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, order_uuid TEXT NOT NULL, rule_uuid TEXT NOT NULL, component_type TEXT NOT NULL, staff_user_uuid TEXT, amount TEXT NOT NULL, status TEXT NOT NULL, reversal_of_uuid TEXT, created_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS staff_earning_accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, staff_user_uuid TEXT NOT NULL UNIQUE, current_balance TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS staff_earning_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL UNIQUE, staff_user_uuid TEXT NOT NULL, type TEXT NOT NULL, amount TEXT NOT NULL, reference_uuid TEXT, reversal_of_uuid TEXT, created_at TEXT NOT NULL);
@@ -869,6 +929,80 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
       movement_type TEXT NOT NULL,
       reference TEXT,
       metadata_json TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS stock_count_sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      warehouse_uuid TEXT NOT NULL,
+      status TEXT NOT NULL,
+      approval_state TEXT NOT NULL,
+      notes TEXT,
+      created_by_user_uuid TEXT,
+      approved_by_user_uuid TEXT,
+      approved_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS stock_count_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      session_uuid TEXT NOT NULL,
+      product_uuid TEXT NOT NULL,
+      unit_uuid TEXT NOT NULL,
+      barcode TEXT,
+      system_quantity TEXT NOT NULL,
+      counted_quantity TEXT NOT NULL,
+      variance_quantity TEXT NOT NULL,
+      note TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS stock_adjustments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      warehouse_uuid TEXT NOT NULL,
+      product_uuid TEXT NOT NULL,
+      unit_uuid TEXT NOT NULL,
+      adjustment_type TEXT NOT NULL,
+      quantity TEXT NOT NULL,
+      reason TEXT NOT NULL,
+      supporting_note TEXT,
+      approval_requested TEXT NOT NULL,
+      approval_state TEXT NOT NULL,
+      created_by_user_uuid TEXT,
+      approved_by_user_uuid TEXT,
+      approved_at TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS stock_transfers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      from_warehouse_uuid TEXT NOT NULL,
+      to_warehouse_uuid TEXT NOT NULL,
+      status TEXT NOT NULL,
+      approval_requested TEXT NOT NULL,
+      approval_state TEXT NOT NULL,
+      reason TEXT,
+      requested_by_user_uuid TEXT,
+      approved_by_user_uuid TEXT,
+      approved_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS stock_transfer_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
+      transfer_uuid TEXT NOT NULL,
+      product_uuid TEXT NOT NULL,
+      unit_uuid TEXT NOT NULL,
+      quantity TEXT NOT NULL,
+      note TEXT,
       created_at TEXT NOT NULL
     );
 
@@ -1110,6 +1244,27 @@ export function runFoundationalMigrations(sqlite: BetterSqliteDatabase): void {
   ensureColumn(sqlite, 'sync_queue', 'last_error_detail', 'TEXT');
   ensureColumn(sqlite, 'users', 'staff_code', 'TEXT');
   ensureColumn(sqlite, 'users', 'force_password_change', "TEXT NOT NULL DEFAULT '0'");
+  ensureColumn(sqlite, 'expenses', 'approval_requested', 'TEXT');
+  ensureColumn(sqlite, 'expenses', 'created_by_user_uuid', 'TEXT');
+  ensureColumn(sqlite, 'expenses', 'created_by_name', 'TEXT');
+  ensureColumn(sqlite, 'expenses', 'approved_by_user_uuid', 'TEXT');
+  ensureColumn(sqlite, 'expenses', 'reversed_by_user_uuid', 'TEXT');
+  ensureColumn(sqlite, 'expenses', 'reversed_at', 'TEXT');
+  ensureColumn(sqlite, 'service_orders', 'payment_confirmed_at', 'TEXT');
+  ensureColumn(sqlite, 'service_orders', 'allocation_requested_at', 'TEXT');
+  ensureColumn(sqlite, 'service_orders', 'approved_by_user_uuid', 'TEXT');
+  ensureColumn(sqlite, 'service_orders', 'cancelled_at', 'TEXT');
+  ensureColumn(sqlite, 'service_orders', 'refunded_at', 'TEXT');
+  ensureColumn(sqlite, 'service_staff_assignments', 'assignment_role', 'TEXT');
+  ensureColumn(sqlite, 'service_staff_assignments', 'started_at', 'TEXT');
+  ensureColumn(sqlite, 'service_staff_assignments', 'completed_at', 'TEXT');
+  ensureColumn(sqlite, 'service_staff_assignments', 'notes', 'TEXT');
+  ensureColumn(sqlite, 'service_expenses', 'category', 'TEXT');
+  ensureColumn(sqlite, 'service_expenses', 'paid_by', 'TEXT');
+  ensureColumn(sqlite, 'service_expenses', 'payment_method', 'TEXT');
+  ensureColumn(sqlite, 'service_expenses', 'receipt_attachment_path', 'TEXT');
+  ensureColumn(sqlite, 'service_expenses', 'approval_status', "TEXT NOT NULL DEFAULT 'pending'");
+  ensureColumn(sqlite, 'service_expenses', 'expense_scope', "TEXT NOT NULL DEFAULT 'direct_service'");
 
   const outboxTables = [
     'users', 'products', 'sales', 'sale_items', 'sale_payments', 'expenses', 'stocks', 'purchases',

@@ -48,7 +48,7 @@ export function LoginScreen() {
       setAccountStatus(session.accountStatus);
       setPasswordChangeRequired(session.passwordChangeRequired);
       setCurrentUser(session.user);
-      setShiftStatus('open');
+      setShiftStatus('closed');
       await window.marketlensClient.session.save({
         shopBaseUrl,
         userUuid: session.userUuid,

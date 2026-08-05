@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { randomUUID } from 'node:crypto';
 import { mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -64,6 +65,78 @@ describe('Shop App cashier shifts and cash controls', () => {
     expect(closed.variance).toBe('-15');
     expect(settlement.status).toBe('verified');
     expect(app.database.sqlite.prepare("select count(*) as count from cash_transactions where transaction_type = 'expense'").get().count).toBe(1);
+  });
+
+  it('opens and closes a cashier shift with closing details persisted', async () => {
+    const app = await createShopApplication(testEnvironment);
+    const terminal = await app.services.cashier.createTerminal({ code: 'POS-2', name: 'Service Counter' });
+    const cashAccount = await app.services.cashier.createCashAccount({ code: 'TILL-2', name: 'Service Till' });
+
+    const shift = await app.services.cashier.openShift({
+      terminalUuid: terminal.uuid,
+      cashAccountUuid: cashAccount.uuid,
+      cashierUserUuid: '00000000-0000-0000-0000-000000000005',
+      openingCash: '250',
+      notes: 'Morning shift',
+    });
+
+    await app.services.cashier.recordShiftPayment(shift.uuid, { type: 'cash_sale', amount: '120', reference: 'SALE-002' });
+
+    const closed = await app.services.cashier.closeShift(shift.uuid, {
+      actualCash: '370',
+      notes: 'End of day close',
+      cashDenominations: [{ denomination: '100', count: 3 }, { denomination: '50', count: 1 }],
+      supportingExplanation: 'No discrepancy found',
+    });
+
+    expect(closed.status).toBe('closed');
+    expect(closed.expectedCash).toBe('370');
+    expect(closed.actualCash).toBe('370');
+    expect(closed.variance).toBe('0');
+    expect(closed.cashDenominations).toEqual([{ denomination: '100', count: 3 }, { denomination: '50', count: 1 }]);
+
+    const settlement = app.database.sqlite.prepare('select * from cashier_settlements where uuid = ?').get(closed.settlementUuid) as { notes: string | null; cash_denominations_json: string | null; supporting_explanation: string | null; status: string };
+    expect(settlement.status).toBe('pending_verification');
+    expect(settlement.notes).toBe('End of day close');
+    expect(settlement.cash_denominations_json).toBe(JSON.stringify([{ denomination: '100', count: 3 }, { denomination: '50', count: 1 }]));
+    expect(settlement.supporting_explanation).toBe('No discrepancy found');
+  });
+
+  it('rejects duplicate and interrupted shift openings', async () => {
+    const app = await createShopApplication(testEnvironment);
+    const terminal = await app.services.cashier.createTerminal({ code: 'POS-3', name: 'Main Counter' });
+    const cashAccount = await app.services.cashier.createCashAccount({ code: 'TILL-3', name: 'Main Till' });
+    const cashierUserUuid = '00000000-0000-0000-0000-000000000006';
+
+    await app.services.cashier.openShift({
+      terminalUuid: terminal.uuid,
+      cashAccountUuid: cashAccount.uuid,
+      cashierUserUuid,
+      openingCash: '75',
+    });
+
+    await expect(app.services.cashier.openShift({
+      terminalUuid: terminal.uuid,
+      cashAccountUuid: cashAccount.uuid,
+      cashierUserUuid,
+      openingCash: '100',
+    })).rejects.toThrow('Another active shift already conflicts with this workstation');
+
+    const interruptedApp = await createShopApplication(testEnvironment);
+    const interruptedTerminal = await interruptedApp.services.cashier.createTerminal({ code: 'POS-4', name: 'Interrupted Counter' });
+    const interruptedCashAccount = await interruptedApp.services.cashier.createCashAccount({ code: 'TILL-4', name: 'Interrupted Till' });
+    const interruptedShiftUuid = randomUUID();
+    const now = new Date().toISOString();
+
+    interruptedApp.database.sqlite.prepare('INSERT INTO cashier_shifts (uuid, terminal_uuid, cash_account_uuid, cashier_user_uuid, status, opening_cash, notes, opened_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .run(interruptedShiftUuid, interruptedTerminal.uuid, interruptedCashAccount.uuid, '00000000-0000-0000-0000-000000000007', 'open', '60', 'Interrupted before close', now, now, now);
+
+    await expect(interruptedApp.services.cashier.openShift({
+      terminalUuid: interruptedTerminal.uuid,
+      cashAccountUuid: interruptedCashAccount.uuid,
+      cashierUserUuid: '00000000-0000-0000-0000-000000000007',
+      openingCash: '60',
+    })).rejects.toThrow('Another active shift already conflicts with this workstation');
   });
 
   it('cancels expenses through a reversal and keeps owner withdrawals separate', async () => {

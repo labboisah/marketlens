@@ -57,12 +57,54 @@ const correctionSchema = z.object({
   reversalOfUuid: z.string().uuid().optional(),
 });
 
+const updateCustomerSchema = z.object({
+  name: z.string().min(1).optional(),
+  type: z.enum(['retail', 'wholesale', 'corporate']).optional(),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+});
+
+const creditEligibilityQuerySchema = z.object({
+  requestedAmount: z.string().regex(/^\d+(\.\d+)?$/),
+  dueDate: z.string().date(),
+});
+
 export async function registerCustomerRoutes(server: FastifyInstance, app: ShopApplication): Promise<void> {
+  server.get('/api/v1/customers', async (request) => {
+    const search = typeof request.query.search === 'string' ? request.query.search.trim() : '';
+    const query = app.database.sqlite.prepare(`
+      SELECT uuid, code, name, type, phone, address, status
+      FROM customers
+      WHERE ? = '' OR code LIKE ? OR name LIKE ? OR phone LIKE ?
+      ORDER BY name ASC
+      LIMIT 200
+    `);
+    const like = `%${search}%`;
+    const data = query.all(search, like, like, like);
+    return { success: true, data, meta: {} };
+  });
+
   server.post('/api/v1/customers', async (request) => ({ success: true, data: await app.services.customers.createCustomer(customerSchema.parse(request.body)), meta: {} }));
+
+  server.patch('/api/v1/customers/:customerUuid', async (request) => {
+    const { customerUuid } = request.params as { customerUuid: string };
+    return { success: true, data: await app.services.customers.updateCustomer(customerUuid, updateCustomerSchema.parse(request.body)), meta: {} };
+  });
 
   server.get('/api/v1/customers/:customerUuid/account', async (request) => {
     const { customerUuid } = request.params as { customerUuid: string };
     return { success: true, data: app.services.customers.getAccount(customerUuid) ?? null, meta: {} };
+  });
+
+  server.get('/api/v1/customers/:customerUuid/debt-profile', async (request) => {
+    const { customerUuid } = request.params as { customerUuid: string };
+    return { success: true, data: app.services.customers.getDebtProfile(customerUuid), meta: {} };
+  });
+
+  server.get('/api/v1/customers/:customerUuid/credit-sale-eligibility', async (request) => {
+    const { customerUuid } = request.params as { customerUuid: string };
+    const query = creditEligibilityQuerySchema.parse(request.query);
+    return { success: true, data: app.services.customers.getCreditSaleEligibility(customerUuid, query), meta: {} };
   });
 
   server.get('/api/v1/customers/:customerUuid/statement', async (request) => {

@@ -14,6 +14,12 @@ import { ConnectionScreen } from './screens/ConnectionScreen';
 import { DevicePairingScreen } from './screens/DevicePairingScreen';
 import { LoginScreen } from './screens/LoginScreen';
 import { RoleWorkspace } from './screens/RoleWorkspace';
+import { PosScreen } from './screens/PosScreen';
+import { CustomersScreen } from './screens/CustomersScreen';
+import { InventoryScreen } from './screens/InventoryScreen';
+import { PurchasesSuppliersScreen } from './screens/PurchasesSuppliersScreen';
+import { ExpensesScreen } from './screens/ExpensesScreen';
+import { ServicesScreen } from './screens/ServicesScreen';
 import { checkDeviceStatus, checkShopStatus, readAuthenticatedSession, readAuthState, refreshShopSession } from './services/shop-api-client';
 import { resolveApplicationState } from './services/application-state-service';
 import { useClientUiStore } from './state/client-ui-store';
@@ -42,6 +48,7 @@ export function App() {
   const currentVersion = useClientUiStore((state) => state.currentVersion);
   const updateRequired = useClientUiStore((state) => state.updateRequired);
   const bootstrap = useClientUiStore((state) => state.bootstrap);
+  const activeNavigationId = useClientUiStore((state) => state.activeNavigationId);
   const notify = useClientUiStore((state) => state.notify);
   const resetSession = useClientUiStore((state) => state.resetSession);
   const setApplicationState = useClientUiStore((state) => state.setApplicationState);
@@ -161,7 +168,7 @@ export function App() {
           updateRequired: updateStatus.updateAvailable,
           currentUser: authState.user,
           connectionState: confirmedStatus ? 'connected' : 'disconnected',
-          shiftStatus: 'open',
+          shiftStatus: 'closed',
         });
       } catch (error) {
         await window.marketlensClient.session.clear();
@@ -292,7 +299,21 @@ export function App() {
             {screen === 'workspace' && !showStateNotice ? (
               <div className="grid min-h-screen grid-cols-[260px_1fr]">
                 <PermissionAwareNavigation />
-                <RoleWorkspace />
+                {activeNavigationId === 'sales-operations'
+                  ? <PosScreen />
+                  : activeNavigationId === 'customers-accounts'
+                    ? <CustomersScreen />
+                    : activeNavigationId === 'inventory-stock'
+                      ? <InventoryScreen />
+                      : activeNavigationId === 'expenses-tracking'
+                        ? <ExpensesScreen />
+                        : activeNavigationId === 'services-workflow'
+                          ? <ServicesScreen />
+                      : activeNavigationId === 'purchases-procurement'
+                        ? <PurchasesSuppliersScreen initialTab="procurement" />
+                        : activeNavigationId === 'suppliers-partners'
+                          ? <PurchasesSuppliersScreen initialTab="suppliers" />
+                    : <RoleWorkspace />}
               </div>
             ) : null}
             <NotificationCenter />

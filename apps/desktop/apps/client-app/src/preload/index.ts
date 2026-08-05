@@ -6,7 +6,7 @@ import type {
   ClientSession,
   ExportFileRequest,
   ExportFileResult,
-  PrintReceiptPayload,
+  ReceiptPrintPayload,
 } from './types';
 
 const api: ClientPreloadApi = {
@@ -32,7 +32,10 @@ const api: ClientPreloadApi = {
     reset: () => ipcRenderer.invoke('client:connection-settings:reset') as Promise<{ reset: true }>,
   },
   printer: {
-    printReceipt: (payload: PrintReceiptPayload) =>
+    list: () => ipcRenderer.invoke('client:printer:list') as ReturnType<ClientPreloadApi['printer']['list']>,
+    getDefault: () => ipcRenderer.invoke('client:printer:getDefault') as ReturnType<ClientPreloadApi['printer']['getDefault']>,
+    setDefault: (name: string) => ipcRenderer.invoke('client:printer:setDefault', name) as ReturnType<ClientPreloadApi['printer']['setDefault']>,
+    printReceipt: (payload: ReceiptPrintPayload) =>
       ipcRenderer.invoke('client:printer:printReceipt', payload) as Promise<{
         accepted: boolean;
         reason?: string;

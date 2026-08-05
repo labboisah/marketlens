@@ -47,9 +47,40 @@ export interface ClientConnectionSettings {
   requirePinnedServerMatch: boolean;
 }
 
-export interface PrintReceiptPayload {
+export type ReceiptPrintFormat = 'thermal' | 'a4';
+
+export interface ReceiptPrintPayload {
   receiptUuid: string;
   saleUuid: string;
+  format: ReceiptPrintFormat;
+  preview?: boolean;
+  printerName?: string;
+  copies?: number;
+  receipt: {
+    receiptNumber: string;
+    saleNumber: string;
+    createdAt: string;
+    cashier: string;
+    customer: string;
+    businessName: string;
+    branchName: string;
+    items: Array<{ name: string; sku?: string; unit?: string; quantity: string; unitPrice: string; lineTotal: string }>;
+    payments: Array<{ method: string; amount: string; reference?: string | null }>;
+    subtotal: string;
+    discountAmount: string;
+    totalAmount: string;
+    totalPaid: string;
+    changeDue: string;
+    balance: string;
+    verificationReference?: string | null;
+    thankYouMessage?: string;
+  };
+}
+
+export interface PrinterInfo {
+  name: string;
+  displayName: string;
+  isDefault: boolean;
 }
 
 export interface ClientAppInfo {
@@ -111,7 +142,10 @@ export interface ClientPreloadApi {
     reset(): Promise<{ reset: true }>;
   };
   readonly printer: {
-    printReceipt(payload: PrintReceiptPayload): Promise<{
+    list(): Promise<PrinterInfo[]>;
+    getDefault(): Promise<string | null>;
+    setDefault(name: string): Promise<{ saved: true }>;
+    printReceipt(payload: ReceiptPrintPayload): Promise<{
       accepted: boolean;
       reason?: string;
       receiptUuid: string;

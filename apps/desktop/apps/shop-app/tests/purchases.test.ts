@@ -100,7 +100,7 @@ describe('Shop App purchasing and receiving', () => {
     expect(stocks[0]?.quantity).toBe('10');
 
     const account = app.services.suppliers.getSupplierAccount(supplier.uuid);
-    expect(account?.currentBalance).toBe('1000');
+    expect(account?.currentBalance).toBe('1500');
 
     const pendingSyncCountRow = app.database.sqlite.prepare('select count(*) as count from sync_queue').get();
     expect(pendingSyncCountRow.count).toBeGreaterThan(0);
@@ -129,5 +129,50 @@ describe('Shop App purchasing and receiving', () => {
 
     const account = app.services.suppliers.getSupplierAccount(supplier.uuid);
     expect(account?.currentBalance).toBe('120');
+
+    const paymentRows = app.database.sqlite.prepare('SELECT count(*) AS count FROM purchase_payments WHERE purchase_uuid = ?').get(purchase.uuid) as { count: number };
+    expect(paymentRows.count).toBe(1);
+  });
+
+  it('creates a purchase return and reduces stock and supplier balance', async () => {
+    const app = await createShopApplication(testEnvironment);
+
+    const unit = app.services.products.createUnit({ code: 'PCS', name: 'Piece', isBase: true });
+    const product = app.services.products.createProduct({ sku: 'SKU-3001', name: 'Returned Widget', baseUnitUuid: unit.uuid, active: true });
+    const warehouse = app.services.inventory.createWarehouse({ code: 'WH2', name: 'Return Warehouse' });
+
+    const supplier = await app.services.suppliers.createSupplier({
+      code: 'SUP-003',
+      name: 'Return Supplier',
+      preferred: false,
+    });
+
+    const purchase = await app.services.purchases.createPurchase({
+      supplierUuid: supplier.uuid,
+      invoiceNumber: 'INV-3001',
+      items: [{ productUuid: product.uuid, purchaseUnitUuid: unit.uuid, quantity: '10', unitCost: '50' }],
+    });
+
+    await app.services.purchases.receivePurchase(purchase.uuid, {
+      warehouseUuid: warehouse.uuid,
+      receivedItems: [{ productUuid: product.uuid, quantity: '10' }],
+    });
+
+    const returned = await app.services.purchases.returnPurchase(purchase.uuid, {
+      warehouseUuid: warehouse.uuid,
+      reason: 'Damaged delivery',
+      items: [{ productUuid: product.uuid, quantity: '2', unitUuid: unit.uuid }],
+    });
+
+    expect(returned.returnedAmount).toBe('100');
+
+    const stocks = app.services.inventory.listStocks(product.uuid, warehouse.uuid);
+    expect(stocks[0]?.quantity).toBe('8');
+
+    const account = app.services.suppliers.getSupplierAccount(supplier.uuid);
+    expect(account?.currentBalance).toBe('400');
+
+    const returnRows = app.database.sqlite.prepare('SELECT count(*) AS count FROM purchase_returns WHERE purchase_uuid = ?').get(purchase.uuid) as { count: number };
+    expect(returnRows.count).toBe(1);
   });
 });

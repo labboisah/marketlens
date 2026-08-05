@@ -133,4 +133,70 @@ describe('Shop App customer debt ledger', () => {
     await expect(app.services.customers.recordCreditSale(customer.uuid, { amount: '10', dueDate: '2026-08-10' }))
       .rejects.toThrow('Customer is blocked');
   });
+
+  it('returns authoritative debt profile and credit-sale eligibility indicators', async () => {
+    const app = await createShopApplication(testEnvironment);
+    const customer = await app.services.customers.createCustomer({
+      code: 'CUS-004',
+      name: 'Indicator Customer',
+      type: 'retail',
+      creditLimit: '500',
+      openingBalance: '100',
+    });
+
+    const overdueDate = '2026-01-10';
+    const futureDate = '2026-12-10';
+    const saleOne = await app.services.customers.recordCreditSale(customer.uuid, { amount: '200', dueDate: overdueDate, reference: 'SALE-OLD' });
+    await app.services.customers.recordCreditSale(customer.uuid, { amount: '100', dueDate: futureDate, reference: 'SALE-NEW' });
+    await app.services.customers.recordPayment(customer.uuid, {
+      amount: '50',
+      reference: 'PMT-001',
+      allocations: [{ accountTransactionUuid: saleOne.uuid, amount: '50' }],
+    });
+
+    const profile = app.services.customers.getDebtProfile(customer.uuid);
+    expect(profile.account.currentBalance).toBe('350');
+    expect(profile.account.creditLimit).toBe('500');
+    expect(profile.account.availableCredit).toBe('150');
+    expect(Number(profile.account.overdueAmount)).toBeGreaterThan(0);
+    expect(profile.paymentHistory.length).toBe(1);
+    expect(profile.openCreditSales.length).toBe(2);
+
+    const eligibility = app.services.customers.getCreditSaleEligibility(customer.uuid, {
+      requestedAmount: '50',
+      dueDate: '2026-12-20',
+    });
+    expect(eligibility.existingBalance).toBe('350');
+    expect(eligibility.availableCredit).toBe('150');
+    expect(eligibility.creditLimit).toBe('500');
+    expect(eligibility.dueDate).toBe('2026-12-20');
+    expect(eligibility.eligible).toBe(false);
+    expect(eligibility.reason).toBe('Customer has overdue balance');
+  });
+
+  it('edits customer profile fields without changing account ledger totals', async () => {
+    const app = await createShopApplication(testEnvironment);
+    const customer = await app.services.customers.createCustomer({
+      code: 'CUS-005',
+      name: 'Editable Customer',
+      type: 'retail',
+      phone: '08035555555',
+      address: 'Before Edit',
+      creditLimit: '300',
+      openingBalance: '20',
+    });
+
+    const updated = await app.services.customers.updateCustomer(customer.uuid, {
+      name: 'Edited Customer',
+      type: 'corporate',
+      phone: '08036666666',
+      address: 'After Edit',
+    });
+
+    expect(updated.name).toBe('Edited Customer');
+    expect(updated.type).toBe('corporate');
+    expect(updated.phone).toBe('08036666666');
+    expect(updated.address).toBe('After Edit');
+    expect(app.services.customers.getAccount(customer.uuid)?.currentBalance).toBe('20');
+  });
 });

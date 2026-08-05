@@ -6,7 +6,7 @@ export type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   error?: string;
 };
 
-export function Input({ className, label, error, id, ...props }: InputProps) {
+export const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input({ className, label, error, id, ...props }, ref) {
   const inputId = id ?? React.useId();
 
   return (
@@ -14,6 +14,7 @@ export function Input({ className, label, error, id, ...props }: InputProps) {
       {label ? <span>{label}</span> : null}
       <input
         id={inputId}
+        ref={ref}
         className={cn(
           'h-10 rounded-md border border-border bg-surface px-3 text-sm text-foreground placeholder:text-muted',
           error && 'border-danger',
@@ -26,4 +27,4 @@ export function Input({ className, label, error, id, ...props }: InputProps) {
       {error ? <span id={`${inputId}-error`} className="text-xs font-medium text-danger">{error}</span> : null}
     </label>
   );
-}
+});

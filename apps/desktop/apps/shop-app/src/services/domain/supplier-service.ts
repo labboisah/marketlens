@@ -72,6 +72,40 @@ export class SupplierService {
     return row ?? null;
   }
 
+  getSupplierByUuid(supplierUuid: string) {
+    const row = this.db.select().from(suppliers).where(eq(suppliers.uuid, supplierUuid)).get();
+    return row ?? null;
+  }
+
+  listSuppliers(search?: string) {
+    const rows = this.db.select().from(suppliers).all();
+    const normalized = search?.trim().toLowerCase();
+    if (!normalized) {
+      return rows;
+    }
+
+    return rows.filter((row) => {
+      const fields = [row.code, row.name, row.contactName, row.contactPhone, row.contactEmail]
+        .map((value) => (value ?? '').toLowerCase());
+      return fields.some((value) => value.includes(normalized));
+    });
+  }
+
+  listSupplierBalances(search?: string) {
+    const suppliersRows = this.listSuppliers(search);
+    return suppliersRows.map((supplier) => {
+      const account = this.getSupplierAccount(supplier.uuid);
+      return {
+        supplierUuid: supplier.uuid,
+        code: supplier.code,
+        name: supplier.name,
+        contactPhone: supplier.contactPhone,
+        contactEmail: supplier.contactEmail,
+        currentBalance: account?.currentBalance ?? '0',
+      };
+    });
+  }
+
   updateSupplierBalance(supplierUuid: string, delta: string) {
     const row = this.db.select().from(supplierAccounts).where(eq(supplierAccounts.supplierUuid, supplierUuid)).get();
     if (!row) {

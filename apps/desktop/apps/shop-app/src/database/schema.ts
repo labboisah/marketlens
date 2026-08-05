@@ -342,6 +342,33 @@ export const purchaseItems = sqliteTable('purchase_items', {
   updatedAt: text('updated_at').notNull(),
 });
 
+export const purchasePayments = sqliteTable('purchase_payments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  purchaseUuid: text('purchase_uuid').notNull(),
+  supplierUuid: text('supplier_uuid').notNull(),
+  amount: text('amount').notNull(),
+  reference: text('reference'),
+  paymentMethod: text('payment_method'),
+  createdAt: text('created_at').notNull(),
+});
+
+export const purchaseReturns = sqliteTable('purchase_returns', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  purchaseUuid: text('purchase_uuid').notNull(),
+  supplierUuid: text('supplier_uuid').notNull(),
+  warehouseUuid: text('warehouse_uuid').notNull(),
+  productUuid: text('product_uuid').notNull(),
+  unitUuid: text('unit_uuid').notNull(),
+  quantity: text('quantity').notNull(),
+  unitCost: text('unit_cost').notNull(),
+  amount: text('amount').notNull(),
+  reason: text('reason'),
+  note: text('note'),
+  createdAt: text('created_at').notNull(),
+});
+
 export const customers = sqliteTable('customers', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   uuid: text('uuid').notNull().unique(),
@@ -506,6 +533,7 @@ export const cashierShifts = sqliteTable('cashier_shifts', {
   cashierUserUuid: text('cashier_user_uuid').notNull(),
   status: text('status').notNull(),
   openingCash: text('opening_cash').notNull(),
+  notes: text('notes'),
   expectedCash: text('expected_cash'),
   actualCash: text('actual_cash'),
   variance: text('variance'),
@@ -543,6 +571,9 @@ export const cashierSettlements = sqliteTable('cashier_settlements', {
   actualCash: text('actual_cash').notNull(),
   variance: text('variance').notNull(),
   status: text('status').notNull(),
+  notes: text('notes'),
+  cashDenominationsJson: text('cash_denominations_json'),
+  supportingExplanation: text('supporting_explanation'),
   verifiedByUserUuid: text('verified_by_user_uuid'),
   verifiedAt: text('verified_at'),
   createdAt: text('created_at').notNull(),
@@ -562,6 +593,12 @@ export const expenses = sqliteTable('expenses', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   uuid: text('uuid').notNull().unique(),
   categoryUuid: text('category_uuid').notNull(),
+  approvalRequested: text('approval_requested'),
+  createdByUserUuid: text('created_by_user_uuid'),
+  createdByName: text('created_by_name'),
+  approvedByUserUuid: text('approved_by_user_uuid'),
+  reversedByUserUuid: text('reversed_by_user_uuid'),
+  reversedAt: text('reversed_at'),
   cashAccountUuid: text('cash_account_uuid'),
   bankAccountUuid: text('bank_account_uuid'),
   shiftUuid: text('shift_uuid'),
@@ -572,6 +609,20 @@ export const expenses = sqliteTable('expenses', {
   status: text('status').notNull(),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
+});
+
+export const expenseReversalRequests = sqliteTable('expense_reversal_requests', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  expenseUuid: text('expense_uuid').notNull(),
+  requestedByUserUuid: text('requested_by_user_uuid'),
+  approvedByUserUuid: text('approved_by_user_uuid'),
+  rejectedByUserUuid: text('rejected_by_user_uuid'),
+  reason: text('reason').notNull(),
+  rejectionReason: text('rejection_reason'),
+  status: text('status').notNull(),
+  createdAt: text('created_at').notNull(),
+  processedAt: text('processed_at'),
 });
 
 export const expenseApprovals = sqliteTable('expense_approvals', {
@@ -643,10 +694,43 @@ export const ownerWithdrawalItems = sqliteTable('owner_withdrawal_items', {
 export const paymentMethods = sqliteTable('payment_methods', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), code: text('code').notNull().unique(), name: text('name').notNull(), type: text('type').notNull(), active: text('active').notNull(), createdAt: text('created_at').notNull(), updatedAt: text('updated_at').notNull() });
 export const sales = sqliteTable('sales', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), saleNumber: text('sale_number').notNull().unique(), idempotencyKey: text('idempotency_key').notNull().unique(), shiftUuid: text('shift_uuid').notNull(), warehouseUuid: text('warehouse_uuid').notNull(), customerUuid: text('customer_uuid'), status: text('status').notNull(), subtotal: text('subtotal').notNull(), discountAmount: text('discount_amount').notNull(), totalAmount: text('total_amount').notNull(), createdAt: text('created_at').notNull() });
 export const saleItems = sqliteTable('sale_items', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), saleUuid: text('sale_uuid').notNull(), productUuid: text('product_uuid').notNull(), unitUuid: text('unit_uuid').notNull(), quantity: text('quantity').notNull(), unitPrice: text('unit_price').notNull(), lineTotal: text('line_total').notNull(), createdAt: text('created_at').notNull() });
-export const salePayments = sqliteTable('sale_payments', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), saleUuid: text('sale_uuid').notNull(), paymentMethodUuid: text('payment_method_uuid').notNull(), amount: text('amount').notNull(), reference: text('reference'), createdAt: text('created_at').notNull() });
+export const salePayments = sqliteTable('sale_payments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  saleUuid: text('sale_uuid').notNull(),
+  paymentMethodUuid: text('payment_method_uuid').notNull(),
+  amount: text('amount').notNull(),
+  amountTendered: text('amount_tendered'),
+  reference: text('reference'),
+  transferVerified: text('transfer_verified'),
+  creditAmount: text('credit_amount'),
+  customerCreditSelection: text('customer_credit_selection'),
+  createdAt: text('created_at').notNull(),
+});
 export const saleDiscounts = sqliteTable('sale_discounts', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), saleUuid: text('sale_uuid').notNull(), amount: text('amount').notNull(), reason: text('reason'), approvedByUserUuid: text('approved_by_user_uuid'), createdAt: text('created_at').notNull() });
-export const saleCancellations = sqliteTable('sale_cancellations', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), saleUuid: text('sale_uuid').notNull().unique(), reason: text('reason').notNull(), approvedByUserUuid: text('approved_by_user_uuid'), createdAt: text('created_at').notNull() });
-export const saleReturns = sqliteTable('sale_returns', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), saleUuid: text('sale_uuid').notNull(), status: text('status').notNull(), refundAmount: text('refund_amount').notNull(), reason: text('reason').notNull(), createdAt: text('created_at').notNull() });
+export const saleCancellations = sqliteTable('sale_cancellations', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  saleUuid: text('sale_uuid').notNull().unique(),
+  reason: text('reason').notNull(),
+  approvedByUserUuid: text('approved_by_user_uuid'),
+  approvalState: text('approval_state'),
+  refundState: text('refund_state'),
+  refundMethod: text('refund_method'),
+  createdAt: text('created_at').notNull(),
+});
+export const saleReturns = sqliteTable('sale_returns', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  saleUuid: text('sale_uuid').notNull(),
+  status: text('status').notNull(),
+  refundAmount: text('refund_amount').notNull(),
+  reason: text('reason').notNull(),
+  refundMethod: text('refund_method'),
+  approvalRequested: text('approval_requested'),
+  approvedByUserUuid: text('approved_by_user_uuid'),
+  createdAt: text('created_at').notNull(),
+});
 export const saleReturnItems = sqliteTable('sale_return_items', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), saleReturnUuid: text('sale_return_uuid').notNull(), saleItemUuid: text('sale_item_uuid').notNull(), quantity: text('quantity').notNull(), amount: text('amount').notNull(), createdAt: text('created_at').notNull() });
 export const receipts = sqliteTable('receipts', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), saleUuid: text('sale_uuid').notNull().unique(), format: text('format').notNull(), receiptNumber: text('receipt_number').notNull().unique(), printCount: integer('print_count').notNull(), createdAt: text('created_at').notNull() });
 export const receiptReprints = sqliteTable('receipt_reprints', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), receiptUuid: text('receipt_uuid').notNull(), reason: text('reason').notNull(), approvedByUserUuid: text('approved_by_user_uuid'), createdAt: text('created_at').notNull() });
@@ -658,11 +742,11 @@ export const servicePrices = sqliteTable('service_prices', { id: integer('id').p
 export const servicePriceHistories = sqliteTable('service_price_histories', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), servicePriceUuid: text('service_price_uuid').notNull(), oldAmount: text('old_amount'), newAmount: text('new_amount').notNull(), createdAt: text('created_at').notNull() });
 export const serviceRevenueShareRules = sqliteTable('service_revenue_share_rules', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), serviceUuid: text('service_uuid'), branchUuid: text('branch_uuid'), basis: text('basis').notNull(), fixedAmount: text('fixed_amount'), requiresApproval: text('requires_approval').notNull(), active: text('active').notNull(), createdAt: text('created_at').notNull() });
 export const serviceRevenueShareRuleComponents = sqliteTable('service_revenue_share_rule_components', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), ruleUuid: text('rule_uuid').notNull(), type: text('type').notNull(), percentage: text('percentage').notNull(), createdAt: text('created_at').notNull() });
-export const serviceOrders = sqliteTable('service_orders', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), orderNumber: text('order_number').notNull().unique(), customerUuid: text('customer_uuid'), branchUuid: text('branch_uuid').notNull(), status: text('status').notNull(), discountAmount: text('discount_amount').notNull(), createdAt: text('created_at').notNull(), completedAt: text('completed_at') });
+export const serviceOrders = sqliteTable('service_orders', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), orderNumber: text('order_number').notNull().unique(), customerUuid: text('customer_uuid'), branchUuid: text('branch_uuid').notNull(), status: text('status').notNull(), discountAmount: text('discount_amount').notNull(), paymentConfirmedAt: text('payment_confirmed_at'), allocationRequestedAt: text('allocation_requested_at'), approvedByUserUuid: text('approved_by_user_uuid'), cancelledAt: text('cancelled_at'), refundedAt: text('refunded_at'), createdAt: text('created_at').notNull(), completedAt: text('completed_at') });
 export const serviceOrderItems = sqliteTable('service_order_items', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), orderUuid: text('order_uuid').notNull(), serviceUuid: text('service_uuid').notNull(), quantity: text('quantity').notNull(), unitPrice: text('unit_price').notNull(), lineTotal: text('line_total').notNull(), createdAt: text('created_at').notNull() });
-export const serviceStaffAssignments = sqliteTable('service_staff_assignments', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), orderItemUuid: text('order_item_uuid').notNull(), staffUserUuid: text('staff_user_uuid').notNull(), contributionPercentage: text('contribution_percentage').notNull(), createdAt: text('created_at').notNull() });
+export const serviceStaffAssignments = sqliteTable('service_staff_assignments', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), orderItemUuid: text('order_item_uuid').notNull(), staffUserUuid: text('staff_user_uuid').notNull(), contributionPercentage: text('contribution_percentage').notNull(), assignmentRole: text('assignment_role'), startedAt: text('started_at'), completedAt: text('completed_at'), notes: text('notes'), createdAt: text('created_at').notNull() });
 export const servicePayments = sqliteTable('service_payments', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), orderUuid: text('order_uuid').notNull(), amount: text('amount').notNull(), paymentMethod: text('payment_method').notNull(), reference: text('reference'), createdAt: text('created_at').notNull() });
-export const serviceExpenses = sqliteTable('service_expenses', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), orderUuid: text('order_uuid').notNull(), amount: text('amount').notNull(), description: text('description').notNull(), createdAt: text('created_at').notNull() });
+export const serviceExpenses = sqliteTable('service_expenses', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), orderUuid: text('order_uuid').notNull(), category: text('category'), amount: text('amount').notNull(), description: text('description').notNull(), paidBy: text('paid_by'), paymentMethod: text('payment_method'), receiptAttachmentPath: text('receipt_attachment_path'), approvalStatus: text('approval_status').notNull(), expenseScope: text('expense_scope').notNull(), createdAt: text('created_at').notNull() });
 export const serviceRevenueAllocations = sqliteTable('service_revenue_allocations', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), orderUuid: text('order_uuid').notNull(), ruleUuid: text('rule_uuid').notNull(), componentType: text('component_type').notNull(), staffUserUuid: text('staff_user_uuid'), amount: text('amount').notNull(), status: text('status').notNull(), reversalOfUuid: text('reversal_of_uuid'), createdAt: text('created_at').notNull() });
 export const staffEarningAccounts = sqliteTable('staff_earning_accounts', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), staffUserUuid: text('staff_user_uuid').notNull().unique(), currentBalance: text('current_balance').notNull(), createdAt: text('created_at').notNull(), updatedAt: text('updated_at').notNull() });
 export const staffEarningTransactions = sqliteTable('staff_earning_transactions', { id: integer('id').primaryKey({ autoIncrement: true }), uuid: text('uuid').notNull().unique(), staffUserUuid: text('staff_user_uuid').notNull(), type: text('type').notNull(), amount: text('amount').notNull(), referenceUuid: text('reference_uuid'), reversalOfUuid: text('reversal_of_uuid'), createdAt: text('created_at').notNull() });
@@ -714,6 +798,80 @@ export const stockMovements = sqliteTable('stock_movements', {
   movementType: text('movement_type').notNull(),
   reference: text('reference'),
   metadataJson: text('metadata_json'),
+  createdAt: text('created_at').notNull(),
+});
+
+export const stockCountSessions = sqliteTable('stock_count_sessions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  warehouseUuid: text('warehouse_uuid').notNull(),
+  status: text('status').notNull(),
+  approvalState: text('approval_state').notNull(),
+  notes: text('notes'),
+  createdByUserUuid: text('created_by_user_uuid'),
+  approvedByUserUuid: text('approved_by_user_uuid'),
+  approvedAt: text('approved_at'),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+export const stockCountItems = sqliteTable('stock_count_items', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  sessionUuid: text('session_uuid').notNull(),
+  productUuid: text('product_uuid').notNull(),
+  unitUuid: text('unit_uuid').notNull(),
+  barcode: text('barcode'),
+  systemQuantity: text('system_quantity').notNull(),
+  countedQuantity: text('counted_quantity').notNull(),
+  varianceQuantity: text('variance_quantity').notNull(),
+  note: text('note'),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+export const stockAdjustments = sqliteTable('stock_adjustments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  warehouseUuid: text('warehouse_uuid').notNull(),
+  productUuid: text('product_uuid').notNull(),
+  unitUuid: text('unit_uuid').notNull(),
+  adjustmentType: text('adjustment_type').notNull(),
+  quantity: text('quantity').notNull(),
+  reason: text('reason').notNull(),
+  supportingNote: text('supporting_note'),
+  approvalRequested: text('approval_requested').notNull(),
+  approvalState: text('approval_state').notNull(),
+  createdByUserUuid: text('created_by_user_uuid'),
+  approvedByUserUuid: text('approved_by_user_uuid'),
+  approvedAt: text('approved_at'),
+  createdAt: text('created_at').notNull(),
+});
+
+export const stockTransfers = sqliteTable('stock_transfers', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  fromWarehouseUuid: text('from_warehouse_uuid').notNull(),
+  toWarehouseUuid: text('to_warehouse_uuid').notNull(),
+  status: text('status').notNull(),
+  approvalRequested: text('approval_requested').notNull(),
+  approvalState: text('approval_state').notNull(),
+  reason: text('reason'),
+  requestedByUserUuid: text('requested_by_user_uuid'),
+  approvedByUserUuid: text('approved_by_user_uuid'),
+  approvedAt: text('approved_at'),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+export const stockTransferItems = sqliteTable('stock_transfer_items', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  uuid: text('uuid').notNull().unique(),
+  transferUuid: text('transfer_uuid').notNull(),
+  productUuid: text('product_uuid').notNull(),
+  unitUuid: text('unit_uuid').notNull(),
+  quantity: text('quantity').notNull(),
+  note: text('note'),
   createdAt: text('created_at').notNull(),
 });
 

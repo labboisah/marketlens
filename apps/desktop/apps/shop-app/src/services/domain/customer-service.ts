@@ -31,6 +31,13 @@ export type CreateCustomerInput = {
   guarantor?: { name: string; phone?: string; address?: string; relationship?: string };
 };
 
+export type UpdateCustomerInput = {
+  name?: string;
+  type?: CustomerType;
+  phone?: string;
+  address?: string;
+};
+
 export type CreditSaleInput = {
   amount: string;
   dueDate: string;
@@ -81,6 +88,36 @@ export class CustomerService {
     this.auditLogs.record({ action: 'customer.created', subjectType: 'customer', subjectUuid: customer.uuid, metadata: { code: customer.code, type: customer.type } });
     this.syncQueue.enqueue({ aggregateType: 'customer', aggregateUuid: customer.uuid, payload: customer, idempotencyKey: `customer:${customer.uuid}` });
     return customer;
+  }
+
+  async updateCustomer(customerUuid: string, input: UpdateCustomerInput) {
+    const existing = this.sqlite.prepare('SELECT uuid, code, name, type, phone, address, status FROM customers WHERE uuid = ?').get(customerUuid) as {
+      uuid: string;
+      code: string;
+      name: string;
+      type: CustomerType;
+      phone: string | null;
+      address: string | null;
+      status: string;
+    } | undefined;
+    if (!existing) throw new Error('Customer not found');
+
+    const updatedAt = new Date().toISOString();
+    const updated = {
+      ...existing,
+      name: input.name ?? existing.name,
+      type: input.type ?? existing.type,
+      phone: input.phone ?? existing.phone,
+      address: input.address ?? existing.address,
+      updatedAt,
+    };
+
+    this.sqlite.prepare('UPDATE customers SET name = ?, type = ?, phone = ?, address = ?, updated_at = ? WHERE uuid = ?')
+      .run(updated.name, updated.type, updated.phone, updated.address, updatedAt, customerUuid);
+
+    this.auditLogs.record({ action: 'customer.updated', subjectType: 'customer', subjectUuid: customerUuid, metadata: { name: updated.name, type: updated.type } });
+    this.syncQueue.enqueue({ aggregateType: 'customer', aggregateUuid: customerUuid, payload: updated, idempotencyKey: `customer:${customerUuid}:updated` });
+    return updated;
   }
 
   async recordCreditSale(customerUuid: string, input: CreditSaleInput): Promise<CustomerLedgerTransaction> {
@@ -222,6 +259,146 @@ export class CustomerService {
   getStatement(customerUuid: string) {
     const transactions = this.sqlite.prepare('SELECT uuid, customer_uuid AS customerUuid, transaction_type AS transactionType, amount, due_date AS dueDate, reference, reversal_of_uuid AS reversalOfUuid, metadata_json AS metadataJson, created_at AS createdAt FROM customer_account_transactions WHERE customer_uuid = ? ORDER BY created_at, id').all(customerUuid) as CustomerLedgerTransaction[];
     return { customerUuid, balance: this.format(transactions.reduce((total, transaction) => total + this.amount(transaction.amount), 0)), overdue: this.hasOverdueBalance(customerUuid), transactions };
+  }
+
+  getDebtProfile(customerUuid: string) {
+    const customer = this.sqlite.prepare('SELECT uuid, code, name, type, status, phone, address FROM customers WHERE uuid = ?').get(customerUuid) as {
+      uuid: string;
+      code: string;
+      name: string;
+      type: string;
+      status: string;
+      phone: string | null;
+      address: string | null;
+    } | undefined;
+    if (!customer) throw new Error('Customer not found');
+
+    const ledger = this.sqlite.prepare('SELECT COALESCE(SUM(CAST(amount AS REAL)), 0) AS balance FROM customer_account_transactions WHERE customer_uuid = ?').get(customerUuid) as { balance: number };
+    const creditSettings = this.sqlite.prepare('SELECT credit_limit AS creditLimit, additional_credit_allowed AS additionalCreditAllowed FROM customer_credit_limits WHERE customer_uuid = ?').get(customerUuid) as { creditLimit: string; additionalCreditAllowed: string } | undefined;
+    const paymentHistory = this.sqlite.prepare(`
+      SELECT
+        cp.uuid,
+        cp.amount,
+        cp.reference,
+        cp.payment_method AS paymentMethod,
+        cp.created_at AS createdAt,
+        COALESCE((
+          SELECT SUM(CAST(cpa.amount AS REAL))
+          FROM customer_payment_allocations cpa
+          WHERE cpa.payment_uuid = cp.uuid
+        ), 0) AS allocatedAmount
+      FROM customer_payments cp
+      WHERE cp.customer_uuid = ?
+      ORDER BY cp.created_at DESC, cp.id DESC
+      LIMIT 200
+    `).all(customerUuid) as Array<{
+      uuid: string;
+      amount: string;
+      reference: string | null;
+      paymentMethod: string | null;
+      createdAt: string;
+      allocatedAmount: number;
+    }>;
+
+    const openCreditSales = this.sqlite.prepare(`
+      SELECT
+        sale.uuid,
+        sale.reference,
+        sale.due_date AS dueDate,
+        sale.amount,
+        sale.created_at AS createdAt,
+        COALESCE((
+          SELECT SUM(CAST(cpa.amount AS REAL))
+          FROM customer_payment_allocations cpa
+          WHERE cpa.account_transaction_uuid = sale.uuid
+        ), 0) AS allocatedAmount
+      FROM customer_account_transactions sale
+      WHERE sale.customer_uuid = ?
+        AND sale.transaction_type = 'credit_sale'
+      ORDER BY sale.created_at ASC, sale.id ASC
+    `).all(customerUuid) as Array<{
+      uuid: string;
+      reference: string | null;
+      dueDate: string | null;
+      amount: string;
+      createdAt: string;
+      allocatedAmount: number;
+    }>;
+
+    const today = new Date().toISOString().slice(0, 10);
+    const overdueAmount = openCreditSales.reduce((total, sale) => {
+      const outstanding = Math.max(this.amount(sale.amount) - sale.allocatedAmount, 0);
+      if (!sale.dueDate || sale.dueDate.slice(0, 10) >= today) {
+        return total;
+      }
+      return total + outstanding;
+    }, 0);
+
+    const currentBalance = ledger.balance;
+    const creditLimit = this.amount(creditSettings?.creditLimit ?? '0');
+    const availableCredit = creditLimit - currentBalance;
+
+    return {
+      customer,
+      account: {
+        currentBalance: this.format(currentBalance),
+        creditLimit: this.format(creditLimit),
+        availableCredit: this.format(availableCredit),
+        overdueAmount: this.format(overdueAmount),
+        hasOverdueBalance: overdueAmount > 0,
+        additionalCreditAllowed: creditSettings?.additionalCreditAllowed === '1',
+      },
+      paymentHistory: paymentHistory.map((payment) => ({
+        ...payment,
+        allocatedAmount: this.format(payment.allocatedAmount),
+        unallocatedAmount: this.format(Math.max(this.amount(payment.amount) - payment.allocatedAmount, 0)),
+      })),
+      openCreditSales: openCreditSales.map((sale) => ({
+        ...sale,
+        allocatedAmount: this.format(sale.allocatedAmount),
+        outstandingAmount: this.format(Math.max(this.amount(sale.amount) - sale.allocatedAmount, 0)),
+      })),
+    };
+  }
+
+  getCreditSaleEligibility(customerUuid: string, input: { requestedAmount: string; dueDate: string }) {
+    const customer = this.requireCustomer(customerUuid);
+    const profile = this.getDebtProfile(customerUuid);
+    const requestedAmount = this.amount(input.requestedAmount);
+    const currentBalance = this.amount(profile.account.currentBalance);
+    const creditLimit = this.amount(profile.account.creditLimit);
+    const hasOverdueBalance = profile.account.hasOverdueBalance;
+    const projectedExposure = currentBalance + requestedAmount;
+
+    let eligible = true;
+    let requiresApproval = false;
+    let reason: string | null = null;
+
+    if (customer.status !== 'active') {
+      eligible = false;
+      reason = 'Customer is blocked';
+    } else if (hasOverdueBalance) {
+      eligible = false;
+      reason = 'Customer has overdue balance';
+    } else if (projectedExposure > creditLimit) {
+      eligible = false;
+      requiresApproval = true;
+      reason = 'Credit limit exceeded';
+    }
+
+    return {
+      customerUuid,
+      dueDate: input.dueDate,
+      requestedAmount: this.format(requestedAmount),
+      eligible,
+      requiresApproval,
+      reason,
+      existingBalance: this.format(currentBalance),
+      availableCredit: this.format(creditLimit - currentBalance),
+      creditLimit: this.format(creditLimit),
+      overdueAmount: profile.account.overdueAmount,
+      hasOverdueBalance,
+    };
   }
 
   private requireCustomer(customerUuid: string) {

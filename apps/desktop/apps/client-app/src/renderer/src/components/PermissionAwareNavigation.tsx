@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button, StatusBadge } from '@marketlens/ui';
 import {
   resolveVisibleShellNavigation,
@@ -8,6 +9,7 @@ import {
 } from '../features/navigation/application-shell-navigation';
 import { useClientUiStore } from '../state/client-ui-store';
 import { ConnectionStatusIndicator } from './ConnectionStatusIndicator';
+import { getServicesModuleAccess } from '../services/services-service';
 
 export function PermissionAwareNavigation() {
   const activeRole = useClientUiStore((state) => state.activeRole);
@@ -16,14 +18,36 @@ export function PermissionAwareNavigation() {
   const shopStatus = useClientUiStore((state) => state.shopStatus);
   const shiftStatus = useClientUiStore((state) => state.shiftStatus);
   const username = useClientUiStore((state) => state.username);
+  const shopBaseUrl = useClientUiStore((state) => state.shopBaseUrl);
+  const deviceUuid = useClientUiStore((state) => state.deviceUuid);
   const setActiveNavigationId = useClientUiStore((state) => state.setActiveNavigationId);
   const setActiveRole = useClientUiStore((state) => state.setActiveRole);
+  const sessionQuery = useQuery({
+    queryKey: ['navigation-session'],
+    enabled: Boolean(shopBaseUrl && deviceUuid),
+    queryFn: async () => window.marketlensClient.session.load() as Promise<{ shopBaseUrl: string; token: string; deviceUuid: string }>,
+  });
 
-  const visibleItems = resolveVisibleShellNavigation({
-    permissions,
-    shopStatus,
-    shiftStatus,
-  }).filter((item) => item.visible);
+  const servicesAccessQuery = useQuery({
+    queryKey: ['services-module-access-navigation'],
+    enabled: Boolean(sessionQuery.data?.token && shopBaseUrl && deviceUuid),
+    queryFn: async () => getServicesModuleAccess({
+      shopBaseUrl: sessionQuery.data?.shopBaseUrl || shopBaseUrl,
+      accessToken: sessionQuery.data!.token,
+      deviceUuid: sessionQuery.data?.deviceUuid || deviceUuid || '',
+    }),
+  });
+
+  const visibleItems = useMemo(() => {
+    const shellItems = resolveVisibleShellNavigation({ permissions, shopStatus, shiftStatus }).filter((item) => item.visible);
+    if (servicesAccessQuery.data && !servicesAccessQuery.data.enabled) {
+      return shellItems.filter((item) => item.id !== 'services-workflow' && item.group !== 'services' && item.group !== 'staff_earnings');
+    }
+    if (!servicesAccessQuery.data && sessionQuery.data?.token) {
+      return shellItems.filter((item) => item.id !== 'services-workflow' && item.group !== 'services' && item.group !== 'staff_earnings');
+    }
+    return shellItems;
+  }, [permissions, sessionQuery.data?.token, servicesAccessQuery.data, shopStatus, shiftStatus]);
 
   const visibleGroups = Object.entries(shellNavigationGroupLabels)
     .map(([groupId, label]) => ({
