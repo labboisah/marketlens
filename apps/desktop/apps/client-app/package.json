@@ -16,11 +16,11 @@
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
-    "@marketlens/api-contracts": "workspace:*",
-    "@marketlens/permissions": "workspace:*",
-    "@marketlens/shared-types": "workspace:*",
-    "@marketlens/ui": "workspace:*",
-    "@marketlens/validation": "workspace:*",
+    "@marketlens/api-contracts": "file:../../packages/api-contracts",
+    "@marketlens/permissions": "file:../../packages/permissions",
+    "@marketlens/shared-types": "file:../../packages/shared-types",
+    "@marketlens/ui": "file:../../packages/ui",
+    "@marketlens/validation": "file:../../packages/validation",
     "@tanstack/react-query": "latest",
     "@tanstack/react-table": "latest",
     "@tanstack/react-virtual": "latest",
@@ -33,9 +33,18 @@
     "zustand": "latest"
   },
   "devDependencies": {
+    "@electron-forge/cli": "latest",
+    "@electron-forge/maker-squirrel": "latest",
+    "@electron-forge/maker-zip": "latest",
     "@electron-forge/plugin-vite": "latest",
     "@electron-forge/shared-types": "latest",
+    "@types/node": "latest",
     "@types/react": "latest",
-    "@types/react-dom": "latest"
+    "@types/react-dom": "latest",
+    "@vitejs/plugin-react": "latest",
+    "electron": "latest",
+    "typescript": "latest",
+    "vite": "latest",
+    "vitest": "latest"
   }
 }

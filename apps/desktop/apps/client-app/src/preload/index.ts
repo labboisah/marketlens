@@ -1,5 +1,13 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { ClientPreloadApi, ClientSession, PrintReceiptPayload } from './types';
+import type {
+  ClientConnectionSettings,
+  ClientPreloadApi,
+  ClientPreferences,
+  ClientSession,
+  ExportFileRequest,
+  ExportFileResult,
+  PrintReceiptPayload,
+} from './types';
 
 const api: ClientPreloadApi = {
   appName: 'MarketLens Client App',
@@ -14,6 +22,15 @@ const api: ClientPreloadApi = {
     save: (session) => ipcRenderer.invoke('client:session:save', session) as Promise<{ saved: true }>,
     clear: () => ipcRenderer.invoke('client:session:clear') as Promise<{ cleared: true }>,
   },
+  preferences: {
+    load: () => ipcRenderer.invoke('client:preferences:load') as Promise<ClientPreferences>,
+    save: (preferences) => ipcRenderer.invoke('client:preferences:save', preferences) as Promise<{ saved: true }>,
+  },
+  connectionSettings: {
+    load: () => ipcRenderer.invoke('client:connection-settings:load') as Promise<ClientConnectionSettings>,
+    save: (settings) => ipcRenderer.invoke('client:connection-settings:save', settings) as Promise<{ saved: true }>,
+    reset: () => ipcRenderer.invoke('client:connection-settings:reset') as Promise<{ reset: true }>,
+  },
   printer: {
     printReceipt: (payload: PrintReceiptPayload) =>
       ipcRenderer.invoke('client:printer:printReceipt', payload) as Promise<{
@@ -24,6 +41,19 @@ const api: ClientPreloadApi = {
   },
   scanner: {
     status: () => ipcRenderer.invoke('client:scanner:status') as Promise<{ connected: boolean; mode: string }>,
+  },
+  appInfo: {
+    get: () => ipcRenderer.invoke('client:app-info:get') as ReturnType<ClientPreloadApi['appInfo']['get']>,
+  },
+  network: {
+    get: () => ipcRenderer.invoke('client:network:get') as ReturnType<ClientPreloadApi['network']['get']>,
+  },
+  files: {
+    chooseExportPath: (input: ExportFileRequest) =>
+      ipcRenderer.invoke('client:files:choose-export-path', input) as Promise<ExportFileResult>,
+  },
+  updates: {
+    check: () => ipcRenderer.invoke('client:updates:check') as ReturnType<ClientPreloadApi['updates']['check']>,
   },
 };
 

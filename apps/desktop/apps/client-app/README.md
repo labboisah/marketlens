@@ -14,6 +14,27 @@ The Client App never opens SQLite and never owns the shop business database.
 - Show clear connection, pairing, session, and permission state.
 - Defer all authoritative transaction outcomes to the Shop App.
 
+## Application States
+
+The Client App resolves and visibly presents these central workstation states:
+
+- `not_configured`
+- `searching_for_shop_server`
+- `awaiting_pairing`
+- `paired`
+- `disconnected`
+- `session_expired`
+- `authenticated`
+- `shop_suspended`
+- `subscription_expired`
+- `module_disabled`
+- `update_required`
+- `ready`
+
+These states are derived from Shop App connectivity, device authorization,
+session validity, subscription and module status, application version, update
+requirements, and the current role or permission context.
+
 ## Supported Roles
 
 - Cashier: POS, cart, customer selection, payment dialog, receipt, shift opening,
@@ -33,6 +54,38 @@ or disconnected from the local server.
 Transactions must remain pending in the UI until the Shop App returns a
 confirmed success response.
 
+The connection workflow supports:
+
+- Automatic LAN discovery where available.
+- Manual IP and port entry.
+- Server-name input and server identity details.
+- Recent verified server list.
+- Connection test before transition.
+- Pairing-code and QR entry foundation.
+- Secure reconnection using encrypted connection settings.
+- Optional pinned server identity verification when configured.
+
+Changing the connected Shop App requires explicit confirmation and may require
+device re-pairing, especially when the new server belongs to a different
+business identity.
+
+## Connection Screens
+
+The current connection workflow includes explicit screens for:
+
+- Find Shop App.
+- Manual connection.
+- Connection test.
+- Server found.
+- Server unavailable.
+- Connection lost.
+- Retry.
+- Change server.
+
+The application status banner displays business name, branch name, Shop App
+device name, server IP, server port, connection status, and last successful
+connection timestamp when available.
+
 ## Automatic Discovery
 
 The scaffold includes a server-discovery service shell. Production discovery can
@@ -48,7 +101,7 @@ http://192.168.1.20:4090
 ```
 
 Manual server configuration is non-authoritative UI data. It may be cached by
-the renderer, but session secrets must not be stored in local storage.
+the application, but session secrets must not be stored in local storage.
 
 ## Device Pairing
 
@@ -58,16 +111,59 @@ pairing endpoint.
 
 Pairing is only complete when the Shop App confirms it.
 
+The Client App must not advance from pairing to login when the Shop App only
+accepts a request for later approval.
+
 ## Login
 
 Users authenticate through the Shop App. The Client App uses the returned
 permissions to decide which navigation items and screens are visible.
+
+Authentication supports:
+
+- Username or staff code identity input.
+- Password-based login through the Shop App.
+- Remember-device mode where policy allows.
+- Token refresh with secure session updates.
+- Manual logout with explicit confirmation.
+- Automatic lock screen after inactivity.
+- Automatic logout after prolonged inactivity.
+- Password-change-required enforcement.
+- Account-suspended and account-disabled handling.
+- Permission refresh through authenticated state checks.
+
+Authentication failures are displayed with generic failure messaging.
+
+On startup, the Client App restores any encrypted session through the preload
+bridge and re-validates it against the Shop App before showing workspace
+screens.
 
 ## Secure Session Storage
 
 Sensitive session values must be stored through Electron `safeStorage` exposed
 by a typed preload API. Renderer code must not store auth tokens, device secrets,
 or session credentials in local storage.
+
+Non-sensitive workstation preferences such as the last Shop App URL, preferred
+role shell, and last device name are stored through a typed preload preferences
+API rather than direct renderer storage.
+
+Connection settings and verified recent servers are stored in an encrypted
+main-process connection-settings store exposed through typed preload APIs.
+
+Session token material is persisted only through Electron `safeStorage` in the
+main process. Plaintext passwords are never persisted.
+
+## Authentication Screens
+
+The Client App includes dedicated screens for:
+
+- Login page.
+- Session-expired page.
+- Account-disabled page.
+- Password-change page.
+- Lock screen.
+- Logout confirmation.
 
 ## Receipt Printing
 
@@ -79,6 +175,19 @@ directly.
 
 USB barcode scanners that act as keyboards can be handled by focused inputs.
 Native scanner integrations must go through controlled preload APIs.
+
+## Preload API Surface
+
+The typed preload bridge currently exposes controlled APIs for:
+
+- Encrypted session storage.
+- Non-sensitive workstation preferences.
+- Receipt printing.
+- Scanner status.
+- Application version and runtime information.
+- Local network information.
+- Controlled export-path selection.
+- Update status checks.
 
 ## Testing
 

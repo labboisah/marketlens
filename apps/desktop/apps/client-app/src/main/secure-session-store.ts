@@ -5,9 +5,15 @@ import { safeStorage } from 'electron';
 export interface StoredSession {
   shopBaseUrl: string;
   userUuid: string;
+  username: string;
   deviceUuid: string;
   token: string;
+  refreshToken: string;
   permissions: string[];
+  roles: string[];
+  rememberDevice: boolean;
+  accountStatus: 'active' | 'inactive' | 'suspended' | 'disabled';
+  passwordChangeRequired: boolean;
   expiresAt: string;
 }
 

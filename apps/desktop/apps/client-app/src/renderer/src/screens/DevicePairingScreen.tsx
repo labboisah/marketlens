@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Button, Input, StatusBadge } from '@marketlens/ui';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { pairDevice } from '../services/shop-api-client';
+import { checkDeviceStatus, pairDevice } from '../services/shop-api-client';
 import { useClientUiStore } from '../state/client-ui-store';
 
 const pairingFormSchema = z.object({
@@ -15,7 +15,8 @@ type PairingForm = z.infer<typeof pairingFormSchema>;
 export function DevicePairingScreen() {
   const shopBaseUrl = useClientUiStore((state) => state.shopBaseUrl);
   const setDeviceUuid = useClientUiStore((state) => state.setDeviceUuid);
-  const setScreen = useClientUiStore((state) => state.setScreen);
+  const setActiveRole = useClientUiStore((state) => state.setActiveRole);
+  const setDeviceAuthorizationState = useClientUiStore((state) => state.setDeviceAuthorizationState);
   const notify = useClientUiStore((state) => state.notify);
   const form = useForm<PairingForm>({
     defaultValues: {
@@ -26,18 +27,47 @@ export function DevicePairingScreen() {
 
   const pairing = useMutation({
     mutationFn: (input: PairingForm) => pairDevice(shopBaseUrl, input),
-    onSuccess: (result) => {
-      if (result.data.deviceUuid) {
-        setDeviceUuid(result.data.deviceUuid);
+    onSuccess: async (result, values) => {
+      if (result.deviceUuid) {
+        setDeviceUuid(result.deviceUuid);
       }
-      notify({
-        tone: result.data.paired ? 'success' : 'information',
-        title: result.data.paired ? 'Device paired' : 'Pairing requested',
-        message: result.data.reason ?? 'Continue after the Shop App approves this workstation.',
+
+      await window.marketlensClient.preferences.save({
+        ...(await window.marketlensClient.preferences.load()),
+        lastDeviceName: values.deviceName,
       });
-      setScreen('login');
+
+      if (!result.paired || !result.deviceUuid) {
+        setDeviceAuthorizationState('pending');
+        notify({
+          tone: 'information',
+          title: 'Pairing requested',
+          message: result.reason ?? 'Wait for the Shop App to approve this workstation before signing in.',
+        });
+        return;
+      }
+
+      const deviceStatus = await checkDeviceStatus(shopBaseUrl, result.deviceUuid);
+      setDeviceAuthorizationState(deviceStatus);
+      if (deviceStatus !== 'paired' && deviceStatus !== 'authorized') {
+        notify({
+          tone: 'warning',
+          title: 'Pairing not confirmed',
+          message: 'The Shop App has not yet confirmed that this workstation can sign in.',
+        });
+        return;
+      }
+
+      const preferences = await window.marketlensClient.preferences.load();
+      setActiveRole(preferences.preferredRole);
+      notify({
+        tone: 'success',
+        title: 'Device paired',
+        message: result.reason ?? 'This workstation can now sign in through the Shop App.',
+      });
     },
     onError: (error) => {
+      setDeviceAuthorizationState('unpaired');
       notify({
         tone: 'danger',
         title: 'Pairing failed',
@@ -69,7 +99,7 @@ export function DevicePairingScreen() {
         </div>
 
         <div className="mt-5 flex justify-between gap-3">
-          <Button variant="ghost" onClick={() => setScreen('connection')}>
+          <Button variant="ghost" onClick={() => setDeviceAuthorizationState('unpaired')}>
             Back
           </Button>
           <Button type="submit" disabled={pairing.isPending}>
