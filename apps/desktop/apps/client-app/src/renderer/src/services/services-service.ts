@@ -173,6 +173,116 @@ const staffSettlementSchema = z.object({
   createdAt: z.string(),
 });
 
+const staffEarningsOverviewSchema = z.object({
+  totals: z.object({
+    totalEarned: z.coerce.number(),
+    approvedEarnings: z.coerce.number(),
+    pendingEarnings: z.coerce.number(),
+    settledAmount: z.coerce.number(),
+    outstandingBalance: z.coerce.number(),
+    reversedAmount: z.coerce.number(),
+  }),
+  earningsByService: z.array(z.object({
+    serviceUuid: z.string().uuid(),
+    serviceName: z.string(),
+    totalEarned: z.coerce.number(),
+    approvedEarnings: z.coerce.number(),
+    pendingEarnings: z.coerce.number(),
+    reversedAmount: z.coerce.number(),
+  })),
+  earningsByPeriod: z.array(z.object({
+    period: z.string(),
+    totalEarned: z.coerce.number(),
+    approvedEarnings: z.coerce.number(),
+    pendingEarnings: z.coerce.number(),
+    settledAmount: z.coerce.number(),
+    reversedAmount: z.coerce.number(),
+  })),
+  settlementHistory: z.array(staffSettlementSchema),
+  ledger: z.array(z.object({
+    uuid: z.string().uuid(),
+    staffUserUuid: z.string().uuid(),
+    staffName: z.string().nullable().optional(),
+    username: z.string(),
+    type: z.enum(['service_share', 'bonus', 'adjustment', 'deduction', 'settlement_payment', 'reversal']),
+    amount: z.string(),
+    referenceUuid: z.string().nullable().optional(),
+    reversalOfUuid: z.string().nullable().optional(),
+    orderNumber: z.string().nullable().optional(),
+    createdAt: z.string(),
+  })),
+  ledgerTypes: z.array(z.enum(['service_share', 'bonus', 'adjustment', 'deduction', 'settlement_payment', 'reversal'])),
+});
+
+const staffSettlementPreviewSchema = z.object({
+  staffUserUuid: z.string().uuid(),
+  staffName: z.string().nullable().optional(),
+  username: z.string(),
+  requestedAmount: z.string(),
+  approvedOutstanding: z.string(),
+  canSettle: z.boolean(),
+  message: z.string(),
+});
+
+const settlementStatementSchema = z.object({
+  generatedAt: z.string(),
+  staff: z.object({
+    uuid: z.string().uuid(),
+    staffName: z.string().nullable().optional(),
+    username: z.string(),
+  }),
+  period: z.object({
+    from: z.string().nullable().optional(),
+    to: z.string().nullable().optional(),
+  }),
+  totals: z.object({
+    totalEarned: z.coerce.number(),
+    approvedEarnings: z.coerce.number(),
+    pendingEarnings: z.coerce.number(),
+    settledAmount: z.coerce.number(),
+    outstandingBalance: z.coerce.number(),
+    reversedAmount: z.coerce.number(),
+  }),
+  ledger: z.array(z.record(z.string(), z.unknown())),
+  settlementHistory: z.array(staffSettlementSchema),
+  notes: z.array(z.string()),
+});
+
+const combinedStaffPerformanceSchema = z.object({
+  generatedAt: z.string(),
+  rows: z.array(z.object({
+    staffUserUuid: z.string().uuid(),
+    staffName: z.string().nullable().optional(),
+    username: z.string(),
+    salesCount: z.coerce.number(),
+    salesValue: z.coerce.number(),
+    discounts: z.coerce.number(),
+    returns: z.coerce.number(),
+    cancellations: z.coerce.number(),
+    expectedCash: z.coerce.number(),
+    actualCash: z.coerce.number(),
+    cashDelta: z.coerce.number(),
+    servicesAssigned: z.coerce.number(),
+    servicesCompleted: z.coerce.number(),
+    servicesCancelled: z.coerce.number(),
+    serviceRevenue: z.coerce.number(),
+    directExpenses: z.coerce.number(),
+    staffShareEarned: z.coerce.number(),
+    staffShareSettled: z.coerce.number(),
+    outstandingEarnings: z.coerce.number(),
+    averageCompletionTimeMinutes: z.coerce.number(),
+    purchases: z.coerce.number(),
+    stockCounts: z.coerce.number(),
+    stockAdjustments: z.coerce.number(),
+    expenses: z.coerce.number(),
+    approvals: z.coerce.number(),
+    deviceActivity: z.coerce.number(),
+    reviewLabels: z.array(z.string()),
+  })),
+  labels: z.array(z.string()),
+  disclaimer: z.string(),
+});
+
 const allocationPreviewSchema = z.object({
   orderUuid: z.string().uuid(),
   grossAmount: z.coerce.number(),
@@ -230,6 +340,10 @@ const expensesResponseSchema = apiSuccessResponseSchema(z.array(serviceExpenseSc
 const allocationsResponseSchema = apiSuccessResponseSchema(z.array(revenueAllocationSchema));
 const staffEarningsResponseSchema = apiSuccessResponseSchema(z.array(staffEarningSchema));
 const staffSettlementsResponseSchema = apiSuccessResponseSchema(z.array(staffSettlementSchema));
+const staffEarningsOverviewResponseSchema = apiSuccessResponseSchema(staffEarningsOverviewSchema);
+const staffSettlementPreviewResponseSchema = apiSuccessResponseSchema(staffSettlementPreviewSchema);
+const settlementStatementResponseSchema = apiSuccessResponseSchema(settlementStatementSchema);
+const combinedStaffPerformanceResponseSchema = apiSuccessResponseSchema(combinedStaffPerformanceSchema);
 const previewResponseSchema = apiSuccessResponseSchema(allocationPreviewSchema);
 const genericSuccessSchema = apiSuccessResponseSchema(z.record(z.string(), z.unknown()));
 
@@ -261,6 +375,10 @@ export type ServicePayment = z.infer<typeof servicePaymentSchema>;
 export type ServiceExpense = z.infer<typeof serviceExpenseSchema>;
 export type RevenueAllocation = z.infer<typeof revenueAllocationSchema>;
 export type ServiceModuleAccess = z.infer<typeof moduleAccessSchema>;
+export type StaffEarningsOverview = z.infer<typeof staffEarningsOverviewSchema>;
+export type StaffSettlementPreview = z.infer<typeof staffSettlementPreviewSchema>;
+export type StaffSettlementStatement = z.infer<typeof settlementStatementSchema>;
+export type CombinedStaffPerformance = z.infer<typeof combinedStaffPerformanceSchema>;
 
 export async function getServicesModuleAccess(input: { shopBaseUrl: string; accessToken: string; deviceUuid: string }) {
   const response = await fetch(`${normalizeBaseUrl(input.shopBaseUrl)}${apiBasePath}/services/module-access`, {
@@ -509,6 +627,24 @@ export async function listStaffEarnings(input: { shopBaseUrl: string; accessToke
   return (await parseResponse(response, staffEarningsResponseSchema)).data;
 }
 
+export async function getStaffEarningsOverview(input: {
+  shopBaseUrl: string;
+  accessToken: string;
+  deviceUuid: string;
+  staffUserUuid?: string;
+  from?: string;
+  to?: string;
+  period?: 'day' | 'week' | 'month';
+}) {
+  const url = new URL(`${normalizeBaseUrl(input.shopBaseUrl)}${apiBasePath}/staff-earnings/overview`);
+  if (input.staffUserUuid) url.searchParams.set('staffUserUuid', input.staffUserUuid);
+  if (input.from) url.searchParams.set('from', input.from);
+  if (input.to) url.searchParams.set('to', input.to);
+  if (input.period) url.searchParams.set('period', input.period);
+  const response = await fetch(url, { headers: headers(input.accessToken, input.deviceUuid) });
+  return (await parseResponse(response, staffEarningsOverviewResponseSchema)).data;
+}
+
 export async function listStaffSettlements(input: {
   shopBaseUrl: string;
   accessToken: string;
@@ -531,4 +667,66 @@ export function settleStaffEarnings(input: { shopBaseUrl: string; accessToken: s
     path: `/staff/${input.staffUserUuid}/settlements`,
     body: { amount: input.amount },
   });
+}
+
+export async function previewStaffSettlement(input: {
+  shopBaseUrl: string;
+  accessToken: string;
+  deviceUuid: string;
+  staffUserUuid: string;
+  amount?: string;
+}) {
+  const url = new URL(`${normalizeBaseUrl(input.shopBaseUrl)}${apiBasePath}/staff/${input.staffUserUuid}/settlement-preview`);
+  if (input.amount) url.searchParams.set('amount', input.amount);
+  const response = await fetch(url, { headers: headers(input.accessToken, input.deviceUuid) });
+  return (await parseResponse(response, staffSettlementPreviewResponseSchema)).data;
+}
+
+export async function getStaffSettlementStatement(input: {
+  shopBaseUrl: string;
+  accessToken: string;
+  deviceUuid: string;
+  staffUserUuid: string;
+  from?: string;
+  to?: string;
+}) {
+  const url = new URL(`${normalizeBaseUrl(input.shopBaseUrl)}${apiBasePath}/staff/${input.staffUserUuid}/settlement-statement`);
+  if (input.from) url.searchParams.set('from', input.from);
+  if (input.to) url.searchParams.set('to', input.to);
+  const response = await fetch(url, { headers: headers(input.accessToken, input.deviceUuid) });
+  return (await parseResponse(response, settlementStatementResponseSchema)).data;
+}
+
+export async function addStaffEarningAdjustment(input: {
+  shopBaseUrl: string;
+  accessToken: string;
+  deviceUuid: string;
+  staffUserUuid: string;
+  type: 'bonus' | 'adjustment' | 'deduction';
+  amount: string;
+  note?: string;
+}) {
+  return postSimple({
+    ...input,
+    path: `/staff/${input.staffUserUuid}/earning-adjustments`,
+    body: {
+      type: input.type,
+      amount: input.amount,
+      note: input.note,
+    },
+  });
+}
+
+export async function getCombinedStaffPerformance(input: {
+  shopBaseUrl: string;
+  accessToken: string;
+  deviceUuid: string;
+  from?: string;
+  to?: string;
+}) {
+  const url = new URL(`${normalizeBaseUrl(input.shopBaseUrl)}${apiBasePath}/staff-performance/combined`);
+  if (input.from) url.searchParams.set('from', input.from);
+  if (input.to) url.searchParams.set('to', input.to);
+  const response = await fetch(url, { headers: headers(input.accessToken, input.deviceUuid) });
+  return (await parseResponse(response, combinedStaffPerformanceResponseSchema)).data;
 }

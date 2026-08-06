@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, BadgeInfo, Check, ChevronRight, DollarSign, Receipt, UserCheck } from 'lucide-react';
 import { useClientUiStore } from '../state/client-ui-store';
 import {
+  addStaffEarningAdjustment,
   approveServiceAllocation,
   assignServiceStaff,
   cancelServiceOrder,
@@ -11,6 +12,9 @@ import {
   createServiceOrder,
   getServiceAllocationPreview,
   getServiceOrderDetail,
+  getStaffEarningsOverview,
+  getStaffSettlementStatement,
+  getCombinedStaffPerformance,
   getServicesCatalog,
   getServicesDashboard,
   getServicesModuleAccess,
@@ -26,10 +30,12 @@ import {
   recordServiceExpense,
   recordServicePayment,
   requestServiceAllocation,
+  previewStaffSettlement,
   settleStaffEarnings,
   startServiceOrder,
   type RevenueAllocation,
   type ServiceAssignment,
+  type CombinedStaffPerformance,
   type ServiceOrder,
 } from '../services/services-service';
 
@@ -42,7 +48,8 @@ type ServicesPageId =
   | 'service-expenses'
   | 'revenue-allocations'
   | 'staff-earnings'
-  | 'staff-settlements';
+  | 'staff-settlements'
+  | 'staff-performance';
 
 type CatalogItemDraft = {
   serviceUuid: string;
@@ -64,6 +71,7 @@ const pages: Array<{ id: ServicesPageId; label: string; description: string }> =
   { id: 'revenue-allocations', label: 'Revenue Allocations', description: 'Preview and approved allocation output.' },
   { id: 'staff-earnings', label: 'Staff Earnings', description: 'Outstanding earnings and balances.' },
   { id: 'staff-settlements', label: 'Staff Settlements', description: 'Payment settlements and completion history.' },
+  { id: 'staff-performance', label: 'Staff Performance', description: 'Combined sales, service, and operational indicators with neutral labels.' },
 ];
 
 const stateTone: Record<string, string> = {
@@ -78,7 +86,16 @@ const stateTone: Record<string, string> = {
 const formatMoney = (value: number | string) => new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(Number(value));
 
 function canUseServices(access: Awaited<ReturnType<typeof getServicesModuleAccess>>, permissions: string[]) {
-  return access.enabled && permissions.some((permission) => ['services.view', 'services.manage', 'view-services'].includes(permission));
+  return access.enabled && permissions.some((permission) => [
+    'services.view',
+    'services.manage',
+    'view-services',
+    'services.manage_services',
+    'services.create_service_order',
+    'services.complete_service',
+    'services.generate_revenue_allocation',
+    'services.view_staff_earnings',
+  ].includes(permission));
 }
 
 export function ServicesScreen() {
@@ -131,6 +148,10 @@ export function ServicesScreen() {
   const [expenseReceiptPath, setExpenseReceiptPath] = useState('');
   const [expenseApprovalStatus, setExpenseApprovalStatus] = useState('pending');
   const [settlementAmount, setSettlementAmount] = useState('');
+  const [earningsPeriod, setEarningsPeriod] = useState<'day' | 'week' | 'month'>('month');
+  const [adjustmentType, setAdjustmentType] = useState<'bonus' | 'adjustment' | 'deduction'>('bonus');
+  const [adjustmentAmount, setAdjustmentAmount] = useState('');
+  const [adjustmentNote, setAdjustmentNote] = useState('');
   const [orderNote, setOrderNote] = useState('');
   const [allocationTargetOrderUuid, setAllocationTargetOrderUuid] = useState('');
   const [allocationTargetOrderItemUuid, setAllocationTargetOrderItemUuid] = useState('');
@@ -148,6 +169,13 @@ export function ServicesScreen() {
 
   const moduleAccess = moduleAccessQuery.data;
   const showModule = Boolean(moduleAccess && authContext && canUseServices(moduleAccess, permissions));
+  const hasPermission = (...keys: string[]) => permissions.some((permission) => keys.includes(permission));
+  const canViewEarnings = hasPermission('services.view_staff_earnings', 'services.manage_services', 'services.manage', 'services.view', 'view-services');
+  const canReviewAllocations = hasPermission('services.generate_revenue_allocation', 'services.manage_services', 'services.manage');
+  const canApproveAllocations = hasPermission('services.approve_allocation', 'services.manage_services', 'services.manage');
+  const canPrepareSettlement = hasPermission('services.settle_staff_earnings', 'services.view_staff_earnings', 'services.manage_services');
+  const canRecordSettlement = hasPermission('services.settle_staff_earnings', 'services.manage_services');
+  const canPrintSettlementStatement = canPrepareSettlement;
 
   const dashboardQuery = useQuery({
     queryKey: ['services-dashboard'],
@@ -221,10 +249,53 @@ export function ServicesScreen() {
     queryFn: async () => listStaffEarnings(authContext!),
   });
 
+  const earningsOverviewQuery = useQuery({
+    queryKey: ['staff-earnings-overview', selectedStaffUserUuid, fromDate, toDate, earningsPeriod],
+    enabled: showModule && canViewEarnings,
+    queryFn: async () => getStaffEarningsOverview({
+      ...authContext!,
+      staffUserUuid: selectedStaffUserUuid || undefined,
+      from: fromDate || undefined,
+      to: toDate || undefined,
+      period: earningsPeriod,
+    }),
+  });
+
   const settlementsQuery = useQuery({
     queryKey: ['staff-settlements', selectedStaffUserUuid, fromDate, toDate],
     enabled: showModule,
     queryFn: async () => listStaffSettlements({ ...authContext!, staffUserUuid: selectedStaffUserUuid || undefined, from: fromDate || undefined, to: toDate || undefined }),
+  });
+
+  const settlementPreviewQuery = useQuery({
+    queryKey: ['staff-settlement-preview', selectedStaffUserUuid, settlementAmount],
+    enabled: showModule && canPrepareSettlement && Boolean(selectedStaffUserUuid),
+    queryFn: async () => previewStaffSettlement({
+      ...authContext!,
+      staffUserUuid: selectedStaffUserUuid,
+      amount: settlementAmount || undefined,
+    }),
+  });
+
+  const settlementStatementQuery = useQuery({
+    queryKey: ['staff-settlement-statement', selectedStaffUserUuid, fromDate, toDate],
+    enabled: showModule && canPrintSettlementStatement && Boolean(selectedStaffUserUuid),
+    queryFn: async () => getStaffSettlementStatement({
+      ...authContext!,
+      staffUserUuid: selectedStaffUserUuid,
+      from: fromDate || undefined,
+      to: toDate || undefined,
+    }),
+  });
+
+  const staffPerformanceQuery = useQuery({
+    queryKey: ['staff-performance-combined', fromDate, toDate],
+    enabled: showModule,
+    queryFn: async () => getCombinedStaffPerformance({
+      ...authContext!,
+      from: fromDate || undefined,
+      to: toDate || undefined,
+    }),
   });
 
   const previewQuery = useQuery({
@@ -388,6 +459,31 @@ export function ServicesScreen() {
       setSettlementAmount('');
       await queryClient.invalidateQueries({ queryKey: ['staff-settlements'] });
       await queryClient.invalidateQueries({ queryKey: ['staff-earnings'] });
+      await queryClient.invalidateQueries({ queryKey: ['staff-earnings-overview'] });
+      await queryClient.invalidateQueries({ queryKey: ['staff-settlement-preview'] });
+      await queryClient.invalidateQueries({ queryKey: ['staff-settlement-statement'] });
+      await queryClient.invalidateQueries({ queryKey: ['staff-performance-combined'] });
+    },
+  });
+
+  const adjustmentMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedStaffUserUuid) throw new Error('Select a staff member first');
+      if (!adjustmentAmount.trim()) throw new Error('Adjustment amount is required');
+      return addStaffEarningAdjustment({
+        ...authContext!,
+        staffUserUuid: selectedStaffUserUuid,
+        type: adjustmentType,
+        amount: adjustmentAmount,
+        note: adjustmentNote || undefined,
+      });
+    },
+    onSuccess: async () => {
+      setAdjustmentAmount('');
+      setAdjustmentNote('');
+      await queryClient.invalidateQueries({ queryKey: ['staff-earnings'] });
+      await queryClient.invalidateQueries({ queryKey: ['staff-earnings-overview'] });
+      await queryClient.invalidateQueries({ queryKey: ['staff-performance-combined'] });
     },
   });
 
@@ -691,8 +787,8 @@ export function ServicesScreen() {
             <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={allocationApprovedByUserUuid} onChange={(event) => setAllocationApprovedByUserUuid(event.target.value)} placeholder="Approved by UUID" />
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            <button type="button" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white" onClick={() => requestAllocationMutation.mutate()}>Request Allocation</button>
-            <button type="button" className="rounded-md border border-slate-300 px-4 py-2 text-sm" onClick={() => approveAllocationMutation.mutate()}>Approve Allocation</button>
+            <button type="button" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50" disabled={!canReviewAllocations} onClick={() => requestAllocationMutation.mutate()}>Review Allocation</button>
+            <button type="button" className="rounded-md border border-slate-300 px-4 py-2 text-sm disabled:opacity-50" disabled={!canApproveAllocations} onClick={() => approveAllocationMutation.mutate()}>Approve Allocation</button>
           </div>
           {preview ? (
             <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
@@ -714,27 +810,221 @@ export function ServicesScreen() {
 
       {activePage === 'staff-earnings' ? (
         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <PageHeader title="Staff Earnings" description="Track the outstanding balance created by approved revenue allocations." />
-          <SimpleTable rows={staffEarnings} columns={['staffName', 'username', 'currentBalance', 'updatedAt']} emptyMessage="No staff earnings available." />
+          <PageHeader title="Staff Earnings" description="Totals, ledger activity, period trends, and service breakdown for staff earnings and settlements." />
+          <div className="mb-4 grid gap-3 md:grid-cols-3 lg:grid-cols-6">
+            <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={fromDate} onChange={(event) => setFromDate(event.target.value)} placeholder="From (YYYY-MM-DD)" />
+            <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={toDate} onChange={(event) => setToDate(event.target.value)} placeholder="To (YYYY-MM-DD)" />
+            <select className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={earningsPeriod} onChange={(event) => setEarningsPeriod(event.target.value as 'day' | 'week' | 'month')}>
+              <option value="day">Daily</option>
+              <option value="week">Weekly</option>
+              <option value="month">Monthly</option>
+            </select>
+            <select className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={selectedStaffUserUuid} onChange={(event) => setSelectedStaffUserUuid(event.target.value)}>
+              <option value="">All staff</option>
+              {(staffQuery.data ?? []).map((staff) => <option key={staff.uuid} value={staff.uuid}>{staff.displayName ?? staff.username}</option>)}
+            </select>
+            <button type="button" className="rounded-md border border-slate-300 px-3 py-2 text-sm" onClick={() => earningsOverviewQuery.refetch()}>Refresh Overview</button>
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">Ledger types: {earningsOverviewQuery.data?.ledgerTypes.join(', ') ?? 'service_share, bonus, adjustment, deduction, settlement_payment, reversal'}</div>
+          </div>
+
+          <div className="mb-4 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+            <MetricTile label="Total earned" value={formatMoney(earningsOverviewQuery.data?.totals.totalEarned ?? 0)} />
+            <MetricTile label="Approved earnings" value={formatMoney(earningsOverviewQuery.data?.totals.approvedEarnings ?? 0)} />
+            <MetricTile label="Pending earnings" value={formatMoney(earningsOverviewQuery.data?.totals.pendingEarnings ?? 0)} />
+            <MetricTile label="Settled amount" value={formatMoney(earningsOverviewQuery.data?.totals.settledAmount ?? 0)} />
+            <MetricTile label="Outstanding balance" value={formatMoney(earningsOverviewQuery.data?.totals.outstandingBalance ?? 0)} />
+            <MetricTile label="Reversed amount" value={formatMoney(earningsOverviewQuery.data?.totals.reversedAmount ?? 0)} />
+          </div>
+
+          <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+            <div className="font-semibold text-slate-900">Authorized actions</div>
+            <div className="mt-2 grid gap-1 md:grid-cols-2 xl:grid-cols-3">
+              <span>View earnings: {canViewEarnings ? 'Yes' : 'No'}</span>
+              <span>Review allocations: {canReviewAllocations ? 'Yes' : 'No'}</span>
+              <span>Approve allocation: {canApproveAllocations ? 'Yes' : 'No'}</span>
+              <span>Prepare settlement: {canPrepareSettlement ? 'Yes' : 'No'}</span>
+              <span>Record settlement: {canRecordSettlement ? 'Yes' : 'No'}</span>
+              <span>Print settlement statement: {canPrintSettlementStatement ? 'Yes' : 'No'}</span>
+            </div>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-2">
+            <div>
+              <h4 className="mb-2 text-sm font-semibold text-slate-900">Earnings by service</h4>
+              <SimpleTable
+                rows={(earningsOverviewQuery.data?.earningsByService ?? []) as Array<Record<string, unknown>>}
+                columns={['serviceName', 'totalEarned', 'approvedEarnings', 'pendingEarnings', 'reversedAmount']}
+                emptyMessage="No service earnings available for the selected range."
+              />
+            </div>
+            <div>
+              <h4 className="mb-2 text-sm font-semibold text-slate-900">Earnings by period</h4>
+              <SimpleTable
+                rows={(earningsOverviewQuery.data?.earningsByPeriod ?? []) as Array<Record<string, unknown>>}
+                columns={['period', 'totalEarned', 'approvedEarnings', 'pendingEarnings', 'settledAmount', 'reversedAmount']}
+                emptyMessage="No period earnings available for the selected range."
+              />
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <h4 className="mb-2 text-sm font-semibold text-slate-900">Earnings ledger</h4>
+            <SimpleTable
+              rows={(earningsOverviewQuery.data?.ledger ?? []) as Array<Record<string, unknown>>}
+              columns={['staffName', 'username', 'type', 'amount', 'orderNumber', 'createdAt']}
+              emptyMessage="No earning ledger rows found."
+            />
+          </div>
+
+          <div className="mt-4">
+            <h4 className="mb-2 text-sm font-semibold text-slate-900">Settlement history</h4>
+            <SimpleTable
+              rows={(earningsOverviewQuery.data?.settlementHistory ?? settlements) as Array<Record<string, unknown>>}
+              columns={['staffName', 'amount', 'status', 'createdAt']}
+              emptyMessage="No settlement history available."
+            />
+          </div>
+
+          <div className="mt-4 rounded-lg border border-slate-200 p-3">
+            <h4 className="mb-2 text-sm font-semibold text-slate-900">Manual ledger entry</h4>
+            <div className="grid gap-3 md:grid-cols-4">
+              <select className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={selectedStaffUserUuid} onChange={(event) => setSelectedStaffUserUuid(event.target.value)}>
+                <option value="">Select staff</option>
+                {(staffQuery.data ?? []).map((staff) => <option key={staff.uuid} value={staff.uuid}>{staff.displayName ?? staff.username}</option>)}
+              </select>
+              <select className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={adjustmentType} onChange={(event) => setAdjustmentType(event.target.value as 'bonus' | 'adjustment' | 'deduction')}>
+                <option value="bonus">bonus</option>
+                <option value="adjustment">adjustment</option>
+                <option value="deduction">deduction</option>
+              </select>
+              <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={adjustmentAmount} onChange={(event) => setAdjustmentAmount(event.target.value)} placeholder="Amount" />
+              <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={adjustmentNote} onChange={(event) => setAdjustmentNote(event.target.value)} placeholder="Optional note" />
+            </div>
+            <div className="mt-3">
+              <button
+                type="button"
+                className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                disabled={!canRecordSettlement || adjustmentMutation.isPending}
+                onClick={() => adjustmentMutation.mutate()}
+              >
+                Post Ledger Entry
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <SimpleTable rows={staffEarnings as Array<Record<string, unknown>>} columns={['staffName', 'username', 'currentBalance', 'updatedAt']} emptyMessage="No staff earnings available." />
+          </div>
         </section>
       ) : null}
 
       {activePage === 'staff-settlements' ? (
         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <PageHeader title="Staff Settlements" description="Record settlements against approved earnings." />
-          <div className="grid gap-3 md:grid-cols-3">
+          <PageHeader title="Staff Settlements" description="Prepare, validate, record, and print settlement statements from approved outstanding earnings." />
+          <div className="grid gap-3 md:grid-cols-4">
             <select className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={selectedStaffUserUuid} onChange={(event) => setSelectedStaffUserUuid(event.target.value)}>
               <option value="">Select staff</option>
               {(staffQuery.data ?? []).map((staff) => <option key={staff.uuid} value={staff.uuid}>{staff.displayName ?? staff.username}</option>)}
             </select>
             <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={settlementAmount} onChange={(event) => setSettlementAmount(event.target.value)} placeholder="Settlement amount" />
-            <button type="button" className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white" onClick={() => settleMutation.mutate()}>Settle Staff Earnings</button>
+            <button type="button" className="rounded-md border border-slate-300 px-4 py-2 text-sm" disabled={!canPrepareSettlement} onClick={() => settlementPreviewQuery.refetch()}>Prepare Settlement</button>
+            <button type="button" className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50" disabled={!canRecordSettlement || settleMutation.isPending} onClick={() => settleMutation.mutate()}>Record Settlement</button>
           </div>
+
+          {settlementPreviewQuery.data ? (
+            <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+              <KeyValue label="Requested amount" value={formatMoney(settlementPreviewQuery.data.requestedAmount)} />
+              <KeyValue label="Approved outstanding" value={formatMoney(settlementPreviewQuery.data.approvedOutstanding)} />
+              <KeyValue label="Can settle" value={settlementPreviewQuery.data.canSettle ? 'Yes' : 'No'} />
+              <div className="mt-2 text-slate-600">{settlementPreviewQuery.data.message}</div>
+            </div>
+          ) : null}
+
+          {settlementStatementQuery.data ? (
+            <div className="mt-3 rounded-lg border border-slate-200 p-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <h4 className="text-sm font-semibold text-slate-900">Settlement statement</h4>
+                <button type="button" className="rounded-md border border-slate-300 px-3 py-1.5 text-xs" disabled={!canPrintSettlementStatement} onClick={() => window.print()}>Print Settlement Statement</button>
+              </div>
+              <div className="grid gap-2 md:grid-cols-3 text-sm">
+                <KeyValue label="Staff" value={settlementStatementQuery.data.staff.staffName ?? settlementStatementQuery.data.staff.username} />
+                <KeyValue label="Generated" value={settlementStatementQuery.data.generatedAt} />
+                <KeyValue label="Period" value={`${settlementStatementQuery.data.period.from ?? 'Start'} to ${settlementStatementQuery.data.period.to ?? 'Now'}`} />
+                <KeyValue label="Total earned" value={formatMoney(settlementStatementQuery.data.totals.totalEarned)} />
+                <KeyValue label="Settled" value={formatMoney(settlementStatementQuery.data.totals.settledAmount)} />
+                <KeyValue label="Outstanding" value={formatMoney(settlementStatementQuery.data.totals.outstandingBalance)} />
+              </div>
+            </div>
+          ) : null}
+
           <SimpleTable rows={settlements} columns={['staffName', 'amount', 'status', 'createdAt']} emptyMessage="No settlements recorded." />
         </section>
       ) : null}
 
+      {activePage === 'staff-performance' ? (
+        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <PageHeader title="Staff Performance" description="Combined sales, service, and operational metrics with neutral monitoring labels." />
+          <div className="mb-4 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+            <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={fromDate} onChange={(event) => setFromDate(event.target.value)} placeholder="From (YYYY-MM-DD)" />
+            <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={toDate} onChange={(event) => setToDate(event.target.value)} placeholder="To (YYYY-MM-DD)" />
+            <button type="button" className="rounded-md border border-slate-300 px-3 py-2 text-sm" onClick={() => staffPerformanceQuery.refetch()}>Refresh Performance</button>
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">{staffPerformanceQuery.data?.disclaimer ?? 'Monitoring indicators are neutral and require review.'}</div>
+          </div>
+
+          <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <div className="mb-2 text-sm font-semibold text-slate-900">Neutral labels</div>
+            <div className="flex flex-wrap gap-2 text-xs">
+              {(staffPerformanceQuery.data?.labels ?? ['Requires review', 'Higher than usual', 'Lower than expected', 'Outside expected range']).map((label) => (
+                <span key={label} className="rounded-full bg-white px-2 py-1 border border-slate-200">{label}</span>
+              ))}
+            </div>
+          </div>
+
+          <SimpleTable
+            rows={(staffPerformanceQuery.data?.rows ?? []) as Array<Record<string, unknown>>}
+            columns={[
+              'staffName',
+              'username',
+              'salesCount',
+              'salesValue',
+              'discounts',
+              'returns',
+              'cancellations',
+              'expectedCash',
+              'actualCash',
+              'cashDelta',
+              'servicesAssigned',
+              'servicesCompleted',
+              'servicesCancelled',
+              'serviceRevenue',
+              'directExpenses',
+              'staffShareEarned',
+              'staffShareSettled',
+              'outstandingEarnings',
+              'averageCompletionTimeMinutes',
+              'purchases',
+              'stockCounts',
+              'stockAdjustments',
+              'expenses',
+              'approvals',
+              'deviceActivity',
+              'reviewLabels',
+            ]}
+            emptyMessage="No staff performance rows available for the selected period."
+          />
+        </section>
+      ) : null}
+
       {activePage === 'new-service-order' ? null : null}
+    </div>
+  );
+}
+
+function MetricTile({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+      <div className="text-xs uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="mt-1 text-base font-semibold text-slate-900">{value}</div>
     </div>
   );
 }

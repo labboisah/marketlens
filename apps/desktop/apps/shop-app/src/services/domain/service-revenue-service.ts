@@ -13,6 +13,7 @@ type RevenueRuleBasis =
 type ServiceOrderState = 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled' | 'refunded';
 
 type RuleComponentType = 'staff' | 'business' | 'expense_reserve' | 'partner' | 'other';
+type StaffLedgerType = 'service_share' | 'bonus' | 'adjustment' | 'deduction' | 'settlement_payment' | 'reversal';
 
 export class ServiceRevenueService {
   constructor(private readonly sqlite: Database, private readonly auditLogs: AuditLogRepository, private readonly syncQueue: SyncQueueRepository) {}
@@ -681,6 +682,617 @@ export class ServiceRevenueService {
     );
   }
 
+  staffEarningsOverview(filter?: { staffUserUuid?: string; from?: string; to?: string; period?: 'day' | 'week' | 'month' }) {
+    this.assertEnabled();
+    const period = filter?.period ?? 'month';
+    const periodExpression = period === 'day'
+      ? "strftime('%Y-%m-%d', created_at)"
+      : period === 'week'
+        ? "strftime('%Y-W%W', created_at)"
+        : "strftime('%Y-%m', created_at)";
+
+    const totals = this.sqlite.prepare(`
+      SELECT
+        COALESCE((
+          SELECT SUM(CASE WHEN setx.type IN ('service_share', 'bonus', 'adjustment') THEN CAST(setx.amount AS REAL) ELSE 0 END)
+          FROM staff_earning_transactions setx
+          WHERE (? IS NULL OR setx.staff_user_uuid = ?)
+            AND (? IS NULL OR date(setx.created_at) >= date(?))
+            AND (? IS NULL OR date(setx.created_at) <= date(?))
+        ), 0) AS totalEarned,
+        COALESCE((
+          SELECT SUM(CASE WHEN sra.status = 'approved' THEN CAST(sra.amount AS REAL) ELSE 0 END)
+          FROM service_revenue_allocations sra
+          WHERE sra.component_type = 'staff'
+            AND sra.reversal_of_uuid IS NULL
+            AND (? IS NULL OR sra.staff_user_uuid = ?)
+            AND (? IS NULL OR date(sra.created_at) >= date(?))
+            AND (? IS NULL OR date(sra.created_at) <= date(?))
+        ), 0) AS approvedEarnings,
+        COALESCE((
+          SELECT SUM(CASE WHEN sra.status IN ('pending', 'pending_approval') THEN CAST(sra.amount AS REAL) ELSE 0 END)
+          FROM service_revenue_allocations sra
+          WHERE sra.component_type = 'staff'
+            AND sra.reversal_of_uuid IS NULL
+            AND (? IS NULL OR sra.staff_user_uuid = ?)
+            AND (? IS NULL OR date(sra.created_at) >= date(?))
+            AND (? IS NULL OR date(sra.created_at) <= date(?))
+        ), 0) AS pendingEarnings,
+        COALESCE((
+          SELECT SUM(CAST(ss.amount AS REAL))
+          FROM staff_settlements ss
+          WHERE ss.status = 'completed'
+            AND (? IS NULL OR ss.staff_user_uuid = ?)
+            AND (? IS NULL OR date(ss.created_at) >= date(?))
+            AND (? IS NULL OR date(ss.created_at) <= date(?))
+        ), 0) AS settledAmount,
+        COALESCE((
+          SELECT SUM(CAST(sea.current_balance AS REAL))
+          FROM staff_earning_accounts sea
+          WHERE (? IS NULL OR sea.staff_user_uuid = ?)
+        ), 0) AS outstandingBalance,
+        COALESCE((
+          SELECT SUM(CASE WHEN setx.type = 'reversal' THEN ABS(CAST(setx.amount AS REAL)) ELSE 0 END)
+          FROM staff_earning_transactions setx
+          WHERE (? IS NULL OR setx.staff_user_uuid = ?)
+            AND (? IS NULL OR date(setx.created_at) >= date(?))
+            AND (? IS NULL OR date(setx.created_at) <= date(?))
+        ), 0) AS reversedAmount
+    `).get(
+      filter?.staffUserUuid ?? null,
+      filter?.staffUserUuid ?? null,
+      filter?.from ?? null,
+      filter?.from ?? null,
+      filter?.to ?? null,
+      filter?.to ?? null,
+      filter?.staffUserUuid ?? null,
+      filter?.staffUserUuid ?? null,
+      filter?.from ?? null,
+      filter?.from ?? null,
+      filter?.to ?? null,
+      filter?.to ?? null,
+      filter?.staffUserUuid ?? null,
+      filter?.staffUserUuid ?? null,
+      filter?.from ?? null,
+      filter?.from ?? null,
+      filter?.to ?? null,
+      filter?.to ?? null,
+      filter?.staffUserUuid ?? null,
+      filter?.staffUserUuid ?? null,
+      filter?.from ?? null,
+      filter?.from ?? null,
+      filter?.to ?? null,
+      filter?.to ?? null,
+      filter?.staffUserUuid ?? null,
+      filter?.staffUserUuid ?? null,
+      filter?.staffUserUuid ?? null,
+      filter?.staffUserUuid ?? null,
+      filter?.from ?? null,
+      filter?.from ?? null,
+      filter?.to ?? null,
+      filter?.to ?? null,
+    ) as {
+      totalEarned: number;
+      approvedEarnings: number;
+      pendingEarnings: number;
+      settledAmount: number;
+      outstandingBalance: number;
+      reversedAmount: number;
+    };
+
+    const earningsByService = this.sqlite.prepare(`
+      WITH order_totals AS (
+        SELECT order_uuid AS orderUuid, COALESCE(SUM(CAST(line_total AS REAL)), 0) AS grossAmount
+        FROM service_order_items
+        GROUP BY order_uuid
+      )
+      SELECT
+        soi.service_uuid AS serviceUuid,
+        s.name AS serviceName,
+        SUM(CASE WHEN sra.status = 'approved' AND sra.reversal_of_uuid IS NULL
+          THEN CAST(sra.amount AS REAL) * (CASE WHEN ot.grossAmount = 0 THEN 0 ELSE CAST(soi.line_total AS REAL) / ot.grossAmount END)
+          ELSE 0 END) AS approvedEarnings,
+        SUM(CASE WHEN sra.status IN ('pending', 'pending_approval') AND sra.reversal_of_uuid IS NULL
+          THEN CAST(sra.amount AS REAL) * (CASE WHEN ot.grossAmount = 0 THEN 0 ELSE CAST(soi.line_total AS REAL) / ot.grossAmount END)
+          ELSE 0 END) AS pendingEarnings,
+        SUM(CASE WHEN sra.reversal_of_uuid IS NOT NULL
+          THEN ABS(CAST(sra.amount AS REAL)) * (CASE WHEN ot.grossAmount = 0 THEN 0 ELSE CAST(soi.line_total AS REAL) / ot.grossAmount END)
+          ELSE 0 END) AS reversedAmount
+      FROM service_revenue_allocations sra
+      JOIN service_order_items soi ON soi.order_uuid = sra.order_uuid
+      JOIN services s ON s.uuid = soi.service_uuid
+      JOIN order_totals ot ON ot.orderUuid = sra.order_uuid
+      WHERE sra.component_type = 'staff'
+        AND (? IS NULL OR sra.staff_user_uuid = ?)
+        AND (? IS NULL OR date(sra.created_at) >= date(?))
+        AND (? IS NULL OR date(sra.created_at) <= date(?))
+      GROUP BY soi.service_uuid, s.name
+      ORDER BY approvedEarnings DESC, pendingEarnings DESC
+    `).all(
+      filter?.staffUserUuid ?? null,
+      filter?.staffUserUuid ?? null,
+      filter?.from ?? null,
+      filter?.from ?? null,
+      filter?.to ?? null,
+      filter?.to ?? null,
+    ) as Array<{ serviceUuid: string; serviceName: string; approvedEarnings: number; pendingEarnings: number; reversedAmount: number }>;
+
+    const earningsByPeriod = this.sqlite.prepare(`
+      SELECT
+        ${periodExpression} AS period,
+        SUM(CASE WHEN type IN ('service_share', 'bonus', 'adjustment') THEN CAST(amount AS REAL) ELSE 0 END) AS totalEarned,
+        SUM(CASE WHEN type = 'reversal' THEN ABS(CAST(amount AS REAL)) ELSE 0 END) AS reversedAmount,
+        SUM(CASE WHEN type = 'settlement_payment' THEN ABS(CAST(amount AS REAL)) ELSE 0 END) AS settledAmount
+      FROM staff_earning_transactions
+      WHERE (? IS NULL OR staff_user_uuid = ?)
+        AND (? IS NULL OR date(created_at) >= date(?))
+        AND (? IS NULL OR date(created_at) <= date(?))
+      GROUP BY ${periodExpression}
+      ORDER BY period DESC
+    `).all(
+      filter?.staffUserUuid ?? null,
+      filter?.staffUserUuid ?? null,
+      filter?.from ?? null,
+      filter?.from ?? null,
+      filter?.to ?? null,
+      filter?.to ?? null,
+    ) as Array<{ period: string; totalEarned: number; reversedAmount: number; settledAmount: number }>;
+
+    const pendingByPeriod = this.sqlite.prepare(`
+      SELECT
+        ${periodExpression} AS period,
+        SUM(CASE WHEN status IN ('pending', 'pending_approval') AND reversal_of_uuid IS NULL THEN CAST(amount AS REAL) ELSE 0 END) AS pendingEarnings,
+        SUM(CASE WHEN status = 'approved' AND reversal_of_uuid IS NULL THEN CAST(amount AS REAL) ELSE 0 END) AS approvedEarnings
+      FROM service_revenue_allocations
+      WHERE component_type = 'staff'
+        AND (? IS NULL OR staff_user_uuid = ?)
+        AND (? IS NULL OR date(created_at) >= date(?))
+        AND (? IS NULL OR date(created_at) <= date(?))
+      GROUP BY ${periodExpression}
+      ORDER BY period DESC
+    `).all(
+      filter?.staffUserUuid ?? null,
+      filter?.staffUserUuid ?? null,
+      filter?.from ?? null,
+      filter?.from ?? null,
+      filter?.to ?? null,
+      filter?.to ?? null,
+    ) as Array<{ period: string; pendingEarnings: number; approvedEarnings: number }>;
+
+    const periodMap = new Map<string, { period: string; totalEarned: number; approvedEarnings: number; pendingEarnings: number; settledAmount: number; reversedAmount: number }>();
+    for (const row of earningsByPeriod) {
+      periodMap.set(row.period, {
+        period: row.period,
+        totalEarned: row.totalEarned,
+        approvedEarnings: 0,
+        pendingEarnings: 0,
+        settledAmount: row.settledAmount,
+        reversedAmount: row.reversedAmount,
+      });
+    }
+    for (const row of pendingByPeriod) {
+      const current = periodMap.get(row.period) ?? {
+        period: row.period,
+        totalEarned: 0,
+        approvedEarnings: 0,
+        pendingEarnings: 0,
+        settledAmount: 0,
+        reversedAmount: 0,
+      };
+      current.approvedEarnings = row.approvedEarnings;
+      current.pendingEarnings = row.pendingEarnings;
+      periodMap.set(row.period, current);
+    }
+
+    const ledger = this.sqlite.prepare(`
+      SELECT
+        setx.uuid,
+        setx.staff_user_uuid AS staffUserUuid,
+        u.display_name AS staffName,
+        u.username,
+        setx.type,
+        setx.amount,
+        setx.reference_uuid AS referenceUuid,
+        setx.reversal_of_uuid AS reversalOfUuid,
+        so.order_number AS orderNumber,
+        setx.created_at AS createdAt
+      FROM staff_earning_transactions setx
+      JOIN users u ON u.uuid = setx.staff_user_uuid
+      LEFT JOIN service_revenue_allocations sra ON sra.uuid = setx.reference_uuid
+      LEFT JOIN service_orders so ON so.uuid = sra.order_uuid
+      WHERE (? IS NULL OR setx.staff_user_uuid = ?)
+        AND (? IS NULL OR date(setx.created_at) >= date(?))
+        AND (? IS NULL OR date(setx.created_at) <= date(?))
+      ORDER BY setx.created_at DESC
+      LIMIT 500
+    `).all(
+      filter?.staffUserUuid ?? null,
+      filter?.staffUserUuid ?? null,
+      filter?.from ?? null,
+      filter?.from ?? null,
+      filter?.to ?? null,
+      filter?.to ?? null,
+    ) as Array<{
+      uuid: string;
+      staffUserUuid: string;
+      staffName: string | null;
+      username: string;
+      type: StaffLedgerType;
+      amount: string;
+      referenceUuid: string | null;
+      reversalOfUuid: string | null;
+      orderNumber: string | null;
+      createdAt: string;
+    }>;
+
+    const settlementHistory = this.listStaffSettlements({
+      staffUserUuid: filter?.staffUserUuid,
+      from: filter?.from,
+      to: filter?.to,
+    });
+
+    return {
+      totals,
+      earningsByService: earningsByService.map((row) => ({
+        ...row,
+        totalEarned: row.approvedEarnings + row.pendingEarnings,
+      })),
+      earningsByPeriod: [...periodMap.values()].sort((a, b) => b.period.localeCompare(a.period)),
+      settlementHistory,
+      ledger,
+      ledgerTypes: ['service_share', 'bonus', 'adjustment', 'deduction', 'settlement_payment', 'reversal'] satisfies StaffLedgerType[],
+    };
+  }
+
+  prepareStaffSettlement(staffUserUuid: string, amount?: string) {
+    this.assertEnabled();
+    const account = this.account(staffUserUuid);
+    const staff = this.sqlite.prepare('SELECT uuid, display_name AS staffName, username FROM users WHERE uuid = ?').get(staffUserUuid) as {
+      uuid: string;
+      staffName: string | null;
+      username: string;
+    } | undefined;
+    if (!staff) throw new Error('Staff account not found');
+
+    const approvedOutstanding = Math.max(this.num(account.currentBalance), 0);
+    const requestedAmount = this.num(amount ?? this.format(approvedOutstanding));
+    const canSettle = requestedAmount > 0 && requestedAmount <= approvedOutstanding;
+
+    return {
+      staffUserUuid,
+      staffName: staff.staffName,
+      username: staff.username,
+      requestedAmount: this.format(requestedAmount),
+      approvedOutstanding: this.format(approvedOutstanding),
+      canSettle,
+      message: canSettle
+        ? 'Settlement can be recorded.'
+        : 'Requested amount is above approved outstanding earnings.',
+    };
+  }
+
+  staffSettlementStatement(staffUserUuid: string, filter?: { from?: string; to?: string }) {
+    this.assertEnabled();
+    const staff = this.sqlite.prepare('SELECT uuid, display_name AS staffName, username FROM users WHERE uuid = ?').get(staffUserUuid) as {
+      uuid: string;
+      staffName: string | null;
+      username: string;
+    } | undefined;
+    if (!staff) throw new Error('Staff account not found');
+
+    const overview = this.staffEarningsOverview({
+      staffUserUuid,
+      from: filter?.from,
+      to: filter?.to,
+      period: 'month',
+    });
+
+    return {
+      generatedAt: new Date().toISOString(),
+      staff,
+      period: {
+        from: filter?.from ?? null,
+        to: filter?.to ?? null,
+      },
+      totals: overview.totals,
+      ledger: overview.ledger,
+      settlementHistory: overview.settlementHistory,
+      notes: [
+        'Monitoring labels are neutral and require human review.',
+        'Settlement recording is capped by approved outstanding earnings.',
+      ],
+    };
+  }
+
+  recordStaffEarningAdjustment(staffUserUuid: string, input: { type: 'bonus' | 'adjustment' | 'deduction'; amount: string; note?: string }) {
+    this.assertEnabled();
+    const amountValue = this.num(input.amount);
+    if (amountValue <= 0) {
+      throw new Error('Adjustment amount must be greater than zero');
+    }
+
+    if (input.type === 'deduction') {
+      const account = this.account(staffUserUuid);
+      if (amountValue > this.num(account.currentBalance)) {
+        throw new Error('Deduction exceeds outstanding earnings');
+      }
+    }
+
+    const signedAmount = input.type === 'deduction' ? -amountValue : amountValue;
+    const transaction = this.postEarning(staffUserUuid, signedAmount, input.type, null);
+    this.audit('staff.earning_adjusted', 'staff_earning_transaction', transaction.uuid);
+
+    return {
+      ...transaction,
+      note: input.note ?? null,
+    };
+  }
+
+  staffPerformanceSummary(filter?: { from?: string; to?: string }) {
+    this.assertEnabled();
+    const users = this.sqlite.prepare(`
+      SELECT uuid, username, display_name AS staffName
+      FROM users
+      WHERE status = 'active'
+      ORDER BY COALESCE(display_name, username) ASC
+    `).all() as Array<{ uuid: string; username: string; staffName: string | null }>;
+
+    const rows = users.map((user) => {
+      const params = [user.uuid, user.uuid, filter?.from ?? null, filter?.from ?? null, filter?.to ?? null, filter?.to ?? null];
+
+      const salesCount = this.totalWithParams(`
+        SELECT COUNT(*) AS total
+        FROM sales s
+        JOIN cashier_shifts cs ON cs.uuid = s.shift_uuid
+        WHERE cs.cashier_user_uuid = ?
+          AND s.status = 'completed'
+          AND (? IS NULL OR date(s.created_at) >= date(?))
+          AND (? IS NULL OR date(s.created_at) <= date(?))
+      `, [user.uuid, filter?.from ?? null, filter?.from ?? null, filter?.to ?? null, filter?.to ?? null]);
+
+      const salesValue = this.totalWithParams(`
+        SELECT COALESCE(SUM(CAST(s.total_amount AS REAL)), 0) AS total
+        FROM sales s
+        JOIN cashier_shifts cs ON cs.uuid = s.shift_uuid
+        WHERE cs.cashier_user_uuid = ?
+          AND s.status = 'completed'
+          AND (? IS NULL OR date(s.created_at) >= date(?))
+          AND (? IS NULL OR date(s.created_at) <= date(?))
+      `, [user.uuid, filter?.from ?? null, filter?.from ?? null, filter?.to ?? null, filter?.to ?? null]);
+
+      const discounts = this.totalWithParams(`
+        SELECT COALESCE(SUM(CAST(sd.amount AS REAL)), 0) AS total
+        FROM sale_discounts sd
+        JOIN sales s ON s.uuid = sd.sale_uuid
+        JOIN cashier_shifts cs ON cs.uuid = s.shift_uuid
+        WHERE cs.cashier_user_uuid = ?
+          AND (? IS NULL OR date(sd.created_at) >= date(?))
+          AND (? IS NULL OR date(sd.created_at) <= date(?))
+      `, [user.uuid, filter?.from ?? null, filter?.from ?? null, filter?.to ?? null, filter?.to ?? null]);
+
+      const returns = this.totalWithParams(`
+        SELECT COALESCE(SUM(CAST(sr.refund_amount AS REAL)), 0) AS total
+        FROM sale_returns sr
+        JOIN sales s ON s.uuid = sr.sale_uuid
+        JOIN cashier_shifts cs ON cs.uuid = s.shift_uuid
+        WHERE cs.cashier_user_uuid = ?
+          AND (? IS NULL OR date(sr.created_at) >= date(?))
+          AND (? IS NULL OR date(sr.created_at) <= date(?))
+      `, [user.uuid, filter?.from ?? null, filter?.from ?? null, filter?.to ?? null, filter?.to ?? null]);
+
+      const cancellations = this.totalWithParams(`
+        SELECT COUNT(*) AS total
+        FROM sale_cancellations sc
+        JOIN sales s ON s.uuid = sc.sale_uuid
+        JOIN cashier_shifts cs ON cs.uuid = s.shift_uuid
+        WHERE cs.cashier_user_uuid = ?
+          AND (? IS NULL OR date(sc.created_at) >= date(?))
+          AND (? IS NULL OR date(sc.created_at) <= date(?))
+      `, [user.uuid, filter?.from ?? null, filter?.from ?? null, filter?.to ?? null, filter?.to ?? null]);
+
+      const expectedCash = this.totalWithParams(`
+        SELECT COALESCE(SUM(CAST(st.expected_cash AS REAL)), 0) AS total
+        FROM cashier_settlements st
+        JOIN cashier_shifts cs ON cs.uuid = st.shift_uuid
+        WHERE cs.cashier_user_uuid = ?
+          AND (? IS NULL OR date(st.created_at) >= date(?))
+          AND (? IS NULL OR date(st.created_at) <= date(?))
+      `, [user.uuid, filter?.from ?? null, filter?.from ?? null, filter?.to ?? null, filter?.to ?? null]);
+
+      const actualCash = this.totalWithParams(`
+        SELECT COALESCE(SUM(CAST(st.actual_cash AS REAL)), 0) AS total
+        FROM cashier_settlements st
+        JOIN cashier_shifts cs ON cs.uuid = st.shift_uuid
+        WHERE cs.cashier_user_uuid = ?
+          AND (? IS NULL OR date(st.created_at) >= date(?))
+          AND (? IS NULL OR date(st.created_at) <= date(?))
+      `, [user.uuid, filter?.from ?? null, filter?.from ?? null, filter?.to ?? null, filter?.to ?? null]);
+
+      const servicesAssigned = this.totalWithParams(`
+        SELECT COUNT(*) AS total
+        FROM service_staff_assignments ssa
+        WHERE ssa.staff_user_uuid = ?
+          AND (? IS NULL OR date(ssa.created_at) >= date(?))
+          AND (? IS NULL OR date(ssa.created_at) <= date(?))
+      `, params);
+
+      const servicesCompleted = this.totalWithParams(`
+        SELECT COUNT(*) AS total
+        FROM service_staff_assignments ssa
+        JOIN service_order_items soi ON soi.uuid = ssa.order_item_uuid
+        JOIN service_orders so ON so.uuid = soi.order_uuid
+        WHERE ssa.staff_user_uuid = ?
+          AND so.status = 'completed'
+          AND (? IS NULL OR date(so.completed_at) >= date(?))
+          AND (? IS NULL OR date(so.completed_at) <= date(?))
+      `, params);
+
+      const servicesCancelled = this.totalWithParams(`
+        SELECT COUNT(*) AS total
+        FROM service_staff_assignments ssa
+        JOIN service_order_items soi ON soi.uuid = ssa.order_item_uuid
+        JOIN service_orders so ON so.uuid = soi.order_uuid
+        WHERE ssa.staff_user_uuid = ?
+          AND so.status IN ('cancelled', 'refunded')
+          AND (? IS NULL OR date(so.created_at) >= date(?))
+          AND (? IS NULL OR date(so.created_at) <= date(?))
+      `, params);
+
+      const serviceRevenue = this.totalWithParams(`
+        SELECT COALESCE(SUM(CAST(soi.line_total AS REAL) * (CAST(ssa.contribution_percentage AS REAL) / 100.0)), 0) AS total
+        FROM service_staff_assignments ssa
+        JOIN service_order_items soi ON soi.uuid = ssa.order_item_uuid
+        JOIN service_orders so ON so.uuid = soi.order_uuid
+        WHERE ssa.staff_user_uuid = ?
+          AND so.status IN ('completed', 'in_progress', 'assigned')
+          AND (? IS NULL OR date(so.created_at) >= date(?))
+          AND (? IS NULL OR date(so.created_at) <= date(?))
+      `, params);
+
+      const directExpenses = this.totalWithParams(`
+        SELECT COALESCE(SUM(CAST(se.amount AS REAL) * (CAST(ssa.contribution_percentage AS REAL) / 100.0)), 0) AS total
+        FROM service_staff_assignments ssa
+        JOIN service_order_items soi ON soi.uuid = ssa.order_item_uuid
+        JOIN service_expenses se ON se.order_uuid = soi.order_uuid
+        WHERE ssa.staff_user_uuid = ?
+          AND (? IS NULL OR date(se.created_at) >= date(?))
+          AND (? IS NULL OR date(se.created_at) <= date(?))
+      `, params);
+
+      const staffShareEarned = this.totalWithParams(`
+        SELECT COALESCE(SUM(CASE WHEN type IN ('service_share', 'bonus', 'adjustment') THEN CAST(amount AS REAL) ELSE 0 END), 0) AS total
+        FROM staff_earning_transactions
+        WHERE staff_user_uuid = ?
+          AND (? IS NULL OR date(created_at) >= date(?))
+          AND (? IS NULL OR date(created_at) <= date(?))
+      `, params);
+
+      const staffShareSettled = this.totalWithParams(`
+        SELECT COALESCE(SUM(CAST(amount AS REAL)), 0) AS total
+        FROM staff_settlements
+        WHERE staff_user_uuid = ?
+          AND status = 'completed'
+          AND (? IS NULL OR date(created_at) >= date(?))
+          AND (? IS NULL OR date(created_at) <= date(?))
+      `, params);
+
+      const outstandingEarnings = this.totalWithParams(
+        'SELECT COALESCE(SUM(CAST(current_balance AS REAL)), 0) AS total FROM staff_earning_accounts WHERE staff_user_uuid = ?',
+        [user.uuid],
+      );
+
+      const averageCompletionTimeMinutes = this.totalWithParams(`
+        SELECT COALESCE(AVG((julianday(ssa.completed_at) - julianday(ssa.started_at)) * 24 * 60), 0) AS total
+        FROM service_staff_assignments ssa
+        WHERE ssa.staff_user_uuid = ?
+          AND ssa.started_at IS NOT NULL
+          AND ssa.completed_at IS NOT NULL
+          AND (? IS NULL OR date(ssa.completed_at) >= date(?))
+          AND (? IS NULL OR date(ssa.completed_at) <= date(?))
+      `, params);
+
+      const purchases = this.totalWithParams(`
+        SELECT COUNT(*) AS total
+        FROM audit_logs
+        WHERE actor_user_uuid = ?
+          AND action LIKE 'purchase.%'
+          AND (? IS NULL OR date(created_at) >= date(?))
+          AND (? IS NULL OR date(created_at) <= date(?))
+      `, params);
+
+      const stockCounts = this.totalWithParams(`
+        SELECT COUNT(*) AS total
+        FROM stock_count_sessions
+        WHERE created_by_user_uuid = ?
+          AND (? IS NULL OR date(created_at) >= date(?))
+          AND (? IS NULL OR date(created_at) <= date(?))
+      `, params);
+
+      const stockAdjustments = this.totalWithParams(`
+        SELECT COUNT(*) AS total
+        FROM stock_adjustments
+        WHERE created_by_user_uuid = ?
+          AND (? IS NULL OR date(created_at) >= date(?))
+          AND (? IS NULL OR date(created_at) <= date(?))
+      `, params);
+
+      const expenses = this.totalWithParams(`
+        SELECT COUNT(*) AS total
+        FROM expenses
+        WHERE created_by_user_uuid = ?
+          AND (? IS NULL OR date(created_at) >= date(?))
+          AND (? IS NULL OR date(created_at) <= date(?))
+      `, params);
+
+      const approvals = this.totalWithParams(`
+        SELECT
+          COALESCE((SELECT COUNT(*) FROM expenses e WHERE e.approved_by_user_uuid = ? AND (? IS NULL OR date(e.created_at) >= date(?)) AND (? IS NULL OR date(e.created_at) <= date(?))), 0)
+          + COALESCE((SELECT COUNT(*) FROM stock_adjustments sa WHERE sa.approved_by_user_uuid = ? AND (? IS NULL OR date(sa.created_at) >= date(?)) AND (? IS NULL OR date(sa.created_at) <= date(?))), 0)
+          + COALESCE((SELECT COUNT(*) FROM stock_count_sessions scs WHERE scs.approved_by_user_uuid = ? AND (? IS NULL OR date(scs.created_at) >= date(?)) AND (? IS NULL OR date(scs.created_at) <= date(?))), 0)
+          + COALESCE((SELECT COUNT(*) FROM service_orders so WHERE so.approved_by_user_uuid = ? AND (? IS NULL OR date(so.created_at) >= date(?)) AND (? IS NULL OR date(so.created_at) <= date(?))), 0)
+          AS total
+      `, [
+        user.uuid, filter?.from ?? null, filter?.from ?? null, filter?.to ?? null, filter?.to ?? null,
+        user.uuid, filter?.from ?? null, filter?.from ?? null, filter?.to ?? null, filter?.to ?? null,
+        user.uuid, filter?.from ?? null, filter?.from ?? null, filter?.to ?? null, filter?.to ?? null,
+        user.uuid, filter?.from ?? null, filter?.from ?? null, filter?.to ?? null, filter?.to ?? null,
+      ]);
+
+      const deviceActivity = this.totalWithParams(`
+        SELECT COUNT(*) AS total
+        FROM login_logs
+        WHERE user_uuid = ?
+          AND success = '1'
+          AND (? IS NULL OR date(created_at) >= date(?))
+          AND (? IS NULL OR date(created_at) <= date(?))
+      `, params);
+
+      const cashDelta = actualCash - expectedCash;
+      const reviewLabels: string[] = [];
+      if (Math.abs(cashDelta) > 0 || expenses > 10) reviewLabels.push('Requires review');
+      if (salesCount >= 5 && cancellations / Math.max(salesCount, 1) >= 0.2) reviewLabels.push('Higher than usual');
+      if (servicesAssigned >= 4 && servicesCompleted / Math.max(servicesAssigned, 1) < 0.5) reviewLabels.push('Lower than expected');
+      if (Math.abs(cashDelta) > Math.max(100, salesValue * 0.05)) reviewLabels.push('Outside expected range');
+
+      return {
+        staffUserUuid: user.uuid,
+        staffName: user.staffName,
+        username: user.username,
+        salesCount,
+        salesValue,
+        discounts,
+        returns,
+        cancellations,
+        expectedCash,
+        actualCash,
+        cashDelta,
+        servicesAssigned,
+        servicesCompleted,
+        servicesCancelled,
+        serviceRevenue,
+        directExpenses,
+        staffShareEarned,
+        staffShareSettled,
+        outstandingEarnings,
+        averageCompletionTimeMinutes,
+        purchases,
+        stockCounts,
+        stockAdjustments,
+        expenses,
+        approvals,
+        deviceActivity,
+        reviewLabels: [...new Set(reviewLabels)],
+      };
+    });
+
+    return {
+      generatedAt: new Date().toISOString(),
+      rows,
+      labels: ['Requires review', 'Higher than usual', 'Lower than expected', 'Outside expected range'],
+      disclaimer: 'These are neutral monitoring indicators only and must be reviewed with context before taking action.',
+    };
+  }
+
   listAssignedServices(staffUserUuid?: string) {
     this.assertEnabled();
     return this.sqlite.prepare(`
@@ -1020,12 +1632,17 @@ export class ServiceRevenueService {
     return account;
   }
 
-  private postEarning(staffUserUuid: string, amount: number, type: string, referenceUuid: string) {
+  private postEarning(staffUserUuid: string, amount: number, type: StaffLedgerType, referenceUuid?: string | null) {
     const account = this.account(staffUserUuid);
     const now = new Date().toISOString();
-    const transaction = this.insert('staff_earning_transactions', { staffUserUuid, type, amount: this.format(amount), referenceUuid, reversalOfUuid: null });
+    const transaction = this.insert('staff_earning_transactions', { staffUserUuid, type, amount: this.format(amount), referenceUuid: referenceUuid ?? null, reversalOfUuid: null });
     this.sqlite.prepare('UPDATE staff_earning_accounts SET current_balance = ?, updated_at = ? WHERE staff_user_uuid = ?').run(this.format(this.num(account.currentBalance) + amount), now, staffUserUuid);
     return transaction;
+  }
+
+  private totalWithParams(sql: string, params: unknown[]) {
+    const row = this.sqlite.prepare(sql).get(...params) as { total: number };
+    return Number(row?.total ?? 0);
   }
 
   private readInstallationFlags() {
