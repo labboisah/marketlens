@@ -4,7 +4,7 @@
       <div>
         <p class="text-sm font-semibold uppercase text-muted">Release operations</p>
         <h1 class="mt-2 text-2xl font-bold">Application-Version Management</h1>
-        <p class="mt-2 max-w-3xl text-sm text-muted">Manage Shop App and Client App releases, rollout channels, minimum supported versions, and secure signed downloads.</p>
+        <p class="mt-2 max-w-3xl text-sm text-muted">Manage Business Server and Client App releases, rollout channels, minimum supported versions, and secure signed downloads.</p>
       </div>
       <a href="{{ route('super-admin.dashboard', ['module' => 'application-versions']) }}" class="rounded-md border border-border px-3 py-2 text-sm font-semibold hover:border-primary/50">Dashboard module</a>
     </div>
@@ -16,7 +16,7 @@
       <div class="mt-4 grid gap-3 md:grid-cols-2">
         <label class="text-sm font-medium">Application
           <select wire:model="application" class="ml-field mt-1 w-full">
-            <option value="shop_app">Shop App</option>
+            <option value="shop_app">Business Server</option>
             <option value="client_app">Client App</option>
           </select>
         </label>

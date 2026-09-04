@@ -56,7 +56,7 @@ function superAdminFixture(): array
     Subscription::query()->create(['business_id' => $suspendedBusiness->id, 'plan_id' => $plan->id, 'status' => SubscriptionStatus::Trialing, 'starts_at' => now(), 'ends_at' => now()->addDays(7)]);
     Subscription::query()->create(['business_id' => $suspendedBusiness->id, 'plan_id' => $plan->id, 'status' => SubscriptionStatus::Cancelled, 'starts_at' => now()->subMonths(2), 'ends_at' => now()->subMonth()]);
 
-    $device = Device::query()->create(['business_id' => $business->id, 'branch_id' => $branch->id, 'name' => 'Main Shop App', 'type' => 'shop_app', 'status' => DeviceStatus::Active, 'app_version' => '1.2.3', 'last_synchronized_at' => now()->subDays(2)]);
+    $device = Device::query()->create(['business_id' => $business->id, 'branch_id' => $branch->id, 'name' => 'Main Business Server', 'type' => 'shop_app', 'status' => DeviceStatus::Active, 'app_version' => '1.2.3', 'last_synchronized_at' => now()->subDays(2)]);
     SyncBatch::query()->create(['business_id' => $business->id, 'branch_id' => $branch->id, 'device_id' => $device->id, 'status' => SyncBatchStatus::Failed, 'records_count' => 2, 'received_at' => now()]);
     SupportTicket::query()->create(['business_id' => $business->id, 'subject' => 'Need help', 'status' => SupportTicketStatus::Open, 'priority' => 'normal']);
     PlatformNotification::query()->create(['business_id' => $business->id, 'type' => 'security', 'severity' => 'high', 'category' => 'security', 'status' => 'open', 'title' => 'Security alert']);

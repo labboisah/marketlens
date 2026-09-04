@@ -15,7 +15,7 @@
 <div class="flex flex-col gap-6">
   <x-app.page-header
     title="Customer debt monitoring"
-    description="Read-only customer debt monitoring from Shop App-generated summaries. The Platform must not overwrite local customer balances."
+    description="Read-only customer debt monitoring from Business Server-generated summaries. The Platform must not overwrite local customer balances."
   />
 
   <x-app.card title="Filters" description="Filter synchronized debt summaries by branch, customer, phone, or debt status.">
@@ -69,21 +69,21 @@
     </section>
 
     @if ($view === 'payments')
-      <x-app.card title="Customer-payment history" description="Replicated debt payments included in Shop App-generated summaries.">
+      <x-app.card title="Customer-payment history" description="Replicated debt payments included in Business Server-generated summaries.">
         <x-app.table density="compact">
           <thead><tr><th>Customer</th><th>Phone</th><th>Branch</th><th>Amount</th><th>Method</th><th>Reference</th><th>Paid at</th></tr></thead>
           <tbody>
             @forelse ($payments as $payment)
               <tr><td>{{ $payment->customer_name }}</td><td>{{ $payment->summary?->phone }}</td><td>{{ $payment->branch?->name }}</td><td class="font-mono">{{ $this->money($payment->amount_minor) }}</td><td>{{ str($payment->payment_method ?? 'not specified')->replace('_', ' ')->title() }}</td><td>{{ $payment->reference }}</td><td>{{ $payment->paid_at?->format('M j, Y H:i') }}</td></tr>
             @empty
-              <tr><td colspan="7"><x-app.empty-state title="No replicated payments" message="Payment history appears when the Shop App includes debt payment entries in synchronized summaries." /></td></tr>
+              <tr><td colspan="7"><x-app.empty-state title="No replicated payments" message="Payment history appears when the Business Server includes debt payment entries in synchronized summaries." /></td></tr>
             @endforelse
           </tbody>
         </x-app.table>
         <div class="mt-4">{{ $payments?->links() }}</div>
       </x-app.card>
     @elseif ($view === 'ageing')
-      <x-app.card title="Debt ageing report" description="Shop App-generated ageing categories for unpaid balances.">
+      <x-app.card title="Debt ageing report" description="Business Server-generated ageing categories for unpaid balances.">
         <x-app.table density="compact"><thead><tr><th>Ageing category</th><th>Amount</th></tr></thead><tbody>@foreach ($ageing as $label => $amount)<tr><td>{{ $label }}</td><td class="font-mono">{{ $this->money($amount) }}</td></tr>@endforeach</tbody></x-app.table>
       </x-app.card>
     @elseif ($view === 'branch')
@@ -91,7 +91,7 @@
         <x-app.table density="compact"><thead><tr><th>Branch</th><th>Customers</th><th>Balance</th><th>Overdue</th></tr></thead><tbody>@foreach ($branchComparison as $row)<tr><td>{{ $row->branch_name }}</td><td class="font-mono">{{ number_format($row->customer_count) }}</td><td class="font-mono">{{ $this->money($row->balance_minor) }}</td><td class="font-mono">{{ $this->money($row->overdue_minor) }}</td></tr>@endforeach</tbody></x-app.table>
       </x-app.card>
     @else
-      <x-app.card title="{{ $views[$view] }}" description="Synchronized customer balances. Balance corrections must happen in the Shop App ledger.">
+      <x-app.card title="{{ $views[$view] }}" description="Synchronized customer balances. Balance corrections must happen in the Business Server ledger.">
         <x-app.table density="compact">
           <thead><tr><th>Customer</th><th>Phone</th><th>Branch</th><th>Credit limit</th><th>Current balance</th><th>Last payment</th><th>Oldest unpaid sale</th><th>Overdue amount</th><th>Debt status</th><th>Last synchronized time</th></tr></thead>
           <tbody>
@@ -110,7 +110,7 @@
                 <td>{{ $balance->last_synchronized_at?->format('M j, Y H:i') ?? 'Not synchronized' }}</td>
               </tr>
             @empty
-              <tr><td colspan="10"><x-app.empty-state title="No synchronized customer debt" message="Customer balances appear after Shop Apps synchronize customer debt summaries." /></td></tr>
+              <tr><td colspan="10"><x-app.empty-state title="No synchronized customer debt" message="Customer balances appear after Business Servers synchronize customer debt summaries." /></td></tr>
             @endforelse
           </tbody>
         </x-app.table>

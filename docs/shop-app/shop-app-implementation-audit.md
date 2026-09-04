@@ -1,4 +1,4 @@
-# Shop App Implementation Audit
+# Business Server Implementation Audit
 
 Date: 2026-08-04
 
@@ -9,7 +9,7 @@ App has a useful local foundation, but critical financial workflows are partial,
 authorization is inconsistent across local routes, and the automated validation
 toolchain could not be installed or run.
 
-The Shop App may continue as a development dependency for Client App contract
+The Business Server may continue as a development dependency for Client App contract
 work only after callers treat unimplemented endpoints as unavailable. It must
 not be used for operational pilot transactions until the blocking items below
 are resolved and the full test/build matrix passes.
@@ -18,22 +18,20 @@ are resolved and the full test/build matrix passes.
 
 | Command group | Result | Evidence |
 | --- | --- | --- |
-| TypeScript | Blocked | Desktop `node_modules` is absent. |
-| ESLint | Blocked | Desktop `node_modules` is absent. |
-| Prettier | Blocked | Desktop `node_modules` is absent. |
+| TypeScript | Blocked | Standalone server app type backlog requires follow-up. |
+| ESLint | Blocked | Standalone server app lint backlog requires follow-up. |
+| Prettier | Blocked | Formatting was not part of this audit run. |
 | Vitest | Blocked | `vitest.cmd` is absent. |
 | Fastify integration tests | Not present | No test uses `createLocalServer` or `server.inject`. |
 | SQLite integration tests | Partial, unrun | Existing tests create temporary SQLite databases but Vitest is unavailable. |
-| Playwright | Blocked and no Shop App E2E files | Playwright binary is absent; config matches only `*.e2e.ts`. |
+| Playwright | Blocked and no Business Server E2E files | Playwright binary is absent; config matches only `*.e2e.ts`. |
 | Electron smoke tests | Not present | No Electron smoke-test suite exists. |
 | Production build | Blocked | TypeScript/Vite dependencies are absent. |
 | Installer build | Blocked | Electron Forge dependencies are absent. |
 
-`pnpm.cmd install` was attempted. Corepack failed while verifying its package
-manager signing key (`Cannot find matching keyid`). The PowerShell `pnpm` shim
-is also blocked by execution policy. Resolve Corepack/Node package-manager
-signing metadata and install the desktop workspace before claiming any command
-group as passing.
+The Business Server/local server now lives at `C:\laragon\www\business-server` and uses
+npm. Run validation from that standalone app instead of the removed
+`apps/desktop` workspace.
 
 ## Required Test Groups
 
@@ -55,7 +53,7 @@ group as passing.
 
 | # | Requirement | Status | Evidence / finding |
 | --- | --- | --- | --- |
-| 1 | Shop App owns SQLite | Verified | SQLite is opened only in `src/database/sqlite.ts` and owned by the Shop App application container. |
+| 1 | Business Server owns SQLite | Verified | SQLite is opened only in `src/database/sqlite.ts` and owned by the Business Server application container. |
 | 2 | Client Apps cannot access SQLite | Verified by boundary | Client App has no SQLite dependency; Electron boundaries preserve renderer isolation. |
 | 3 | Operational users are local | Verified | Users and sessions are local SQLite records. |
 | 4 | Client devices require authorization | Partial | Login verifies devices when supplied, but device approval/revocation routes do not consistently enforce an administrator session. |
@@ -90,8 +88,8 @@ group as passing.
 
 ## Blocking Remediation
 
-1. Repair Corepack or install a trusted `pnpm` distribution, then install the
-   desktop workspace and run every command group listed above.
+1. Install `C:\laragon\www\business-server` with npm and run every command
+   group listed above from the standalone app.
 2. Implement and test sales cancellation, returns, credit-sale posting,
    discount approval, mixed payments, and receipt reprint approval.
 3. Replace placeholder sales, services, and shareholder tests with temporary

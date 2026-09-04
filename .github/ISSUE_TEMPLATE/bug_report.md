@@ -13,10 +13,10 @@ Describe the problem clearly.
 ## Affected Area
 
 - [ ] Platform
-- [ ] Shop App
+- [ ] Business Server
 - [ ] Client App
 - [ ] Monitoring App
-- [ ] Shared desktop package
+- [ ] Standalone desktop package
 - [ ] Documentation
 - [ ] Infrastructure
 

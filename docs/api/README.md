@@ -2,8 +2,8 @@
 
 This document defines shared API standards for all MarketLens API boundaries:
 
-- Client App to Shop App local API.
-- Shop App to Platform synchronization and cloud APIs.
+- Client App to Business Server local API.
+- Business Server to Platform synchronization and cloud APIs.
 - Monitoring App to Platform cloud API.
 
 All HTTP APIs must be versioned under `/api/v1/`.
@@ -130,8 +130,8 @@ responses return `trace_id`, which may equal the correlation ID.
 
 Rate limits are applied by API boundary:
 
-- Client App to Shop App: per client device, user, and LAN source where useful.
-- Shop App to Platform: per business, branch, device, and endpoint group.
+- Client App to Business Server: per client device, user, and LAN source where useful.
+- Business Server to Platform: per business, branch, device, and endpoint group.
 - Monitoring App to Platform: per user, business, token, and endpoint group.
 
 Use `429 RATE_LIMITED` with retry metadata when possible.
@@ -140,8 +140,9 @@ Use `429 RATE_LIMITED` with retry metadata when possible.
 
 Shared TypeScript contracts live in:
 
-- `apps/desktop/packages/api-contracts`
-- `apps/desktop/packages/sync-contracts`
+- `C:\laragon\www\business-server\packages\api-contracts`
+- `C:\laragon\www\business-server\packages\sync-contracts`
+- `C:\laragon\www\business-app\packages\api-contracts`
 
 Contracts use Zod schemas as runtime validators and inferred TypeScript types.
 Breaking changes require versioning and documentation.

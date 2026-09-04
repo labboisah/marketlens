@@ -293,15 +293,15 @@ export function RoleWorkspace() {
 
           {dashboardQuery.isError ? (
             <div className="mt-4 rounded-xl border border-border bg-background p-4 text-sm text-muted">
-              {dashboardQuery.error instanceof Error ? dashboardQuery.error.message : 'Unable to load the Shop App summary.'}
+              {dashboardQuery.error instanceof Error ? dashboardQuery.error.message : 'Unable to load the Business Server summary.'}
             </div>
           ) : null}
 
           <div className="mt-4 grid gap-4 lg:grid-cols-4">
             <MetricCard label="Business" value={shopStatus?.businessName ?? 'Unknown'} note={shopStatus?.branchName ?? 'Unknown branch'} tone="information" />
-            <MetricCard label="Shop server" value={shopStatus?.shopServerName ?? 'Unknown'} note={`${shopStatus?.serverIp ?? 'Unknown'}:${shopStatus?.serverPort ?? 'GÇö'}`} tone="neutral" />
+            <MetricCard label="Business server" value={shopStatus?.shopServerName ?? 'Unknown'} note={`${shopStatus?.serverIp ?? 'Unknown'}:${shopStatus?.serverPort ?? 'GÇö'}`} tone="neutral" />
             <MetricCard label="Last sync" value={formatTimestamp(shopStatus?.lastSynchronization)} note={`Platform: ${shopStatus?.platformConnectivity ?? 'unknown'}`} tone={dashboardTone(shopStatus?.platformConnectivity ?? 'unknown')} />
-            <MetricCard label="Client apps" value={formatNumber(dashboard?.summary.authorizedClientApps ?? 0)} note="Authorized clients on the Shop App" tone="success" />
+            <MetricCard label="Client apps" value={formatNumber(dashboard?.summary.authorizedClientApps ?? 0)} note="Authorized clients on the Business Server" tone="success" />
           </div>
         </section>
 
@@ -309,14 +309,14 @@ export function RoleWorkspace() {
           <section className="mt-4 grid gap-4 xl:grid-cols-3">
             <div className="grid gap-4 lg:grid-cols-2 xl:col-span-2">
               <MetricCard label="Current shift status" value={(dashboard?.summary.openCashierShifts ?? 0) > 0 ? 'Open' : 'Closed'} note={`${formatNumber(dashboard?.summary.openCashierShifts ?? 0)} open shift(s)`} tone={(dashboard?.summary.openCashierShifts ?? 0) > 0 ? 'success' : 'warning'} />
-              <MetricCard label="Opening cash" value={valueOrDash(currentStaffRow?.openingCash)} note="Loaded from the Shop App summary" tone="information" />
+              <MetricCard label="Opening cash" value={valueOrDash(currentStaffRow?.openingCash)} note="Loaded from the Business Server summary" tone="information" />
               <MetricCard label="Sales count" value={valueOrDash(currentStaffRow?.transactionCount)} note="Completed sales in the selected window" />
-              <MetricCard label="Sales value" value={formatCurrency(asNumber(currentStaffRow?.salesValue ?? 0))} note="Completed sales value from Shop App" />
+              <MetricCard label="Sales value" value={formatCurrency(asNumber(currentStaffRow?.salesValue ?? 0))} note="Completed sales value from Business Server" />
               <MetricCard label="Cash collected" value={valueOrDash(cashPayment?.amount)} note={cashPayment ? cashPayment.paymentMethod : 'No cash payments'} />
               <MetricCard label="Transfer payments" value={valueOrDash(transferPayment?.amount)} note={transferPayment ? transferPayment.paymentMethod : 'No transfer payments'} />
               <MetricCard label="POS payments" value={valueOrDash(posPayment?.amount)} note={posPayment ? posPayment.paymentMethod : 'No POS payments'} />
               <MetricCard label="Credit sales" value={valueOrDash(creditPayment?.amount)} note={creditPayment ? creditPayment.paymentMethod : 'No credit payments'} />
-              <MetricCard label="Returns" value={valueOrDash(currentStaffRow?.returns)} note="Cashier-linked returns from Shop App" />
+              <MetricCard label="Returns" value={valueOrDash(currentStaffRow?.returns)} note="Cashier-linked returns from Business Server" />
               <MetricCard label="Expected cash" value={valueOrDash(currentStaffRow?.expectedCash)} note="Authoritative shift expectation" />
             </div>
             <ListCard
@@ -325,7 +325,7 @@ export function RoleWorkspace() {
               items={[
                 { primary: 'Connection', secondary: connectionState },
                 { primary: 'Sync state', secondary: syncState },
-                { primary: 'Shop server', secondary: shopStatus?.shopServerName ?? 'Unknown' },
+                { primary: 'Business server', secondary: shopStatus?.shopServerName ?? 'Unknown' },
                 { primary: 'Branch', secondary: shopStatus?.branchName ?? 'Unknown' },
               ]}
             />
@@ -429,7 +429,7 @@ export function RoleWorkspace() {
             <div className="grid gap-4 lg:grid-cols-2 xl:col-span-2">
               <MetricCard label="Customer debt" value={formatCurrency(dashboard?.summary.customerDebt ?? 0)} note="Outstanding customer balances" tone="warning" />
               <MetricCard label="Supplier balances" value={formatCurrency(dashboard?.summary.supplierBalance ?? 0)} note="Outstanding supplier balances" tone="warning" />
-              <MetricCard label="Expenses" value={formatCurrency(dashboard?.summary.expenses ?? 0)} note="Approved expenses from Shop App" />
+              <MetricCard label="Expenses" value={formatCurrency(dashboard?.summary.expenses ?? 0)} note="Approved expenses from Business Server" />
               <MetricCard label="Cashier settlements" value={formatNumber(dashboard?.cashierSettlementRows.length ?? 0)} note="Settlement rows loaded from the summary" />
               <MetricCard label="Staff earnings" value={formatNumber(dashboard?.staffEarningsRows.length ?? 0)} note="Earning accounts with balances" />
               <MetricCard label="Shareholder operational payments" value={formatNumber((dashboard?.revenueAllocationRows ?? []).length)} note="Shown when shareholder operations are enabled" />
@@ -439,7 +439,7 @@ export function RoleWorkspace() {
               emptyText="No payment breakdown available"
               items={paymentBreakdown.map((item) => ({
                 primary: item.paymentMethod,
-                secondary: 'Authoritative Shop App aggregate',
+                secondary: 'Authoritative Business Server aggregate',
                 value: valueOrDash(item.amount),
               }))}
             />
@@ -452,8 +452,8 @@ export function RoleWorkspace() {
               <MetricCard label="Assigned services" value={valueOrDash(currentStaffRow?.servicesAssigned)} note="Service assignments linked to your user" />
               <MetricCard label="Services in progress" value={formatNumber(Math.max(asNumber(currentStaffRow?.servicesAssigned ?? 0) - asNumber(currentStaffRow?.servicesCompleted ?? 0) - asNumber(currentStaffRow?.servicesCancelled ?? 0), 0))} note="Derived from assigned minus completed and cancelled service work" tone="warning" />
               <MetricCard label="Services completed" value={valueOrDash(currentStaffRow?.servicesCompleted)} note="Completed service orders in the window" tone="success" />
-              <MetricCard label="Pending customer payments" value={formatNumber(pendingCustomerPayments.length)} note="Customer debt rows from the Shop App summary" />
-              <MetricCard label="Staff earnings" value={valueOrDash(currentStaffRow?.staffShareEarned)} note="Loaded from Shop App service earnings" />
+              <MetricCard label="Pending customer payments" value={formatNumber(pendingCustomerPayments.length)} note="Customer debt rows from the Business Server summary" />
+              <MetricCard label="Staff earnings" value={valueOrDash(currentStaffRow?.staffShareEarned)} note="Loaded from Business Server service earnings" />
               <MetricCard label="Outstanding settlements" value={valueOrDash(currentStaffRow?.outstandingEarnings)} note="Remaining settlement balance" tone="warning" />
             </div>
             <ListCard
@@ -471,7 +471,7 @@ export function RoleWorkspace() {
         <section className="mt-4 rounded-2xl border border-border bg-surface p-5 shadow-sm">
           <h2 className="text-base font-semibold">Summary source</h2>
           <p className="mt-2 text-sm text-muted">
-            This dashboard reads Shop App summary and report endpoints through TanStack Query. Authoritative financial totals stay in the Shop App; the renderer only presents server-authored values and lists.
+            This dashboard reads Business Server summary and report endpoints through TanStack Query. Authoritative financial totals stay in the Business Server; the renderer only presents server-authored values and lists.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <StatusBadge tone="information">Role: {roleLabel(activeRole)}</StatusBadge>

@@ -4,10 +4,10 @@
 
 MarketLens is an offline-first retail sales, inventory, debt tracking, and
 remote-monitoring platform for businesses that need reliable operations inside
-shops and clear visibility from anywhere.
+businesses and clear visibility from anywhere.
 
 The system is designed for environments where internet connectivity may be
-unstable. Each shop continues selling, receiving stock, managing users, and
+unstable. Each business continues selling, receiving stock, managing users, and
 recording operational activity locally. When internet access is available,
 approved records synchronize to the cloud Platform for reporting, device
 management, subscriptions, and owner monitoring.
@@ -15,7 +15,7 @@ management, subscriptions, and owner monitoring.
 ## Business Problems
 
 - Sales teams need to keep working even when internet access fails.
-- Owners need remote visibility across branches without disrupting local shop
+- Owners need remote visibility across branches without disrupting local business
   operations.
 - Inventory changes must be auditable instead of hidden behind direct stock
   edits.
@@ -28,7 +28,7 @@ management, subscriptions, and owner monitoring.
 ## Target Businesses
 
 MarketLens is intended for small and medium retail businesses, wholesalers,
-pharmacies, supermarkets, provision stores, electronics shops, boutiques,
+pharmacies, supermarkets, provision stores, electronics businesses, boutiques,
 hardware stores, and multi-branch merchants that need resilient sales and
 inventory control.
 
@@ -42,23 +42,23 @@ The Platform is the central cloud application. It is multi-tenant and manages
 businesses, subscriptions, branches, devices, synchronization, cloud APIs, and
 remote reporting.
 
-### MarketLens Shop App
+### MarketLens Business Server
 
-The Shop App is installed on the main computer in each shop or branch. It is
+The Business Server is installed on the main computer in each business or branch. It is
 the local source of truth, runs the local API server, stores operational records
 locally, registers operational users, and synchronizes records to the Platform.
 
 ### MarketLens Client App
 
 The Client App is installed on cashier, storekeeper, manager, and accountant
-computers. It connects to the Shop App over LAN or Wi-Fi, uses role-based
+computers. It connects to the Business Server over LAN or Wi-Fi, uses role-based
 interfaces, and never accesses the local SQLite database directly.
 
 ### MarketLens Monitoring App
 
 The Monitoring App is an Android-first mobile application for business owners
 and authorized remote users. It reads synchronized records from the Platform and
-never connects directly to a Shop App.
+never connects directly to a Business Server.
 
 ## High-Level Data Flow
 
@@ -66,7 +66,7 @@ never connects directly to a Shop App.
 Client App
     | Local LAN/Wi-Fi
     v
-Shop App
+Business Server
     | Internet synchronization
     v
 Platform
@@ -75,8 +75,8 @@ Platform
 Monitoring App
 ```
 
-Operational writes begin at the Shop App. Client Apps submit requests to the
-Shop App local API. The Shop App validates permissions, applies business rules,
+Operational writes begin at the Business Server. Client Apps submit requests to the
+Business Server local API. The Business Server validates permissions, applies business rules,
 persists records in SQLite, and later synchronizes eligible records to the
 Platform. The Monitoring App consumes Platform APIs only.
 
@@ -88,7 +88,7 @@ Laravel, PHP, Livewire, Alpine.js, Tailwind CSS, Flux UI, Vite, PostgreSQL,
 Redis, Laravel Horizon, Laravel Sanctum, Laravel Reverb, Pest, Larastan,
 Laravel Pint, Docker Compose, Nginx, and S3-compatible storage.
 
-### Shop App
+### Business Server
 
 Electron, TypeScript, React, Vite, Tailwind CSS, shadcn/ui, Lucide Icons,
 Node.js LTS, Fastify, SQLite, better-sqlite3, Drizzle ORM, Zod, Socket.IO,
@@ -110,35 +110,40 @@ Test.
 ## Repository Structure
 
 ```text
-marketlens/
+laragon/www/
+|-- business-server/
+|   |-- packages/
+|   `-- src/
+|-- business-app/
+|   |-- packages/
+|   `-- src/
+|-- marketlens/
 |-- apps/
 |   |-- platform/
-|   |-- desktop/
-|   |   |-- apps/
-|   |   |   |-- shop-app/
-|   |   |   `-- client-app/
-|   |   `-- packages/
-|   |       |-- api-contracts/
-|   |       |-- shared-types/
-|   |       |-- validation/
-|   |       |-- permissions/
-|   |       |-- calculations/
-|   |       |-- sync-contracts/
-|   |       `-- ui/
 |   `-- monitoring-app/
 |-- docs/
 |-- infrastructure/
 `-- .github/
 ```
 
+The desktop applications are maintained as sibling standalone projects outside
+the main `marketlens` repository:
+
+- `C:\laragon\www\business-server`: MarketLens Business Server / local server.
+- `C:\laragon\www\business-app`: MarketLens Client App.
+
+Each desktop app keeps its own copied shared packages and dependency tree so it
+can be installed, tested, built, and packaged independently. Do not reintroduce
+`apps/desktop` as a duplicate source tree.
+
 ## Development Prerequisites
 
 - Git.
-- Node.js LTS and npm for the desktop workspace.
+- Node.js LTS and npm for the standalone desktop apps.
 - PHP supported stable version and Composer for the Platform.
 - Docker Compose for local infrastructure.
 - Flutter stable SDK for the Monitoring App.
-- SQLite tooling for local Shop App inspection and development.
+- SQLite tooling for local Business Server inspection and development.
 - PostgreSQL and Redis for Platform development.
 
 ## Local Setup Overview
@@ -173,8 +178,8 @@ debt ledger changes, synchronization contracts, and tenant or branch isolation
 require especially focused coverage.
 
 Expected tools include Pest and Larastan for the Platform, Vitest and
-Playwright for the desktop applications and packages, and Flutter Test for the
-Monitoring App.
+Playwright for the standalone desktop applications and their copied packages,
+and Flutter Test for the Monitoring App.
 
 ## Security Principles
 

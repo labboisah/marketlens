@@ -19,7 +19,7 @@ starting points.
 | `barcode` | Product barcodes | Fast POS scanning. |
 | `sku` | Products | Fast product lookup and import de-duplication. |
 
-## Shop App SQLite Indexes
+## Business Server SQLite Indexes
 
 Recommended Shop indexes:
 
@@ -57,7 +57,7 @@ ON sync_queue (sync_status, created_at);
 
 SQLite notes:
 
-- Keep write-heavy indexes minimal on the Shop App because local writes must
+- Keep write-heavy indexes minimal on the Business Server because local writes must
   stay fast during busy sales periods.
 - Use covering indexes only where profiling proves a benefit.
 - Keep barcode and SKU lookups fast for keyboard/scanner workflows.

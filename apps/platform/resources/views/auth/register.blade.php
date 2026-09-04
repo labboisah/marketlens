@@ -3,7 +3,7 @@
 @section('content')
   <div>
     <h1 class="text-2xl font-bold">Create your MarketLens account</h1>
-    <p class="mt-2 text-sm text-muted">For business owners and Monitoring users. Shop staff are registered in the Shop App.</p>
+    <p class="mt-2 text-sm text-muted">For business owners and Monitoring users. Business staff are registered in the Business Server.</p>
 
     <form method="POST" action="{{ route('register') }}" class="mt-6 grid gap-4">
       @csrf

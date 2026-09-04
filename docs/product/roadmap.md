@@ -54,15 +54,15 @@ gates.
 - Security docs.
 - Testing docs.
 
-## Milestone 2: Shop Operations
+## Milestone 2: Business Operations
 
 ### Goal
 
-Build the Shop App as the local source of truth for daily retail operations.
+Build the Business Server as the local source of truth for daily retail operations.
 
 ### Deliverables
 
-- Shop configuration.
+- Business configuration.
 - Local user authentication.
 - Roles and permissions.
 - Products, categories, units, and prices.
@@ -85,7 +85,7 @@ Build the Shop App as the local source of truth for daily retail operations.
 
 ### Acceptance Criteria
 
-- Shop can sell, receive stock, track payments, record expenses, and manage
+- Business can sell, receive stock, track payments, record expenses, and manage
   customer debt without internet.
 - Completed sales are immutable.
 - Inventory quantity changes are movement-based.
@@ -105,7 +105,7 @@ Build the Shop App as the local source of truth for daily retail operations.
 
 ### Documentation Required
 
-- Shop App setup guide.
+- Business Server setup guide.
 - Local database schema notes.
 - Operational user and permission guide.
 - Backup and recovery guide.
@@ -115,7 +115,7 @@ Build the Shop App as the local source of truth for daily retail operations.
 
 ### Goal
 
-Provide role-based workstations that connect to the Shop App over LAN or Wi-Fi.
+Provide role-based workstations that connect to the Business Server over LAN or Wi-Fi.
 
 ### Deliverables
 
@@ -134,8 +134,8 @@ Provide role-based workstations that connect to the Shop App over LAN or Wi-Fi.
 
 ### Dependencies
 
-- Shop App local API.
-- Shop App device authorization.
+- Business Server local API.
+- Business Server device authorization.
 - Shared API contracts.
 - Shared desktop UI package.
 - Secure preload API foundation.
@@ -143,9 +143,9 @@ Provide role-based workstations that connect to the Shop App over LAN or Wi-Fi.
 ### Acceptance Criteria
 
 - Client App never opens SQLite.
-- Client App only connects to an authorized Shop App.
-- POS transaction status remains pending until confirmed by Shop App.
-- Role navigation follows Shop App permissions.
+- Client App only connects to an authorized Business Server.
+- POS transaction status remains pending until confirmed by Business Server.
+- Role navigation follows Business Server permissions.
 - Receipt printing uses controlled preload APIs.
 
 ### Tests Required
@@ -169,7 +169,7 @@ Provide role-based workstations that connect to the Shop App over LAN or Wi-Fi.
 
 ### Goal
 
-Synchronize approved Shop App records to the Platform safely and recoverably.
+Synchronize approved Business Server records to the Platform safely and recoverably.
 
 ### Deliverables
 
@@ -181,11 +181,11 @@ Synchronize approved Shop App records to the Platform safely and recoverably.
 - Conflict tracking.
 - Exponential retry and recovery.
 - Last successful sync status.
-- Sync status UI in Shop App.
+- Sync status UI in Business Server.
 
 ### Dependencies
 
-- Shop App operational records.
+- Business Server operational records.
 - Platform device activation.
 - Shared sync contracts.
 - Synchronization protocol.
@@ -293,10 +293,10 @@ Deliver Android-first remote owner visibility using Platform data only.
 
 ### Acceptance Criteria
 
-- Monitoring App never connects directly to Shop Apps.
+- Monitoring App never connects directly to Business Servers.
 - Cached data is read-only.
 - Stale data is clearly identified.
-- Last successful shop synchronization time is visible.
+- Last successful business synchronization time is visible.
 - Tokens use secure storage.
 - Sensitive screens can require biometric re-authentication where configured.
 
@@ -322,7 +322,7 @@ Deliver Android-first remote owner visibility using Platform data only.
 
 ### Goal
 
-Validate MarketLens with real pilot shops before commercial launch.
+Validate MarketLens with real pilot businesses before commercial launch.
 
 ### Deliverables
 
@@ -335,7 +335,7 @@ Validate MarketLens with real pilot shops before commercial launch.
 
 ### Dependencies
 
-- Shop operations.
+- Business operations.
 - Client App POS workflows.
 - Synchronization.
 - Platform reporting.
@@ -343,7 +343,7 @@ Validate MarketLens with real pilot shops before commercial launch.
 
 ### Acceptance Criteria
 
-- Pilot shops can operate for full business days.
+- Pilot businesses can operate for full business days.
 - Offline operation is verified.
 - Sync recovery is verified after internet interruptions.
 - Pilot owners can view accurate remote summaries.

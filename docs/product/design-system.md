@@ -5,7 +5,7 @@ calm under pressure, and easy for users with limited technical experience. The
 visual language should communicate business visibility, inventory control, sales
 intelligence, and operational confidence without becoming visually busy.
 
-This document is the shared source of truth for Platform, Shop App, Client App,
+This document is the shared source of truth for Platform, Business Server, Client App,
 and Monitoring App styling. Application components must use semantic tokens and
 shared primitives instead of scattering hard-coded colors through views.
 
@@ -17,7 +17,7 @@ shared primitives instead of scattering hard-coded colors through views.
 - Offline awareness: connection and synchronization state must always be visible
   where it affects user decisions.
 - Operational durability: tables, forms, dashboards, and POS surfaces should
-  work well in noisy shops and low-connectivity environments.
+  work well in busy businesses and low-connectivity environments.
 - Color supports meaning, but never carries meaning alone.
 
 ## Color System
@@ -219,7 +219,7 @@ Offline and synchronization indicators:
 
 - Always distinguish offline, connected, syncing, delayed, failed, and synced.
 - Include last successful sync time where available.
-- Shop App and Client App should show local server connection state in app
+- Business Server and Client App should show local server connection state in app
   chrome.
 - Monitoring App should show cached-data and last-sync status.
 
@@ -244,11 +244,12 @@ hero layouts inside authenticated product workflows.
 
 ## Desktop Styling
 
-Shop App and Client App use Electron, React, Tailwind CSS, shadcn/ui, and
-Lucide Icons. Both apps must import shared tokens and reusable primitives from
-`apps/desktop/packages/ui`.
+Business Server and Client App use Electron, React, Tailwind CSS, shadcn/ui, and
+Lucide Icons. The standalone apps live at `C:\laragon\www\business-server` and
+`C:\laragon\www\business-app`. Each app carries its own copied `packages/ui`
+package and must keep those tokens aligned with the Platform design system.
 
-The shared package owns:
+The desktop UI package owns:
 
 - Tailwind preset and semantic design tokens.
 - Buttons, inputs, selects, dialogs, data tables, and status badges.
@@ -260,8 +261,9 @@ The shared package owns:
 - Server-connection indicator.
 - Synchronization-status indicator.
 
-Shop-specific and client-specific components may compose these primitives, but
-must not fork token definitions.
+Business-specific and client-specific components may compose these primitives, but
+must not fork token definitions or reintroduce a duplicate `apps/desktop`
+workspace in the main repository.
 
 ## Monitoring App Styling
 
@@ -280,13 +282,13 @@ The app should define:
 - Notification tiles.
 
 Monitoring should feel owner-focused: quick to scan, secure, and calm. It must
-never imply a direct connection to a Shop App.
+never imply a direct connection to a Business Server.
 
 ## Accessibility
 
 - Meet strong contrast requirements for text, controls, charts, badges, and
   status indicators.
-- Support keyboard navigation in Platform, Shop App, and Client App.
+- Support keyboard navigation in Platform, Business Server, and Client App.
 - Provide visible focus states.
 - Use large touch targets for POS and mobile workflows. Prefer at least 44px
   target size where practical.

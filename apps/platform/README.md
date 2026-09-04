@@ -4,8 +4,8 @@ The MarketLens Platform is the central cloud application for business
 administration, subscriptions, device management, synchronization ingress,
 Monitoring App authentication, and owner-facing reporting.
 
-It does not operate shop sales directly. Shop operational writes originate in
-the Shop App and are synchronized to the Platform for cloud reporting and remote
+It does not operate business sales directly. Business operational writes originate in
+the Business Server and are synchronized to the Platform for cloud reporting and remote
 visibility.
 
 ## Stack

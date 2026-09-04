@@ -1,7 +1,7 @@
 <div class="flex flex-col gap-6">
   <x-app.page-header
-    title="Shop App device activation"
-    description="Generate short-lived, single-use activation codes and monitor activated Shop App devices."
+    title="Business Server device activation"
+    description="Generate short-lived, single-use activation codes and monitor activated Business Server devices."
   >
     <x-slot:actions>
       <a href="{{ route('platform.support', ['category' => 'device']) }}" class="rounded-md border border-border px-3 py-2 text-sm font-semibold text-foreground hover:border-primary/50">Get device support</a>
@@ -12,17 +12,20 @@
     <x-app.status-badge tone="success">{{ session('device_status') }}</x-app.status-badge>
   @endif
 
-  @if ($generatedCode)
-    <section class="rounded-lg border border-warning/30 bg-warning/5 p-4">
-      <p class="text-sm font-semibold text-foreground">Activation code</p>
-      <p class="mt-2 font-mono text-2xl font-bold tracking-wide">{{ $generatedCode }}</p>
-      <p class="mt-2 text-sm text-muted">This code is shown once. Device credentials are only returned to the Shop App during activation.</p>
-    </section>
-  @endif
-
   <section class="grid gap-4 xl:grid-cols-[0.9fr_1.5fr]">
     <x-app.card title="Generate activation" description="Codes are hashed at rest and expire automatically.">
-      <form wire:submit="generate" class="space-y-3">
+      <form wire:submit.prevent="generate" class="space-y-3">
+        @if ($errors->any())
+          <div class="rounded-lg border border-danger/30 bg-danger/10 p-3 text-sm text-danger">
+            <p class="font-semibold">Activation code could not be generated.</p>
+            <ul class="mt-2 list-disc space-y-1 pl-5">
+              @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+              @endforeach
+            </ul>
+          </div>
+        @endif
+
         <div>
           <label class="text-sm font-medium" for="device-branch">Branch</label>
           <select id="device-branch" wire:model="branchId" class="ml-field mt-1 w-full">
@@ -35,7 +38,7 @@
 
         <div>
           <label class="text-sm font-medium" for="device-label">Device label</label>
-          <input id="device-label" wire:model="deviceLabel" class="ml-field mt-1 w-full" placeholder="Main Shop App">
+          <input id="device-label" wire:model="deviceLabel" class="ml-field mt-1 w-full" placeholder="Main Business Server">
           @error('deviceLabel') <p class="mt-1 text-xs text-danger">{{ $message }}</p> @enderror
         </div>
 
@@ -43,7 +46,7 @@
           <div>
             <label class="text-sm font-medium" for="device-type">Device type</label>
             <select id="device-type" wire:model="deviceType" class="ml-field mt-1 w-full">
-              <option value="shop_app">Shop App</option>
+              <option value="shop_app">Business Server</option>
               <option value="client_app">Client App</option>
             </select>
           </div>
@@ -66,17 +69,43 @@
               <option value="{{ $version->id }}">{{ $version->version }}</option>
             @endforeach
           </select>
+          @error('applicationVersionId') <p class="mt-1 text-xs text-danger">{{ $message }}</p> @enderror
         </div>
 
-        <button type="submit" class="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white">
-          Generate code
+        @if ($generatedCode)
+          <div wire:key="generated-activation-code" class="rounded-lg border border-warning/40 bg-warning/10 p-4">
+            <p class="text-xs font-bold uppercase text-warning">One-time activation code</p>
+            <p class="mt-2 select-all rounded-md border border-warning/20 bg-white px-3 py-2 font-mono text-2xl font-bold tracking-wide text-primary">
+              {{ $generatedCode }}
+            </p>
+            <dl class="mt-3 grid gap-2 text-sm text-muted sm:grid-cols-2">
+              <div>
+                <dt class="font-medium text-foreground">Device</dt>
+                <dd>{{ $generatedDeviceLabel }}</dd>
+              </div>
+              <div>
+                <dt class="font-medium text-foreground">Branch</dt>
+                <dd>{{ $generatedBranchName }}</dd>
+              </div>
+              <div class="sm:col-span-2">
+                <dt class="font-medium text-foreground">Expires</dt>
+                <dd>{{ $generatedExpiresAt }}</dd>
+              </div>
+            </dl>
+            <p class="mt-3 text-sm text-muted">This code is shown once. Device credentials are only returned to the Business Server during activation.</p>
+          </div>
+        @endif
+
+        <button type="submit" class="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60" wire:loading.attr="disabled" wire:target="generate">
+          <span wire:loading.remove wire:target="generate">Generate code</span>
+          <span wire:loading wire:target="generate">Generating...</span>
         </button>
       </form>
     </x-app.card>
 
     <x-app.card title="Devices and activations" description="Credentials are stored as hashes and can be revoked.">
       @if ($devices->isEmpty())
-        <x-app.empty-state title="No device activations yet" message="Generate an activation code for a Shop App device." />
+        <x-app.empty-state title="No device activations yet" message="Generate an activation code for a Business Server device." />
       @else
         <div class="overflow-x-auto">
           <table class="ml-table">

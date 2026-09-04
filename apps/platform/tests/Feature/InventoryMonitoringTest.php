@@ -153,7 +153,7 @@ it('stores replicated inventory stocks alerts and movements from synchronization
     [, $business, $branch] = inventoryMonitoringFixture();
     $deviceUser = User::factory()->create();
     $activation = app(ShopAppActivationService::class)->createActivation($business, $branch, $deviceUser, [
-        'device_label' => 'Inventory Shop App',
+        'device_label' => 'Inventory Business Server',
         'device_type' => 'shop_app',
         'expires_at' => now()->addMinutes(30),
         'application_version_id' => null,
@@ -277,7 +277,7 @@ it('renders read-only inventory monitoring pages filters details and movement su
         ->assertSee('Inventory monitoring')
         ->assertSee('Current stock by branch')
         ->assertSee('Golden Rice 50kg')
-        ->assertSee('Shop App remains authoritative')
+        ->assertSee('Business Server remains authoritative')
         ->assertDontSee('Edit stock')
         ->assertDontSee('Correct stock');
 

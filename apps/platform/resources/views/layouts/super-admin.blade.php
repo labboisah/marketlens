@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title ?? 'MarketLens Admin' }}</title>
+    @livewireStyles
     @fluxAppearance
     @vite(['resources/css/app.css', 'resources/js/app.js'])
   </head>
@@ -112,7 +113,7 @@
         </div>
       </div>
     </div>
+    @livewireScripts
     @fluxScripts
   </body>
 </html>
-

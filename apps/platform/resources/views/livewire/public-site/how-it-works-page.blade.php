@@ -1,18 +1,18 @@
 @php
   $statements = [
-      'Shop users are registered in the Shop App.',
+      'Business users are registered in the Business Server.',
       'Multiple Client Apps can connect through LAN or Wi-Fi.',
-      'The Shop App owns the local database.',
-      'Shop operations continue offline.',
-      'The Shop App synchronizes records to the Platform.',
+      'The Business Server owns the local database.',
+      'Business operations continue offline.',
+      'The Business Server synchronizes records to the Platform.',
       'The Monitoring App reads from the Platform.',
-      'The Monitoring App does not connect directly to the shop.',
+      'The Monitoring App does not connect directly to the business.',
   ];
 
   $steps = [
-      ['title' => 'Staff work on Client Apps', 'body' => 'Cashiers, storekeepers, managers, and accountants use role-based Client Apps connected to the Shop App over the local network.'],
-      ['title' => 'The Shop App controls the shop', 'body' => 'The Shop App registers operational users, checks permissions, validates transactions, writes the local database, and keeps the shop running offline.'],
-      ['title' => 'Records synchronize to the Platform', 'body' => 'When internet is available, the Shop App sends accepted batches to the Platform for cloud reporting and device/subscription management.'],
+      ['title' => 'Staff work on Client Apps', 'body' => 'Cashiers, storekeepers, managers, and accountants use role-based Client Apps connected to the Business Server over the local network.'],
+      ['title' => 'The Business Server controls the business', 'body' => 'The Business Server registers operational users, checks permissions, validates transactions, writes the local database, and keeps the business running offline.'],
+      ['title' => 'Records synchronize to the Platform', 'body' => 'When internet is available, the Business Server sends accepted batches to the Platform for cloud reporting and device/subscription management.'],
       ['title' => 'Owners monitor from the Platform', 'body' => 'The Monitoring App shows synchronized records, branch summaries, alerts, and last synchronization time from the Platform only.'],
   ];
 @endphp
@@ -24,7 +24,7 @@
       <div class="mt-8 max-w-3xl">
         <x-public.status-badge tone="information">How it works</x-public.status-badge>
         <h1 class="mt-5 text-4xl font-bold tracking-normal text-foreground sm:text-5xl">A simple architecture for shops that cannot stop selling.</h1>
-        <p class="mt-5 text-lg leading-8 text-muted">MarketLens keeps daily shop operations local, then synchronizes records to the cloud so owners can monitor the business remotely.</p>
+        <p class="mt-5 text-lg leading-8 text-muted">MarketLens keeps daily business operations local, then synchronizes records to the cloud so owners can monitor the business remotely.</p>
       </div>
     </div>
   </section>
@@ -44,7 +44,7 @@
 
   <section class="border-y border-border bg-background py-16">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <x-public.section-heading title="The operating flow" description="From shop computer to owner phone, every application has a focused job." />
+      <x-public.section-heading title="The operating flow" description="From business computer to owner phone, every application has a focused job." />
       <div class="mt-8 grid gap-4 lg:grid-cols-4">
         @foreach ($steps as $index => $step)
           <article class="rounded-lg border border-border bg-surface p-5 shadow-sm">

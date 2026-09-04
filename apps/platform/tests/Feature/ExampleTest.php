@@ -66,8 +66,8 @@ class ExampleTest extends TestCase
             ->assertSee('Cashier shortages')
             ->assertSee('Weak debt management')
             ->assertSee('Unreliable internet')
-            ->assertSee('Offline shop operation')
-            ->assertSee('Local Shop App')
+            ->assertSee('Offline business operation')
+            ->assertSee('Local Business Server')
             ->assertSee('Cloud synchronization')
             ->assertSee('Debt ledger')
             ->assertSee('Owner dashboards');
@@ -79,9 +79,9 @@ class ExampleTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertSee('Client Apps process shop operations.')
-            ->assertSee('Shop App validates and stores records locally.')
-            ->assertSee('Shop App synchronizes records to the Platform.')
+            ->assertSee('Client Apps process business operations.')
+            ->assertSee('Business Server validates and stores records locally.')
+            ->assertSee('Business Server synchronizes records to the Platform.')
             ->assertSee('Monitoring App displays synchronized business records.');
     }
 
@@ -98,7 +98,7 @@ class ExampleTest extends TestCase
             ->assertSee('Synchronization status')
             ->assertSee('Security alerts')
             ->assertSee('Supermarkets')
-            ->assertSee('Provision shops')
+            ->assertSee('Provision businesses')
             ->assertSee('Wholesalers')
             ->assertSee('Pharmacies')
             ->assertSee('Spare-parts shops');
@@ -128,9 +128,9 @@ class ExampleTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertSee('Does each shop need a domain?')
-            ->assertSee('Does each shop need a cloud server?')
-            ->assertSee('Can the shop operate without internet?')
+            ->assertSee('Does each business need a domain?')
+            ->assertSee('Does each business need a cloud server?')
+            ->assertSee('Can the business operate without internet?')
             ->assertSee('Can multiple computers connect?')
             ->assertSee('Where are staff users created?')
             ->assertSee('Can the owner monitor remotely?')
@@ -200,7 +200,7 @@ class ExampleTest extends TestCase
             ->assertSee('Home')
             ->assertSee('Product')
             ->assertSee('Platform')
-            ->assertSee('Shop App')
+            ->assertSee('Business Server')
             ->assertSee('Client App')
             ->assertSee('Monitoring App')
             ->assertSee('Data flow')
@@ -249,7 +249,7 @@ class ExampleTest extends TestCase
             ->assertSee('Useful MarketLens modules')
             ->assertSee('Specialized features that may be added later')
             ->assertSee('Supermarket')
-            ->assertSee('Provision shop')
+            ->assertSee('Provision business')
             ->assertSee('Wholesale distributor')
             ->assertSee('Pharmacy')
             ->assertSee('Building materials')
@@ -268,13 +268,13 @@ class ExampleTest extends TestCase
             ->assertOk()
             ->assertSee('Home')
             ->assertSee('How it works')
-            ->assertSee('Shop users are registered in the Shop App.')
+            ->assertSee('Business users are registered in the Business Server.')
             ->assertSee('Multiple Client Apps can connect through LAN or Wi-Fi.')
-            ->assertSee('The Shop App owns the local database.')
-            ->assertSee('Shop operations continue offline.')
-            ->assertSee('The Shop App synchronizes records to the Platform.')
+            ->assertSee('The Business Server owns the local database.')
+            ->assertSee('Business operations continue offline.')
+            ->assertSee('The Business Server synchronizes records to the Platform.')
             ->assertSee('The Monitoring App reads from the Platform.')
-            ->assertSee('The Monitoring App does not connect directly to the shop.');
+            ->assertSee('The Monitoring App does not connect directly to the business.');
     }
 
     public function test_versioned_api_returns_marketlens_header(): void

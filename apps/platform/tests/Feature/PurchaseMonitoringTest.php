@@ -152,7 +152,7 @@ it('stores replicated purchases items payments and supplier balances from synchr
     Queue::fake();
     [, $business, $branch] = purchaseMonitoringFixture();
     $deviceUser = User::factory()->create();
-    $activation = app(ShopAppActivationService::class)->createActivation($business, $branch, $deviceUser, ['device_label' => 'Purchase Shop App', 'device_type' => 'shop_app', 'expires_at' => now()->addMinutes(30), 'application_version_id' => null]);
+    $activation = app(ShopAppActivationService::class)->createActivation($business, $branch, $deviceUser, ['device_label' => 'Purchase Business Server', 'device_type' => 'shop_app', 'expires_at' => now()->addMinutes(30), 'application_version_id' => null]);
     $credential = app(ShopAppActivationService::class)->activate(['activation_code' => $activation['code'], 'device_identity' => 'purchase-machine', 'app_version' => '1.0.0'])['credential'];
     $device = Device::query()->where('business_id', $business->id)->firstOrFail();
     $purchaseUuid = (string) Str::uuid();

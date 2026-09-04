@@ -89,7 +89,7 @@
             @error('relatedBranchId') <p class="mt-1 text-xs text-danger">{{ $message }}</p> @enderror
           </label>
           <label class="block text-sm font-medium" for="related-device">
-            Related Shop App device
+            Related Business Server device
             <select id="related-device" wire:model="relatedDeviceId" class="ml-field mt-1 w-full">
               <option value="">None</option>
               @foreach ($devices as $device)

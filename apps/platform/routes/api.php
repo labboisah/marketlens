@@ -9,6 +9,13 @@ use App\Domain\Services\Http\Controllers\Platform\StaffEarningsController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware(['api.version', 'throttle:api'])->group(function (): void {
+    Route::get('/activation/ping', fn () => response()->json([
+        'success' => true,
+        'message' => 'Activation endpoint reachable.',
+        'data' => ['status' => 'ok'],
+        'meta' => [],
+    ]))->name('api.v1.activation.ping');
+
     Route::prefix('auth')->name('api.v1.auth.')->group(function (): void {
         Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login')->name('login');
         Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum')->name('logout');
@@ -20,6 +27,7 @@ Route::prefix('v1')->middleware(['api.version', 'throttle:api'])->group(function
         Route::get('/status', [DeviceController::class, 'status'])->name('status');
         Route::post('/heartbeat', [DeviceController::class, 'heartbeat'])->name('heartbeat');
         Route::get('/application-update', [DeviceController::class, 'applicationUpdate'])->name('application-update');
+        Route::get('/approved-client-apps', [DeviceController::class, 'approvedClientApps'])->name('approved-client-apps');
         Route::get('/versions', [DeviceController::class, 'versions'])->name('versions');
     });
 
@@ -74,5 +82,3 @@ Route::prefix('v1')->middleware(['api.version', 'throttle:api'])->group(function
         Route::get('/settlements', [StaffEarningsController::class, 'settlements']);
     });
 });
-
-

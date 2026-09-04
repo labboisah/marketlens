@@ -40,7 +40,7 @@ class FeaturePlaceholderScreen extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Placeholder screen only. This app retrieves Platform summaries and cached read-only reports; it never connects directly to Shop Apps.',
+                'Placeholder screen only. This app retrieves Platform summaries and cached read-only reports; it never connects directly to Business Servers.',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),

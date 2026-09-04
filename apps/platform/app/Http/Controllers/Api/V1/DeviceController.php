@@ -42,6 +42,13 @@ class DeviceController extends Controller
         return new SuccessResource($versions->updatePayload($device, $request->validated()));
     }
 
+    public function approvedClientApps(DeviceStatusRequest $request, ShopAppActivationService $activationService): SuccessResource
+    {
+        return new SuccessResource([
+            'devices' => $activationService->approvedClientAppDevices($request->credential()),
+        ]);
+    }
+
     public function versions(): SuccessResource
     {
         return new SuccessResource(['versions' => []]);

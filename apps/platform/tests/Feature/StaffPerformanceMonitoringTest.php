@@ -194,7 +194,7 @@ it('stores cashier shifts and staff activity summaries from synchronization reco
     [, $business, $branch] = staffPerformanceFixture();
     $deviceUser = User::factory()->create();
     $activation = app(ShopAppActivationService::class)->createActivation($business, $branch, $deviceUser, [
-        'device_label' => 'Staff Shop App',
+        'device_label' => 'Staff Business Server',
         'device_type' => 'shop_app',
         'expires_at' => now()->addMinutes(30),
         'application_version_id' => null,

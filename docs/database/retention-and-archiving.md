@@ -1,7 +1,7 @@
 # Retention and Archiving
 
 Retention policy must preserve legal, audit, operational, and support needs
-while keeping local Shop App databases responsive and Platform reporting tables
+while keeping local Business Server databases responsive and Platform reporting tables
 manageable.
 
 Final retention periods should be approved with product, legal, and operations
@@ -19,9 +19,9 @@ stakeholders before production launch.
 | Local backups | SQLite backup files | Retain rolling set based on disk policy. |
 | Cached Monitoring reports | Read-only summaries | Purge when stale or after configured offline cache window. |
 
-## Shop App Retention
+## Business Server Retention
 
-The Shop App should keep complete local operational history needed for branch
+The Business Server should keep complete local operational history needed for branch
 continuity. Because it may operate offline, deletion policies must be
 conservative.
 
@@ -66,7 +66,7 @@ Platform archiving candidates:
 - Detailed synchronization logs if introduced.
 - `notifications`.
 
-Shop App archiving candidates:
+Business Server archiving candidates:
 
 - Old sync logs after successful acknowledgement.
 - Old security alerts after resolution and sync.

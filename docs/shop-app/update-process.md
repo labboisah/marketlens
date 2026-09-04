@@ -1,4 +1,4 @@
-# Shop App Update Process
+# Business Server Update Process
 
 ## Platform Policy
 
@@ -6,7 +6,7 @@ The Platform supplies update metadata for the configured `stable` or `beta`
 channel: latest version, minimum supported version, mandatory flag, release
 notes, download URL, and SHA-256 checksum.
 
-The Shop App verifies the installer checksum before any update is accepted. A
+The Business Server verifies the installer checksum before any update is accepted. A
 mandatory update blocks continued use only when the current version is below the
 Platform minimum supported version.
 

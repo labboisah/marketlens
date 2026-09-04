@@ -11,9 +11,9 @@
   ];
 
   $solutions = [
-      ['title' => 'Offline shop operation', 'body' => 'Shop teams keep selling, receiving stock, and recording expenses even when internet service is unreliable.'],
-      ['title' => 'Local Shop App', 'body' => 'The Shop App validates users, permissions, transactions, stock movements, debt ledgers, and local audit logs.'],
-      ['title' => 'Multiple Client Apps', 'body' => 'Cashier, storekeeper, manager, and accountant computers connect to the authorized Shop App over the local network.'],
+      ['title' => 'Offline business operation', 'body' => 'Business teams keep selling, receiving stock, and recording expenses even when internet service is unreliable.'],
+      ['title' => 'Local Business Server', 'body' => 'The Business Server validates users, permissions, transactions, stock movements, debt ledgers, and local audit logs.'],
+      ['title' => 'Multiple Client Apps', 'body' => 'Cashier, storekeeper, manager, and accountant computers connect to the authorized Business Server over the local network.'],
       ['title' => 'Cloud synchronization', 'body' => 'Accepted records synchronize to the Platform in batches when internet is available.'],
       ['title' => 'Remote Monitoring App', 'body' => 'Owners view synchronized summaries, alerts, and branch performance from the Platform.'],
       ['title' => 'Stock movement tracking', 'body' => 'Inventory changes are recorded as auditable movements rather than hidden quantity edits.'],
@@ -23,9 +23,9 @@
   ];
 
   $steps = [
-      ['title' => 'Client Apps process shop operations.', 'body' => 'Cashiers, storekeepers, managers, and accountants use role-aware desktop screens.', 'icon' => 'credit-card'],
-      ['title' => 'Shop App validates and stores records locally.', 'body' => 'The local source of truth applies permissions, transactions, audit logs, and SQLite persistence.', 'icon' => 'database'],
-      ['title' => 'Shop App synchronizes records to the Platform.', 'body' => 'Queued sync batches move accepted records to the cloud when internet service is available.', 'icon' => 'refresh-cw'],
+      ['title' => 'Client Apps process business operations.', 'body' => 'Cashiers, storekeepers, managers, and accountants use role-aware desktop screens.', 'icon' => 'credit-card'],
+      ['title' => 'Business Server validates and stores records locally.', 'body' => 'The local source of truth applies permissions, transactions, audit logs, and SQLite persistence.', 'icon' => 'database'],
+      ['title' => 'Business Server synchronizes records to the Platform.', 'body' => 'Queued sync batches move accepted records to the cloud when internet service is available.', 'icon' => 'refresh-cw'],
       ['title' => 'Monitoring App displays synchronized business records.', 'body' => 'Owners view branch summaries, alerts, and last synchronization time from the Platform.', 'icon' => 'smartphone'],
   ];
 
@@ -44,15 +44,15 @@
 
   $businessTypes = [
       'Supermarkets',
-      'Provision shops',
+      'Provision businesses',
       'Wholesalers',
       'Pharmacies',
-      'Building-material shops',
-      'Electronics shops',
-      'Cosmetics shops',
+      'Building-material businesses',
+      'Electronics businesses',
+      'Cosmetics businesses',
       'Agricultural-product dealers',
-      'Spare-parts shops',
-      'Bookshops',
+      'Spare-parts businesses',
+      'Bookstores',
   ];
 
   $metrics = [
@@ -84,7 +84,7 @@
           See Every Sale. Control Every Stock.
         </p>
         <p class="mt-5 max-w-2xl text-lg leading-8 text-muted">
-          MarketLens is an offline-first sales, inventory, debt, expense and business-monitoring platform for shops, supermarkets, wholesalers and multi-branch retail businesses.
+          MarketLens is an offline-first sales, inventory, debt, expense and business-monitoring platform for businesses, supermarkets, wholesalers and multi-branch retail businesses.
         </p>
         <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
           <a href="/register" class="inline-flex h-11 items-center justify-center rounded-md bg-accent px-5 text-sm font-semibold text-white shadow-sm">
@@ -162,7 +162,7 @@
       <x-public.section-heading
         eyebrow="Product solution"
         title="One platform for local operations and owner visibility"
-        description="The Shop App keeps the business running locally while the Platform and Monitoring App provide synchronized oversight."
+        description="The Business Server keeps the business running locally while the Platform and Monitoring App provide synchronized oversight."
       />
       <div class="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         @foreach ($solutions as $solution)
@@ -180,7 +180,7 @@
       <x-public.section-heading
         eyebrow="How MarketLens works"
         title="Four applications, clear responsibilities"
-        description="Use the stepper to see how shop operations move from local computers to remote owner monitoring."
+        description="Use the stepper to see how business operations move from local computers to remote owner monitoring."
       />
       <div class="mt-8 grid gap-4 lg:grid-cols-4">
         @foreach ($steps as $index => $step)
@@ -226,7 +226,7 @@
       <x-public.section-heading
         eyebrow="Business types"
         title="Designed for practical retail environments"
-        description="MarketLens supports the kinds of shops where stock accuracy, cash control, and simple staff workflows matter every day."
+        description="MarketLens supports the kinds of businesses where stock accuracy, cash control, and simple staff workflows matter every day."
       />
       <div class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         @foreach ($businessTypes as $type)
@@ -243,12 +243,12 @@
       <x-public.section-heading
         class="lg:col-span-1"
         eyebrow="Offline-first"
-        title="The shop keeps working when the internet does not"
+        title="The business keeps working when the internet does not"
       />
       <div class="grid gap-4 lg:col-span-2">
         <article class="rounded-lg border border-border bg-surface p-5 shadow-sm">
-          <h3 class="text-base font-semibold">Shop operations continue without internet.</h3>
-          <p class="mt-2 text-sm leading-6 text-muted">Sales, inventory movements, expenses, shifts, and local reports remain available through the Shop App.</p>
+          <h3 class="text-base font-semibold">Business operations continue without internet.</h3>
+          <p class="mt-2 text-sm leading-6 text-muted">Sales, inventory movements, expenses, shifts, and local reports remain available through the Business Server.</p>
         </article>
         <article class="rounded-lg border border-border bg-surface p-5 shadow-sm">
           <h3 class="text-base font-semibold">Cloud monitoring reflects the last synchronized records.</h3>
@@ -294,7 +294,7 @@
         description="These cards show intended subscription tiers only. Payment integration and final pricing are not implemented yet."
       />
       <div class="mt-8 grid gap-4 md:grid-cols-3">
-        <x-public.pricing-card name="Starter" price="Preview" description="For one branch getting started.">Shop App, local users, products, sales, expenses, and basic synchronization.</x-public.pricing-card>
+        <x-public.pricing-card name="Starter" price="Preview" description="For one branch getting started.">Business Server, local users, products, sales, expenses, and basic synchronization.</x-public.pricing-card>
         <x-public.pricing-card name="Growth" price="Preview" description="For expanding retail teams." featured>Multiple Client Apps, owner dashboards, branch reports, and alerts.</x-public.pricing-card>
         <x-public.pricing-card name="Multi-branch" price="Preview" description="For businesses comparing branches.">Branch comparison, consolidated summaries, device activation, and monitoring access.</x-public.pricing-card>
       </div>
@@ -305,11 +305,11 @@
     <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
       <x-public.section-heading eyebrow="FAQ" title="Questions business owners ask first" />
       <div class="mt-8 grid gap-3">
-        <x-public.faq-item question="Does each shop need a domain?">No. Shop operations run locally through the Shop App and authorized Client Apps.</x-public.faq-item>
-        <x-public.faq-item question="Does each shop need a cloud server?">No. The Platform is the cloud service; individual shops use their local Shop App.</x-public.faq-item>
-        <x-public.faq-item question="Can the shop operate without internet?">Yes. Daily transactions continue locally, then synchronize later.</x-public.faq-item>
-        <x-public.faq-item question="Can multiple computers connect?">Yes. Multiple authorized Client Apps can connect to the Shop App over the local network.</x-public.faq-item>
-        <x-public.faq-item question="Where are staff users created?">Operational staff users are created in the Shop App, not the Platform.</x-public.faq-item>
+        <x-public.faq-item question="Does each business need a domain?">No. Business operations run locally through the Business Server and authorized Client Apps.</x-public.faq-item>
+        <x-public.faq-item question="Does each business need a cloud server?">No. The Platform is the cloud service; individual shops use their local Business Server.</x-public.faq-item>
+        <x-public.faq-item question="Can the business operate without internet?">Yes. Daily transactions continue locally, then synchronize later.</x-public.faq-item>
+        <x-public.faq-item question="Can multiple computers connect?">Yes. Multiple authorized Client Apps can connect to the Business Server over the local network.</x-public.faq-item>
+        <x-public.faq-item question="Where are staff users created?">Operational staff users are created in the Business Server, not the Platform.</x-public.faq-item>
         <x-public.faq-item question="Can the owner monitor remotely?">Yes. Owners use the Monitoring App through synchronized Platform data.</x-public.faq-item>
         <x-public.faq-item question="What happens when synchronization is delayed?">The Monitoring App shows the last successful synchronization time so stale data is visible.</x-public.faq-item>
         <x-public.faq-item question="Is business data separated securely?">Yes. Platform records are tenant-scoped and branch-scoped by design.</x-public.faq-item>

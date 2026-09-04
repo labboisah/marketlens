@@ -1,12 +1,12 @@
 # MarketLens Database Architecture
 
 This section defines the database architecture for the MarketLens Platform and
-Shop App. It is the source of truth for ownership boundaries, table groups,
+Business Server. It is the source of truth for ownership boundaries, table groups,
 schema rules, indexing, migration order, retention, and archiving.
 
 MarketLens has two authoritative persistence systems:
 
-- Shop App SQLite databases own local branch operations.
+- Business Server SQLite databases own local branch operations.
 - Platform PostgreSQL owns cloud administration, subscriptions, device
   activation, monitoring access, reporting aggregates, and synchronized
   replicated data.
@@ -45,7 +45,7 @@ for offline viewing, but they do not own operational records.
 ## Identity Model
 
 Synchronized records must use stable UUIDs across devices and the Platform. A
-Shop App may use local integer IDs for SQLite join efficiency, but local IDs
+Business Server may use local integer IDs for SQLite join efficiency, but local IDs
 must never appear as cloud synchronization identities.
 
 Recommended identity columns:

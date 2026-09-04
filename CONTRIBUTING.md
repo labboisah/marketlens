@@ -24,9 +24,9 @@ should be deliberate, tested, and documented.
 
 ## Architectural Expectations
 
-- Preserve the Platform, Shop App, Client App, and Monitoring App boundaries.
-- Keep the Shop App as the local operational source of truth.
-- Route Client App operational writes through the Shop App API.
+- Preserve the Platform, Business Server, Client App, and Monitoring App boundaries.
+- Keep the Business Server as the local operational source of truth.
+- Route Client App operational writes through the Business Server API.
 - Route Monitoring App reads through the Platform API.
 - Use UUIDs for synchronized records.
 - Preserve immutable transactional records.

@@ -17,7 +17,7 @@ return [
 
 These Terms of Service govern access to MarketLens public pages, Platform accounts, Monitoring App access, subscriptions, reports, synchronization monitoring, and related support services.
 
-MarketLens is a cloud Platform for business administration and monitoring. Shop App operational writes remain controlled by the Shop App. Users must keep account credentials secure, provide accurate business and billing information, and avoid attempts to bypass tenant, branch, subscription, synchronization, device, or authorization controls.
+MarketLens is a cloud Platform for business administration and monitoring. Business Server operational writes remain controlled by the Business Server. Users must keep account credentials secure, provide accurate business and billing information, and avoid attempts to bypass tenant, branch, subscription, synchronization, device, or authorization controls.
 
 Subscriptions, support, security, acceptable use, data retention, and privacy obligations are supplemented by the related legal documents published in this legal centre. Continued authenticated use after a material effective version requires acceptance by the user.
 TEXT,
@@ -37,7 +37,7 @@ MarketLens processes account profile data, business details, subscription and bi
 
 Where permitted and necessary for security, compliance, and abuse prevention, MarketLens may record acceptance timestamps, IP addresses, and user agents for legal-document acceptance. Private credentials, production secrets, and sensitive operational authentication material should never be submitted through support tickets.
 
-MarketLens applies tenant and branch isolation to business records. Client Apps must not bypass the Shop App local API for operational writes, and Monitoring App visibility depends on synchronized Platform data only.
+MarketLens applies tenant and branch isolation to business records. Client Apps must not bypass the Business Server local API for operational writes, and Monitoring App visibility depends on synchronized Platform data only.
 TEXT,
         ],
         'data-processing-information' => [
@@ -51,7 +51,7 @@ TEXT,
             'body' => <<<'TEXT'
 # Data Processing Information
 
-MarketLens receives synchronized records from Shop Apps for cloud reporting, subscription management, device management, alerts, and Monitoring App APIs. The Platform does not directly operate shop sales and does not make Client Apps the source of truth for shop operations.
+MarketLens receives synchronized records from Business Servers for cloud reporting, subscription management, device management, alerts, and Monitoring App APIs. The Platform does not directly operate business sales and does not make Client Apps the source of truth for business operations.
 
 Processing activities include authentication, account administration, subscription enforcement, synchronization intake, reporting, notification delivery, support investigation, audit logging, export generation, and retention-policy administration.
 
@@ -101,7 +101,7 @@ TEXT,
             'body' => <<<'TEXT'
 # Support Policy
 
-Authenticated users can submit support tickets with categories, priorities, conversations, related branch, related Shop App device, related synchronization batch, and validated attachments.
+Authenticated users can submit support tickets with categories, priorities, conversations, related branch, related Business Server device, related synchronization batch, and validated attachments.
 
 Support attachments are validated by file type and size and stored privately. Do not submit secrets, passwords, payment card data, private keys, raw production credentials, or sensitive authentication payloads through support tickets.
 TEXT,
@@ -135,7 +135,7 @@ TEXT,
 
 MarketLens protects Platform access with authenticated accounts, verified email, active account checks, tenant-scoped business context, branch-aware authorization, audit logging, hashed device credentials, signed export links, and private support attachments.
 
-The Platform receives synchronized data from authorized Shop App devices. Monitoring App users access synchronized Platform data only and must not connect directly to a Shop App. Business owners are responsible for assigning appropriate roles, branch access, and module access.
+The Platform receives synchronized data from authorized Business Server devices. Monitoring App users access synchronized Platform data only and must not connect directly to a Business Server. Business owners are responsible for assigning appropriate roles, branch access, and module access.
 TEXT,
         ],
     ],

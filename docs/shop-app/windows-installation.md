@@ -2,10 +2,11 @@
 
 ## Installer
 
-Build the Windows Squirrel installer from `apps/desktop`:
+Build the Windows Squirrel installer from the standalone server app:
 
 ```powershell
-pnpm --filter @marketlens/shop-app make
+cd C:\laragon\www\business-server
+npm run make
 ```
 
 The output includes the setup executable, installed application executable,
@@ -16,7 +17,7 @@ not place certificates, private keys, or signing passwords in the repository.
 
 ## First Launch
 
-1. Start MarketLens Shop App from the Start Menu.
+1. Start MarketLens Business Server from the Start Menu.
 2. The app initializes SQLite, applies safe migrations, verifies integrity, and
    starts Fastify and Socket.IO before accepting Client App connections.
 3. Sign in as an authorized administrator and complete activation.

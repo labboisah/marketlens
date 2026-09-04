@@ -130,7 +130,7 @@ class SubscriptionManagementService
             $feature = strtolower($featureName);
 
             $this->applyNumericFeatureLimit($limits, $feature, 'branches', 'branches?');
-            $this->applyNumericFeatureLimit($limits, $feature, 'shop_app_devices', 'shop app devices?');
+            $this->applyNumericFeatureLimit($limits, $feature, 'shop_app_devices', 'business server devices?');
             $this->applyNumericFeatureLimit($limits, $feature, 'client_app_devices', 'client app devices?');
             $this->applyNumericFeatureLimit($limits, $feature, 'monitoring_users', 'monitoring users?');
             $this->applyNumericFeatureLimit($limits, $feature, 'report_exports_per_month', 'reports?|report exports?');
@@ -176,7 +176,7 @@ class SubscriptionManagementService
     {
         $labels = [
             'branches' => 'Branches',
-            'shop_app_devices' => 'Shop App devices',
+            'shop_app_devices' => 'Business Server devices',
             'client_app_devices' => 'Client App devices',
             'monitoring_users' => 'Monitoring users',
             'storage_mb' => 'Storage',

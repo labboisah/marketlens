@@ -127,7 +127,7 @@ it('stores replicated customer debt summaries and payment history from synchroni
     [, $business, $branch] = customerDebtMonitoringFixture();
     $deviceUser = User::factory()->create();
     $activation = app(ShopAppActivationService::class)->createActivation($business, $branch, $deviceUser, [
-        'device_label' => 'Debt Shop App',
+        'device_label' => 'Debt Business Server',
         'device_type' => 'shop_app',
         'expires_at' => now()->addMinutes(30),
         'application_version_id' => null,

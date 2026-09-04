@@ -17,7 +17,7 @@
                 <span class="text-xl font-bold text-foreground">MarketLens</span>
               </a>
               <p class="mt-2 max-w-sm text-xs leading-5 text-muted">
-                Platform and Monitoring access for business owners. Operational Shop App users are created inside the Shop App.
+                Platform and Monitoring access for business owners. Operational Business Server users are created inside the Business Server.
               </p>
             </div>
 

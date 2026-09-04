@@ -5,7 +5,7 @@ failures, validation failures, and duplicate retries.
 
 ## Local Queue Behavior
 
-The Shop App local sync queue is the source of pending upload truth.
+The Business Server local sync queue is the source of pending upload truth.
 
 Rules:
 
@@ -30,7 +30,7 @@ Recommended retry schedule:
 2 hours
 ```
 
-Add jitter to avoid many Shop Apps retrying at the same time. Reset backoff
+Add jitter to avoid many Business Servers retrying at the same time. Reset backoff
 after a successful batch.
 
 ## Retryable Failures
@@ -57,7 +57,7 @@ Non-retryable examples:
 
 ## Unknown Acknowledgement State
 
-If the Shop App uploads a batch but loses connection before receiving the
+If the Business Server uploads a batch but loses connection before receiving the
 response, it must retry the same `batch_uuid` and record idempotency keys.
 
 The Platform must return the original effective result for duplicate batches.
@@ -65,12 +65,12 @@ The Platform must return the original effective result for duplicate batches.
 ## Dead Letter Handling
 
 Records may move to `dead_letter` only after configured retry limits and clear
-diagnostics. Dead-letter records must remain visible in the Shop App sync status
+diagnostics. Dead-letter records must remain visible in the Business Server sync status
 surface and should be included in support diagnostics.
 
 ## Local Operator Visibility
 
-The Shop App should show:
+The Business Server should show:
 
 - Sync connected/disconnected state.
 - Last successful sync time.
@@ -95,7 +95,7 @@ The Monitoring App should clearly label stale data and cached data.
 
 ```mermaid
 sequenceDiagram
-    participant Shop as Shop App
+    participant Shop as Business Server
     participant Queue as Local Sync Queue
     participant Platform as Platform
 
@@ -112,7 +112,7 @@ sequenceDiagram
 
 ## Recovery Runbook
 
-1. Check Shop App connection and device authorization status.
+1. Check Business Server connection and device authorization status.
 2. Confirm local clock is close to Platform time.
 3. Inspect sync queue counts by status.
 4. Retry retryable failures.

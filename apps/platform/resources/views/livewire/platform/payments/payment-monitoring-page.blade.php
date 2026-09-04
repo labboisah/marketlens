@@ -16,7 +16,7 @@
 <div class="flex flex-col gap-6">
   <x-app.page-header
     title="Payment monitoring"
-    description="Read-only reconciliation from synchronized Shop App payments and cashier settlements. Corrections must happen in the Shop App."
+    description="Read-only reconciliation from synchronized Business Server payments and cashier settlements. Corrections must happen in the Business Server."
   >
     <x-slot:actions>
       <button type="button" wire:click="exportCsv" class="rounded-md border border-border px-3 py-2 text-sm font-semibold hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-primary">CSV export</button>
@@ -108,7 +108,7 @@
                 <td>{{ $payment->paid_at?->format('M j, Y H:i') }}</td>
               </tr>
             @empty
-              <tr><td colspan="8"><x-app.empty-state title="No synchronized payments" message="Payments appear here after Shop Apps synchronize payment records." /></td></tr>
+              <tr><td colspan="8"><x-app.empty-state title="No synchronized payments" message="Payments appear here after Business Servers synchronize payment records." /></td></tr>
             @endforelse
           </tbody>
         </x-app.table>

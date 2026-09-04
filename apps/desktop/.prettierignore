@@ -1,8 +1,0 @@
-node_modules
-dist
-out
-coverage
-playwright-report
-test-results
-.turbo
-pnpm-lock.yaml

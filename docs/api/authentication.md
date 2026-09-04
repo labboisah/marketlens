@@ -2,17 +2,17 @@
 
 Authentication depends on the API boundary.
 
-## Client App to Shop App
+## Client App to Business Server
 
-The Client App authenticates against the Shop App local API.
+The Client App authenticates against the Business Server local API.
 
 Requirements:
 
 - Device pairing is required before login.
-- User authentication is handled by the Shop App.
-- Client App permissions come from the Shop App.
+- User authentication is handled by the Business Server.
+- Client App permissions come from the Business Server.
 - All transaction writes must include an authenticated session.
-- Client Apps must never bypass the Shop App API or open SQLite.
+- Client Apps must never bypass the Business Server API or open SQLite.
 
 Recommended headers:
 
@@ -23,9 +23,9 @@ X-Correlation-ID: uuid
 Idempotency-Key: unique-operation-key
 ```
 
-## Shop App to Platform
+## Business Server to Platform
 
-The Shop App authenticates to the Platform with activated device credentials.
+The Business Server authenticates to the Platform with activated device credentials.
 
 Requirements:
 
@@ -45,7 +45,7 @@ Requirements:
 - Tokens must be stored in secure storage.
 - Business and branch access follows Platform authorization.
 - Sensitive screens may require biometric re-authentication.
-- Monitoring APIs return synchronized summaries, not direct Shop App data.
+- Monitoring APIs return synchronized summaries, not direct Business Server data.
 
 ## Correlation and Traceability
 

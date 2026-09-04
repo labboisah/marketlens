@@ -2,7 +2,7 @@
 
 This guide defines the shared development tooling for the MarketLens repository.
 It covers Windows and Ubuntu setup for the four-application architecture:
-Platform, Shop App, Client App, and Monitoring App.
+Platform, Business Server, Client App, and Monitoring App.
 
 Do not commit real environment files, passwords, Firebase credentials, API keys,
 private keys, production tokens, customer data, or local database files. Commit
@@ -345,11 +345,11 @@ When the Platform is scaffolded:
 ```bash
 cd apps/platform
 composer install
-pnpm install
+npm install
 cp .env.example .env
 php artisan key:generate
 php artisan migrate
-pnpm dev
+npm run dev
 ```
 
 Install the Laravel CLI only as a convenience:
@@ -361,13 +361,19 @@ laravel --version
 
 ## Desktop Tools
 
-The desktop workspace contains the Shop App, Client App, and shared packages
-under `apps/desktop`.
+The desktop apps are standalone sibling projects beside the main repository:
+
+- `C:\laragon\www\business-server` contains the Business Server/local server.
+- `C:\laragon\www\business-app` contains the Client App.
+
+Each app includes its own copied `packages/` directory and dependency tree so
+the server and client can be installed, tested, built, and packaged separately.
+Do not recreate `apps/desktop` in the main repository.
 
 Required local tools:
 
 - Node.js LTS.
-- pnpm.
+- npm.
 - Electron.
 - Electron Forge.
 - Native build tools for `better-sqlite3`.
@@ -395,13 +401,16 @@ sudo apt install -y build-essential python3 make g++ pkg-config libsecret-1-dev
 python3 --version
 ```
 
-When the desktop workspace is scaffolded:
+Install and run each desktop app from its own project directory:
 
-```bash
-cd apps/desktop
-pnpm install
-pnpm --filter shop-app dev
-pnpm --filter client-app dev
+```powershell
+cd C:\laragon\www\business-server
+npm install
+npm run dev
+
+cd C:\laragon\www\business-app
+npm install
+npm run dev
 ```
 
 Use Electron Forge through package scripts instead of installing project-local
@@ -460,10 +469,8 @@ make build
 make clean
 ```
 
-At the moment, application scaffolding is intentionally not implemented. These
-targets are placeholders that document the expected workflow and will be wired
-to Composer, pnpm, Flutter, Pest, Vitest, Playwright, Pint, Larastan, and Flutter
-Test when the owning apps are created.
+The desktop targets run the standalone sibling apps rather than an
+`apps/desktop` workspace.
 
 Windows developers without `make` can run the underlying commands documented in
 the application sections. If repository-level automation needs richer
@@ -476,8 +483,8 @@ Copy example files to local ignored files:
 
 ```bash
 cp apps/platform/.env.example apps/platform/.env
-cp apps/desktop/apps/shop-app/.env.example apps/desktop/apps/shop-app/.env
-cp apps/desktop/apps/client-app/.env.example apps/desktop/apps/client-app/.env
+cp ../business-server/.env.example ../business-server/.env
+cp ../business-app/.env.example ../business-app/.env
 cp apps/monitoring-app/.env.example apps/monitoring-app/.env
 ```
 
@@ -485,8 +492,8 @@ PowerShell equivalent:
 
 ```powershell
 Copy-Item apps/platform/.env.example apps/platform/.env
-Copy-Item apps/desktop/apps/shop-app/.env.example apps/desktop/apps/shop-app/.env
-Copy-Item apps/desktop/apps/client-app/.env.example apps/desktop/apps/client-app/.env
+Copy-Item ..\business-server\.env.example ..\business-server\.env
+Copy-Item ..\business-app\.env.example ..\business-app\.env
 Copy-Item apps/monitoring-app/.env.example apps/monitoring-app/.env
 ```
 
@@ -502,7 +509,7 @@ Test values:
 - Should use isolated databases, queues, cache stores, ports, and filesystem
   paths.
 - Must be safe to delete.
-- Must not point to production, staging, or a real shop device.
+- Must not point to production, staging, or a real business device.
 
 Production secrets:
 
@@ -513,7 +520,7 @@ Production secrets:
 - Include database passwords, app keys, JWT secrets, encryption keys, API tokens,
   Firebase credentials, S3 credentials, webhook secrets, and signing keys.
 
-Local Shop App configuration:
+Local Business Server configuration:
 
 - Owns the local SQLite path.
 - Owns the local API bind host and port.
@@ -528,14 +535,14 @@ Cloud Platform configuration:
 
 Client App server-discovery configuration:
 
-- Points to a Shop App local API on LAN or Wi-Fi.
+- Points to a Business Server local API on LAN or Wi-Fi.
 - May use manual host and port values during development.
-- Must never bypass the Shop App local API or read SQLite directly.
+- Must never bypass the Business Server local API or read SQLite directly.
 
 Monitoring API configuration:
 
 - Points only to the Platform API.
-- Must never point to a Shop App.
+- Must never point to a Business Server.
 - Uses synchronized Platform data for reporting and owner visibility.
 
 ## Troubleshooting
@@ -602,7 +609,7 @@ Monitoring API configuration:
 
 ### Port Conflicts
 
-- Platform HTTP, Vite, Redis, PostgreSQL, Shop App local API, Socket.IO, Reverb,
+- Platform HTTP, Vite, Redis, PostgreSQL, Business Server local API, Socket.IO, Reverb,
   and emulator ports may conflict with existing processes.
 - Change only local development ports in ignored `.env` files.
 - On Windows, inspect ports with `netstat -ano`.
@@ -610,9 +617,9 @@ Monitoring API configuration:
 
 ### Windows Firewall Blocking Client App Connections
 
-- Confirm the Shop App local API binds to the intended LAN interface.
-- Allow the Shop App executable or development server through Windows Defender
+- Confirm the Business Server local API binds to the intended LAN interface.
+- Allow the Business Server executable or development server through Windows Defender
   Firewall for private networks.
 - Verify the Client App can reach `http://SHOP_HOST:SHOP_PORT/health` or the
   eventual health endpoint.
-- Keep firewall access restricted to trusted shop networks.
+- Keep firewall access restricted to trusted business networks.

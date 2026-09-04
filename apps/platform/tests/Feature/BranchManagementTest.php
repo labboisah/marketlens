@@ -189,7 +189,7 @@ it('suspends branches without deleting synchronized history', function (): void 
     Device::query()->create([
         'business_id' => $business->id,
         'branch_id' => $branch->id,
-        'name' => 'Shop App',
+        'name' => 'Business Server',
         'type' => 'shop_app',
     ]);
 
@@ -243,7 +243,7 @@ it('blocks device activation for suspended branches', function (): void {
         'status' => BranchStatus::Active,
     ]);
     $result = app(ShopAppActivationService::class)->createActivation($business, $branch, $user, [
-        'device_label' => 'Shop App',
+        'device_label' => 'Business Server',
         'device_type' => 'shop_app',
         'expires_at' => now()->addMinutes(30),
         'application_version_id' => null,

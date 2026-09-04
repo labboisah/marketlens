@@ -6,12 +6,14 @@ use App\Domain\Audit\Models\AuditLog;
 use App\Domain\Billing\Services\SubscriptionManagementService;
 use App\Domain\Devices\Models\Device;
 use App\Domain\Devices\Models\DeviceActivation;
+use App\Domain\Modules\Services\ModuleAccessService;
 use App\Domain\Devices\Models\DeviceHeartbeatLog;
 use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Models\Business;
 use App\Domain\Versions\Models\ApplicationVersion;
 use App\Enums\ApplicationVersionStatus;
 use App\Enums\BranchStatus;
+use App\Enums\BusinessModule;
 use App\Enums\BusinessStatus;
 use App\Enums\DeviceStatus;
 use App\Models\User;
@@ -21,7 +23,10 @@ use Illuminate\Validation\ValidationException;
 
 class ShopAppActivationService
 {
-    public function __construct(private readonly SubscriptionManagementService $subscriptions) {}
+    public function __construct(
+        private readonly SubscriptionManagementService $subscriptions,
+        private readonly ModuleAccessService $moduleAccess,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $data
@@ -133,6 +138,21 @@ class ShopAppActivationService
             'credential' => $credential,
             'credential_preview' => substr($credential, 0, 14).'...',
             'expires_at' => null,
+            'business_uuid' => $business->uuid,
+            'branch_uuid' => $branch->uuid,
+            'business_name' => $business->name,
+            'branch_name' => $branch->name,
+            'subscription_state' => $business->currentSubscription?->status->value ?? 'unknown',
+            'plan_features' => $this->planFeatures($business),
+            'enabled_modules' => $this->enabledModules($business, $branch),
+            'branch_settings' => [
+                'business_modules' => $business->module_settings ?? [],
+                'branch_modules' => $branch->module_settings ?? [],
+                'branch_code' => $branch->code,
+                'timezone' => $business->timezone,
+                'currency' => $business->default_currency,
+            ],
+            'sync_protocol_version' => '1.0',
         ];
     }
 
@@ -208,6 +228,33 @@ class ShopAppActivationService
         return $this->deviceFromCredential($credential);
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function approvedClientAppDevices(string $credential): array
+    {
+        $serverDevice = $this->deviceFromCredential($credential);
+
+        return Device::query()
+            ->where('business_id', $serverDevice->business_id)
+            ->where('branch_id', $serverDevice->branch_id)
+            ->where('type', 'client_app')
+            ->where('status', DeviceStatus::Active)
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Device $device): array => [
+                'uuid' => $device->uuid,
+                'name' => $device->name,
+                'type' => $device->type,
+                'status' => $device->status->value,
+                'app_version' => $device->app_version,
+                'last_seen_at' => $device->last_seen_at?->toISOString(),
+                'activated_at' => $device->activated_at?->toISOString(),
+            ])
+            ->values()
+            ->all();
+    }
+
     private function generateCode(): string
     {
         return strtoupper(Str::random(4).'-'.Str::random(4));
@@ -250,7 +297,7 @@ class ShopAppActivationService
             ->count();
 
         if ($activeCount >= $this->subscriptions->maxDevices($business, $deviceType)) {
-            throw ValidationException::withMessages(['device' => 'The current subscription does not allow another Shop App device.']);
+            throw ValidationException::withMessages(['device' => 'The current subscription does not allow another Business Server device.']);
         }
     }
 
@@ -276,7 +323,7 @@ class ShopAppActivationService
             : null;
 
         if ($assigned && ($assigned->status !== ApplicationVersionStatus::Published || $assigned->version !== $appVersion)) {
-            throw ValidationException::withMessages(['app_version' => 'This Shop App version is not allowed for the activation.']);
+            throw ValidationException::withMessages(['app_version' => 'This Business Server version is not allowed for the activation.']);
         }
     }
 
@@ -307,6 +354,35 @@ class ShopAppActivationService
             'requires_update' => $device->requires_update_at !== null,
             'required_version' => $device->required_version,
         ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function planFeatures(Business $business): array
+    {
+        $business->loadMissing('currentSubscription.plan.features');
+
+        return $business->currentSubscription?->plan?->features
+            ->map(fn ($feature): string => (string) ($feature->key ?: $feature->name))
+            ->values()
+            ->all() ?? [];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function enabledModules(Business $business, Branch $branch): array
+    {
+        $modules = ['sales', 'inventory', 'purchases', 'customers', 'reports'];
+
+        foreach (BusinessModule::cases() as $module) {
+            if ($this->moduleAccess->available($business, $module, $branch)) {
+                $modules[] = $module->value;
+            }
+        }
+
+        return array_values(array_unique($modules));
     }
 
     private function audit(?User $actor, ?int $businessId, ?int $branchId, string $action, ?Device $device = null, array $metadata = []): void

@@ -64,7 +64,7 @@ paths:
   /device/activate:
     post:
       tags: [Devices]
-      summary: Activate a Shop App device.
+      summary: Activate a Business Server device.
       operationId: deviceActivate
       responses:
         "200":
@@ -90,7 +90,7 @@ paths:
   /sync/batches:
     post:
       tags: [Synchronization]
-      summary: Upload a Shop App synchronization batch.
+      summary: Upload a Business Server synchronization batch.
       operationId: syncBatchStore
       security:
         - bearerAuth: []

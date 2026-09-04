@@ -62,7 +62,7 @@
     </div>
   </x-app.card>
 
-  <x-app.card title="Notification centre" description="Alerts are read-only business signals. Resolving an alert records a note but does not alter immutable shop transactions.">
+  <x-app.card title="Notification centre" description="Alerts are read-only business signals. Resolving an alert records a note but does not alter immutable business transactions.">
     <x-app.table density="compact">
       <thead>
         <tr>

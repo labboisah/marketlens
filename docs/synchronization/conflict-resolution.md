@@ -12,7 +12,7 @@ transaction history, tenant isolation, and auditability.
 - Inventory is movement-based.
 - Product master-data conflicts may require manager review.
 - Platform subscription and device state override local copies.
-- Shop operational transactions remain authoritative unless invalid.
+- Business operational transactions remain authoritative unless invalid.
 - Every important conflict decision must be auditable.
 
 ## Transaction Records
@@ -57,13 +57,13 @@ The Platform is authoritative for:
 - Application version policy.
 
 If the Platform says a device is revoked or a subscription blocks cloud sync,
-the Shop App must stop cloud synchronization and surface the status locally.
-The Shop App should still preserve local operational continuity unless product
+the Business Server must stop cloud synchronization and surface the status locally.
+The Business Server should still preserve local operational continuity unless product
 policy explicitly restricts it.
 
 ## Invalid Operational Records
 
-Shop operational transactions are authoritative unless invalid. Invalid records
+Business operational transactions are authoritative unless invalid. Invalid records
 include:
 
 - Records from an unregistered or revoked device.
@@ -103,7 +103,7 @@ codes.
 
 ```mermaid
 sequenceDiagram
-    participant Shop as Shop App
+    participant Shop as Business Server
     participant Queue as Local Sync Queue
     participant Platform as Platform
     participant Manager as Manager Review

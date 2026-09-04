@@ -1,6 +1,6 @@
 # Synchronization Security
 
-Synchronization is a privileged Shop App to Platform channel. It must use
+Synchronization is a privileged Business Server to Platform channel. It must use
 strong device authentication, replay protection, validation, and audit logging.
 
 ## Transport
@@ -12,7 +12,7 @@ strong device authentication, replay protection, validation, and audit logging.
 
 ## Device Credentials
 
-Every Shop App device must have a signed credential issued through Platform
+Every Business Server device must have a signed credential issued through Platform
 device activation.
 
 Credential rules:
@@ -21,12 +21,12 @@ Credential rules:
   `device_uuid`.
 - Credentials must be revocable.
 - Device revocation must prevent new sync batches from being accepted.
-- Credentials must be stored securely on the Shop App machine.
+- Credentials must be stored securely on the Business Server machine.
 - Credential rotation should be supported.
 
 ## Device Tokens
 
-Device tokens identify the activated Shop App device and are used together with
+Device tokens identify the activated Business Server device and are used together with
 HMAC request signatures. A device token alone is not sufficient authorization;
 the Platform must verify the token, credential status, request signature,
 timestamp, nonce, business UUID, and branch UUID before accepting a batch.
@@ -67,7 +67,7 @@ Rules:
 The Platform must reject requests with timestamps outside the accepted clock
 skew window, for example five minutes.
 
-The response `server_time` helps the Shop App diagnose clock drift.
+The response `server_time` helps the Business Server diagnose clock drift.
 
 ## Replay Protection
 
@@ -132,13 +132,13 @@ Never synchronize:
 - Unrestricted personal data not required for reporting.
 
 Limited operational-user profiles may synchronize for reporting and audit, but
-must not become Platform authority for Shop App login.
+must not become Platform authority for Business Server login.
 
 ## Device Authentication Failure
 
 ```mermaid
 sequenceDiagram
-    participant Shop as Shop App
+    participant Shop as Business Server
     participant Platform as Platform
     participant Audit as Platform Audit Log
 

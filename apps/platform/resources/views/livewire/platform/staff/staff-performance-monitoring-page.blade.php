@@ -11,7 +11,7 @@
 <div class="flex flex-col gap-6">
   <x-app.page-header
     title="Staff performance monitoring"
-    description="Read-only cashier and operational-staff indicators from synchronized Shop App records. Indicators highlight activity that may require review; they are not automatic accusations of fraud."
+    description="Read-only cashier and operational-staff indicators from synchronized Business Server records. Indicators highlight activity that may require review; they are not automatic accusations of fraud."
   >
     <x-slot:actions>
       <button type="button" wire:click="exportCsv" class="rounded-md border border-border px-3 py-2 text-sm font-semibold hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-primary">CSV export</button>
@@ -89,7 +89,7 @@
                 <td>{{ $cashier['last_synchronized_at'] ? \Illuminate\Support\Carbon::parse($cashier['last_synchronized_at'])->format('M j, Y H:i') : 'No sync yet' }}</td>
               </tr>
             @empty
-              <tr><td colspan="14"><x-app.empty-state title="No cashier activity" message="Cashier metrics appear after Shop Apps synchronize sales, shifts, and settlements." /></td></tr>
+              <tr><td colspan="14"><x-app.empty-state title="No cashier activity" message="Cashier metrics appear after Business Servers synchronize sales, shifts, and settlements." /></td></tr>
             @endforelse
           </tbody>
         </x-app.table>
@@ -102,7 +102,7 @@
             @forelse ($storekeepers as $row)
               <tr><td>{{ $row->display_name }}</td><td>{{ $row->role_name }}</td><td class="font-mono">{{ number_format($row->purchases_recorded_count) }}</td><td class="font-mono">{{ number_format($row->stock_counts_count) }}</td><td class="font-mono">{{ number_format($row->stock_adjustments_count) }}</td><td class="font-mono">{{ number_format($row->damaged_stock_records_count) }}</td><td class="font-mono">{{ number_format($row->transfers_processed_count) }}</td><td>{{ $row->last_activity_at ? \Illuminate\Support\Carbon::parse($row->last_activity_at)->format('M j, Y H:i') : 'No activity synced' }}</td></tr>
             @empty
-              <tr><td colspan="8"><x-app.empty-state title="No storekeeper activity" message="Storekeeper monitoring appears after activity summaries synchronize from Shop Apps." /></td></tr>
+              <tr><td colspan="8"><x-app.empty-state title="No storekeeper activity" message="Storekeeper monitoring appears after activity summaries synchronize from Business Servers." /></td></tr>
             @endforelse
           </tbody>
         </x-app.table>
@@ -115,7 +115,7 @@
             @forelse ($managers as $row)
               <tr><td>{{ $row->display_name }}</td><td>{{ $row->role_name }}</td><td class="font-mono">{{ number_format($row->discounts_approved_count) }}</td><td class="font-mono">{{ number_format($row->expenses_approved_count) }}</td><td class="font-mono">{{ number_format($row->returns_approved_count) }}</td><td class="font-mono">{{ number_format($row->stock_adjustments_approved_count) }}</td><td class="font-mono">{{ number_format($row->cashier_settlements_reviewed_count) }}</td><td>{{ $row->last_activity_at ? \Illuminate\Support\Carbon::parse($row->last_activity_at)->format('M j, Y H:i') : 'No activity synced' }}</td></tr>
             @empty
-              <tr><td colspan="8"><x-app.empty-state title="No manager activity" message="Manager approval monitoring appears after Shop Apps synchronize staff summaries." /></td></tr>
+              <tr><td colspan="8"><x-app.empty-state title="No manager activity" message="Manager approval monitoring appears after Business Servers synchronize staff summaries." /></td></tr>
             @endforelse
           </tbody>
         </x-app.table>
@@ -130,7 +130,7 @@
           'Repeated stock adjustments' => ['rows' => $exceptions['repeatedStockAdjustments'] ?? collect(), 'tone' => 'warning', 'message' => 'Outside expected range'],
           'Activity outside normal hours' => ['rows' => $exceptions['outsideNormalHours'] ?? collect(), 'tone' => 'warning', 'message' => 'Unusual activity'],
         ] as $title => $group)
-          <x-app.card :title="$title" description="Monitoring indicator only. Review the synchronized Shop App records before taking action.">
+          <x-app.card :title="$title" description="Monitoring indicator only. Review the synchronized Business Server records before taking action.">
             @forelse ($group['rows'] as $row)
               <div class="flex items-center justify-between gap-4 border-b border-border py-2 text-sm last:border-0">
                 <div>
@@ -162,7 +162,7 @@
                 <td>{{ $row->last_activity_at?->format('M j, Y H:i') ?? 'No activity synced' }}</td>
               </tr>
             @empty
-              <tr><td colspan="8"><x-app.empty-state title="No staff summaries" message="Staff summaries appear after Shop Apps synchronize operational activity summaries." /></td></tr>
+              <tr><td colspan="8"><x-app.empty-state title="No staff summaries" message="Staff summaries appear after Business Servers synchronize operational activity summaries." /></td></tr>
             @endforelse
           </tbody>
         </x-app.table>

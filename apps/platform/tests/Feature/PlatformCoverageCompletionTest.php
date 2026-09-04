@@ -29,7 +29,7 @@ it('keeps every public marketing and legal route reachable without admin data le
 
     $routes = [
         route('welcome') => ['MarketLens', 'See Every Sale. Control Every Stock.'],
-        route('public.product') => ['Product', 'Shop App', 'Monitoring App'],
+        route('public.product') => ['Product', 'Business Server', 'Monitoring App'],
         route('public.features') => ['Features', 'Business problem', 'MarketLens solution'],
         route('public.pricing') => ['Pricing', 'Hosting and Platform access are included'],
         route('public.business-types') => ['Business types', 'Common operational challenges'],

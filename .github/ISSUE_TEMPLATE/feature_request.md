@@ -17,10 +17,10 @@ Who needs this feature?
 ## Affected Area
 
 - [ ] Platform
-- [ ] Shop App
+- [ ] Business Server
 - [ ] Client App
 - [ ] Monitoring App
-- [ ] Shared desktop package
+- [ ] Standalone desktop package
 - [ ] Documentation
 - [ ] Infrastructure
 

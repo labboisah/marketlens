@@ -1,7 +1,7 @@
 <div class="flex flex-col gap-6">
   <x-app.page-header
     title="Synchronization monitoring"
-    description="Monitor Shop App devices, batch processing, conflicts, heartbeat history, protocol versions, and application-version distribution."
+    description="Monitor Business Server devices, batch processing, conflicts, heartbeat history, protocol versions, and application-version distribution."
   >
     <x-slot:actions>
       <a href="{{ route('platform.support', ['category' => 'synchronization']) }}" class="rounded-md border border-border px-3 py-2 text-sm font-semibold text-foreground hover:border-primary/50">Get sync support</a>
@@ -20,7 +20,7 @@
     @php($metrics = $overview['metrics'] ?? [])
     <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
       @foreach ([
-        'Active Shop App devices' => $metrics['active_devices'] ?? 0,
+        'Active Business Server devices' => $metrics['active_devices'] ?? 0,
         'Online devices' => $metrics['online_devices'] ?? 0,
         'Recently synchronized' => $metrics['recently_synchronized_devices'] ?? 0,
         'Delayed devices' => $metrics['delayed_devices'] ?? 0,
@@ -51,7 +51,7 @@
                 <td><x-app.status-badge tone="{{ $branch['status'] === 'Fresh' ? 'success' : 'warning' }}">{{ $branch['status'] }}</x-app.status-badge></td>
               </tr>
             @empty
-              <tr><td colspan="4"><x-app.empty-state title="No branch synchronization yet" message="Branch synchronization timestamps appear after Shop Apps push accepted batches." /></td></tr>
+              <tr><td colspan="4"><x-app.empty-state title="No branch synchronization yet" message="Branch synchronization timestamps appear after Business Servers push accepted batches." /></td></tr>
             @endforelse
           </tbody>
         </x-app.table>
@@ -92,7 +92,7 @@
               </td>
             </tr>
           @empty
-            <tr><td colspan="8"><x-app.empty-state title="No Shop App devices" message="Activate a Shop App device before monitoring synchronization." /></td></tr>
+            <tr><td colspan="8"><x-app.empty-state title="No Business Server devices" message="Activate a Business Server device before monitoring synchronization." /></td></tr>
           @endforelse
         </tbody>
       </x-app.table>
@@ -120,7 +120,7 @@
               </td>
             </tr>
           @empty
-            <tr><td colspan="8"><x-app.empty-state title="No synchronization batches" message="Batch records appear after Shop Apps synchronize with the Platform." /></td></tr>
+            <tr><td colspan="8"><x-app.empty-state title="No synchronization batches" message="Batch records appear after Business Servers synchronize with the Platform." /></td></tr>
           @endforelse
         </tbody>
       </x-app.table>
@@ -129,7 +129,7 @@
   @endif
 
   @if ($currentView === 'batch-detail')
-    <x-app.card title="Sync batch details" description="Details are for monitoring and support. Immutable shop transactions cannot be rewritten here.">
+    <x-app.card title="Sync batch details" description="Details are for monitoring and support. Immutable business transactions cannot be rewritten here.">
       @if ($batch)
         <dl class="grid gap-3 text-sm md:grid-cols-2 xl:grid-cols-4">
           <div><dt class="text-muted">Batch UUID</dt><dd class="font-mono">{{ $batch->uuid }}</dd></div>
@@ -141,7 +141,7 @@
           <div><dt class="text-muted">Conflicts</dt><dd class="font-mono">{{ count($batch->conflicting_records ?? []) }}</dd></div>
           <div><dt class="text-muted">Trace ID</dt><dd class="font-mono">{{ $batch->trace_id ?? 'None' }}</dd></div>
         </dl>
-        <p class="mt-4 text-sm text-muted">Administrators may retry eligible processing failures, revoke devices, or mark conflicts reviewed. They cannot edit completed Shop App sales, payments, debt ledgers, or stock movements from this page.</p>
+        <p class="mt-4 text-sm text-muted">Administrators may retry eligible processing failures, revoke devices, or mark conflicts reviewed. They cannot edit completed Business Server sales, payments, debt ledgers, or stock movements from this page.</p>
       @else
         <x-app.empty-state title="Batch not found" message="The selected batch does not exist for this business." />
       @endif
@@ -189,14 +189,14 @@
   @endif
 
   @if ($currentView === 'heartbeats')
-    <x-app.card title="Device heartbeat history" description="Recent contact events reported by authorized Shop App devices.">
+    <x-app.card title="Device heartbeat history" description="Recent contact events reported by authorized Business Server devices.">
       <x-app.table density="compact">
         <thead><tr><th>Device</th><th>Branch</th><th>Status</th><th>App version</th><th>Last sync</th><th>Reported</th><th>Errors</th></tr></thead>
         <tbody>
           @forelse ($heartbeatLogs as $log)
             <tr><td>{{ $log->device?->name ?? $log->device_uuid }}</td><td>{{ $log->branch?->name ?? 'Unknown' }}</td><td>{{ ucfirst($log->status) }}</td><td>{{ $log->app_version ?? 'Unknown' }}</td><td>{{ $log->last_synchronized_at?->format('M j, Y H:i') ?? 'No sync' }}</td><td>{{ $log->reported_at->format('M j, Y H:i') }}</td><td class="font-mono">{{ count($log->synchronization_errors ?? []) }}</td></tr>
           @empty
-            <tr><td colspan="7"><x-app.empty-state title="No heartbeat history" message="Heartbeat logs appear when activated Shop Apps contact the Platform." /></td></tr>
+            <tr><td colspan="7"><x-app.empty-state title="No heartbeat history" message="Heartbeat logs appear when activated Business Servers contact the Platform." /></td></tr>
           @endforelse
         </tbody>
       </x-app.table>
@@ -205,7 +205,7 @@
   @endif
 
   @if ($currentView === 'protocols')
-    <x-app.card title="Protocol-version usage" description="Track synchronization protocol adoption across Shop App batches.">
+    <x-app.card title="Protocol-version usage" description="Track synchronization protocol adoption across Business Server batches.">
       <x-app.table density="compact">
         <thead><tr><th>Protocol version</th><th>Batches</th></tr></thead>
         <tbody>
@@ -220,9 +220,9 @@
   @endif
 
   @if ($currentView === 'versions')
-    <x-app.card title="Application-version distribution" description="Understand which Shop App versions are still active across the business.">
+    <x-app.card title="Application-version distribution" description="Understand which Business Server versions are still active across the business.">
       <x-app.table density="compact">
-        <thead><tr><th>Shop App version</th><th>Devices</th></tr></thead>
+        <thead><tr><th>Business Server version</th><th>Devices</th></tr></thead>
         <tbody>
           @forelse ($versionDistribution as $row)
             <tr><td class="font-mono">{{ $row->app_version }}</td><td class="font-mono">{{ number_format($row->devices_count) }}</td></tr>

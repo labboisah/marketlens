@@ -134,7 +134,7 @@ it('stores replicated expenses from synchronized expense records', function (): 
     [, $business, $branch] = expenseMonitoringFixture();
     $deviceUser = User::factory()->create();
     $activation = app(ShopAppActivationService::class)->createActivation($business, $branch, $deviceUser, [
-        'device_label' => 'Expense Shop App',
+        'device_label' => 'Expense Business Server',
         'device_type' => 'shop_app',
         'expires_at' => now()->addMinutes(30),
         'application_version_id' => null,

@@ -4,7 +4,7 @@ help:
 	@echo "MarketLens root commands"
 	@echo "  make install             - Install all scaffolded app dependencies"
 	@echo "  make platform-install    - Install Platform dependencies"
-	@echo "  make desktop-install     - Install desktop workspace dependencies"
+	@echo "  make desktop-install     - Install standalone desktop app dependencies"
 	@echo "  make monitoring-install  - Install Monitoring App dependencies"
 	@echo "  make test                - Run all configured test suites"
 	@echo "  make lint                - Run all configured linters"
@@ -20,33 +20,39 @@ platform-install:
 	cd apps/platform && npm install
 
 desktop-install:
-	cd apps/desktop && pnpm install
+	cd ../business-server && npm install
+	cd ../business-app && npm install
 
 monitoring-install:
 	cd apps/monitoring-app && flutter pub get
 
 test:
 	cd apps/platform && php artisan test
-	cd apps/desktop && pnpm test
+	cd ../business-server && npm test
+	cd ../business-app && npm test
 	cd apps/monitoring-app && flutter test
 
 lint:
 	cd apps/platform && vendor/bin/phpstan analyse
-	cd apps/desktop && pnpm lint
+	cd ../business-server && npm run lint
+	cd ../business-app && npm run lint
 	cd apps/monitoring-app && flutter analyze
 
 format:
 	cd apps/platform && vendor/bin/pint
-	cd apps/desktop && pnpm format
+	cd ../business-server && npm exec -- prettier . --write
+	cd ../business-app && npm exec -- prettier . --write
 	cd apps/monitoring-app && dart format .
 
 build:
 	cd apps/platform && npm run build
-	cd apps/desktop && pnpm build
+	cd ../business-server && npm run build
+	cd ../business-app && npm run build
 	cd apps/monitoring-app && flutter build apk --debug
 
 clean:
-	cd apps/desktop && pnpm clean
+	cd ../business-server && npm run clean
+	cd ../business-app && npm run clean
 	cd apps/monitoring-app && flutter clean
 
 docs:

@@ -1,11 +1,17 @@
 # MarketLens Foundation Audit
 
 Audit date: 2026-07-28
+Standalone desktop split update: 2026-08-10
 
 This audit inspected the repository after the foundational scaffolding and
 documentation work. It focuses on structure, boundaries, stack consistency,
 contracts, environment templates, security, tests, CI, Docker readiness, and
 whether documentation matches the current implementation.
+
+The Business Server/local server and Client App are now maintained as standalone
+sibling projects at `C:\laragon\www\business-server` and
+`C:\laragon\www\business-app`. The former `apps/desktop` workspace was removed
+from the main `marketlens` repository to avoid duplicate desktop sources.
 
 ## Corrections Applied During Audit
 
@@ -30,10 +36,10 @@ whether documentation matches the current implementation.
   application folders exist.
 - The four-application structure is present:
   - `apps/platform`
-  - `apps/desktop/apps/shop-app`
-  - `apps/desktop/apps/client-app`
+  - `C:\laragon\www\business-server`
+  - `C:\laragon\www\business-app`
   - `apps/monitoring-app`
-- Desktop shared packages exist:
+- Desktop shared packages are copied into each standalone desktop app:
   - `api-contracts`
   - `sync-contracts`
   - `shared-types`
@@ -46,10 +52,11 @@ whether documentation matches the current implementation.
 
 - Root `README.md` and root `AGENTS.md` exist and define the four-application
   architecture.
-- Application-level `AGENTS.md` files exist for Platform, Desktop workspace,
-  Shop App, Client App, and Monitoring App.
-- Application-level README files exist for Platform, Desktop workspace, Shop
-  App, Client App, and Monitoring App.
+- Application-level `AGENTS.md` files exist for Platform, Business Server, Client App,
+  and Monitoring App. The Business Server and Client App guidance lives in their
+  standalone sibling projects.
+- Application-level README files exist for Platform, Business Server, Client App, and
+  Monitoring App.
 - Shared package README files exist for all desktop packages.
 
 ### Stack Consistency
@@ -57,7 +64,7 @@ whether documentation matches the current implementation.
 - Platform stack matches the approved direction: Laravel, Livewire, Flux,
   Tailwind, PostgreSQL/Redis configuration, Horizon, Sanctum, Reverb, Pest,
   Pint, Larastan, and Vite.
-- Shop App stack matches the approved direction: Electron, TypeScript, React,
+- Business Server stack matches the approved direction: Electron, TypeScript, React,
   Vite, Tailwind, shadcn config, Fastify, SQLite, better-sqlite3, Drizzle, Zod,
   Socket.IO, Pino, Vitest, Playwright, and Electron Forge.
 - Client App stack matches the approved direction: Electron, TypeScript, React,
@@ -72,8 +79,8 @@ whether documentation matches the current implementation.
 
 - Environment templates exist for:
   - `apps/platform/.env.example`
-  - `apps/desktop/apps/shop-app/.env.example`
-  - `apps/desktop/apps/client-app/.env.example`
+  - `C:\laragon\www\business-server\.env.example`
+  - `C:\laragon\www\business-app\.env.example`
   - `apps/monitoring-app/.env.example`
 - Secret scan found no committed `.env`, SQLite database, private key, PEM, or
   Firebase credential files.
@@ -83,7 +90,7 @@ whether documentation matches the current implementation.
 ### Database Documentation
 
 - Database documentation exists under `docs/database`.
-- Data ownership is documented for Shop App authoritative data, Platform
+- Data ownership is documented for Business Server authoritative data, Platform
   authoritative data, Platform replicated data, and Monitoring App cached data.
 - Shop and Platform schema table groups are documented.
 - Indexing, migration order, retention, archiving, and Mermaid ER diagrams are
@@ -129,14 +136,14 @@ whether documentation matches the current implementation.
 - Desktop UI package contains shared tokens and reusable components.
 - Monitoring App Material 3 theme exists and matches the MarketLens semantic
   color direction.
-- Shop App and Client App import shared desktop UI tokens.
+- Business Server and Client App import shared desktop UI tokens.
 
 ### Testing Setup
 
 - Testing strategy exists under `docs/testing`.
-- Test expectations are defined for Platform, Shop App, Client App, Monitoring
+- Test expectations are defined for Platform, Business Server, Client App, Monitoring
   App, and shared packages.
-- Scaffold/boundary tests exist in Platform, Desktop packages, Shop App, Client
+- Scaffold/boundary tests exist in Platform, Desktop packages, Business Server, Client
   App, and Monitoring App.
 
 ### CI Workflows
@@ -150,14 +157,14 @@ whether documentation matches the current implementation.
 
 ### Application Boundaries
 
-- Shop App documentation and scaffold state it is the local source of truth.
-- Shop App owns SQLite and initializes required SQLite PRAGMAs.
+- Business Server documentation and scaffold state it is the local source of truth.
+- Business Server owns SQLite and initializes required SQLite PRAGMAs.
 - Client App documentation and code avoid SQLite, Drizzle, and better-sqlite3.
 - Monitoring App documentation and screens state that it connects only to the
-  Platform and never directly to Shop Apps.
+  Platform and never directly to Business Servers.
 - Platform AGENTS and docs state that only limited operational-user profiles are
   synchronized for reporting.
-- Electron security settings are enabled in Shop App and Client App:
+- Electron security settings are enabled in Business Server and Client App:
   `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`, and
   `webSecurity: true`.
 
@@ -171,7 +178,8 @@ whether documentation matches the current implementation.
 
 ### Dependency Lockfiles Missing
 
-- No desktop `pnpm-lock.yaml` was found.
+- Standalone desktop apps now use npm lockfiles in `C:\laragon\www\business-server`
+  and `C:\laragon\www\business-app`.
 - No Monitoring App `pubspec.lock` was found.
 - Platform has `composer.lock`, but Platform frontend dependencies do not have a
   committed npm lockfile.
@@ -187,7 +195,7 @@ whether documentation matches the current implementation.
 
 ### Sync Implementation Is Much Thinner Than Sync Documentation
 
-- Sync protocol documentation is complete, but Shop App and Platform sync code
+- Sync protocol documentation is complete, but Business Server and Platform sync code
   remain placeholder-level.
 - HMAC signatures, replay nonce storage, compression handling, partial success
   processing, conflict persistence, and exponential backoff are not yet
@@ -209,7 +217,7 @@ whether documentation matches the current implementation.
 - Platform uses internal numeric `business_id` and `branch_id` scoping while
   synchronization/docs use UUIDs. This is acceptable if API boundaries map
   consistently, but it needs explicit implementation discipline.
-- Shop App foundational SQLite tables are minimal and do not yet include the
+- Business Server foundational SQLite tables are minimal and do not yet include the
   full documented schema or tenant/branch columns on all future business
   records.
 - Monitoring App includes Firebase dependencies and bootstrap shell, but no real
@@ -223,10 +231,11 @@ whether documentation matches the current implementation.
 
 - `docker-compose.yml`
 - Platform Dockerfile
-- Shop App Docker/development helper files, if containerized local development
+- Business Server Docker/development helper files, if containerized local development
   is desired
 - `.dockerignore`
-- `apps/desktop/pnpm-lock.yaml`
+- Standalone desktop lockfiles must remain with `C:\laragon\www\business-server`
+  and `C:\laragon\www\business-app`.
 - Platform frontend npm lockfile
 - `apps/monitoring-app/pubspec.lock`
 - Deployment runbooks
@@ -272,11 +281,11 @@ whether documentation matches the current implementation.
 3. Run CI locally or in GitHub Actions and fix setup failures.
 4. Add API response format tests on Platform.
 5. Add contract compatibility tests for API and sync packages.
-6. Implement foundational database migrations for Shop App and Platform in the
+6. Implement foundational database migrations for Business Server and Platform in the
    documented order.
 7. Implement real sync queue processing behind the documented protocol.
 8. Add tenant and branch isolation tests for Platform APIs and reports.
-9. Add Shop App SQLite integration tests and local API tests.
+9. Add Business Server SQLite integration tests and local API tests.
 10. Expand deployment, backup, restore, release signing, and secure update docs.
 
 ## Audit Conclusion

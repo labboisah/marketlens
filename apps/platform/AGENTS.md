@@ -6,14 +6,18 @@ Monitoring App API concerns.
 
 ## Platform Boundaries
 
-- The Platform does not operate shop sales directly.
-- The Platform receives synchronized records from Shop Apps.
+- The Platform does not operate business sales directly.
+- The Platform receives synchronized records from Business Servers.
 - The Platform authenticates Monitoring App users.
-- The Platform manages subscriptions, businesses, branches, and Shop App
+- The Platform manages subscriptions, businesses, branches, and Business Server
   devices.
 - The Platform must not become the authentication authority for operational Shop
   App users.
 - Only limited operational-user profiles are synchronized for reporting.
+- Desktop source lives outside this repository: `C:\laragon\www\business-server`
+  owns the Business Server/local server and `C:\laragon\www\business-app` owns the
+  Client App. Platform work must not recreate `apps/desktop` or keep duplicate
+  desktop packages under the Platform tree.
 
 ## Data Isolation
 

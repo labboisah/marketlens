@@ -4,7 +4,7 @@
       <div>
         <p class="text-sm font-semibold uppercase text-muted">Business-owner account administration</p>
         <h1 class="mt-2 text-2xl font-bold">Manage business owner accounts</h1>
-        <p class="mt-2 max-w-3xl text-sm text-muted">Super admins can review owner account status, linked businesses, verification state, and account-risk signals. This page does not include shop operations or general Platform modules.</p>
+        <p class="mt-2 max-w-3xl text-sm text-muted">Super admins can review owner account status, linked businesses, verification state, and account-risk signals. This page does not include business operations or general Platform modules.</p>
       </div>
       <div class="flex flex-wrap gap-2">
         <span class="rounded-md border border-border px-3 py-2 text-sm font-semibold">{{ auth()->user()->name }}</span>

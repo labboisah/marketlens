@@ -89,17 +89,25 @@ it('lets business owners generate hashed short-lived activation codes', function
     [$user, $business, $branch] = deviceActivationFixture(deviceActivationPlan(['More Client App devices']));
     $version = publishedShopVersion();
 
-    Livewire::actingAs($user)
+    $component = Livewire::actingAs($user)
         ->test(DeviceActivationPage::class)
         ->set('branchId', $branch->id)
-        ->set('deviceLabel', 'Main Shop App')
+        ->set('deviceLabel', 'Main Business Server')
         ->set('deviceType', 'shop_app')
         ->set('expiresInMinutes', 30)
         ->set('applicationVersionId', $version->id)
         ->call('generate')
         ->assertHasNoErrors()
         ->assertDispatched('notify')
-        ->assertSet('deviceLabel', '');
+        ->assertSet('deviceLabel', '')
+        ->assertSet('generatedDeviceLabel', 'Main Business Server')
+        ->assertSet('generatedBranchName', 'Main Branch');
+
+    $generatedCode = $component->get('generatedCode');
+
+    expect($generatedCode)->toBeString()->not->toBe('');
+
+    $component->assertSee($generatedCode);
 
     $device = Device::query()->where('business_id', $business->id)->firstOrFail();
     $activation = DeviceActivation::query()->where('device_id', $device->id)->firstOrFail();
@@ -111,11 +119,11 @@ it('lets business owners generate hashed short-lived activation codes', function
         ->and(AuditLog::query()->where('action', 'device.activation_created')->exists())->toBeTrue();
 });
 
-it('activates a Shop App with a single-use code and returns credential once', function (): void {
+it('activates a Business Server with a single-use code and returns credential once', function (): void {
     [$user, $business, $branch] = deviceActivationFixture(deviceActivationPlan(['More Client App devices']));
     $version = publishedShopVersion('2.1.0');
     $result = app(ShopAppActivationService::class)->createActivation($business, $branch, $user, [
-        'device_label' => 'Main Shop App',
+        'device_label' => 'Main Business Server',
         'device_type' => 'shop_app',
         'expires_at' => now()->addMinutes(30),
         'application_version_id' => $version->id,
@@ -134,7 +142,26 @@ it('activates a Shop App with a single-use code and returns credential once', fu
         ->assertOk()
         ->assertJsonPath('success', true)
         ->assertJsonPath('message', 'Device activated.')
-        ->assertJsonStructure(['data' => ['device_uuid', 'credential', 'credential_preview']]);
+        ->assertJsonStructure(['data' => [
+            'device_uuid',
+            'credential',
+            'credential_preview',
+            'business_uuid',
+            'branch_uuid',
+            'business_name',
+            'branch_name',
+            'subscription_state',
+            'plan_features',
+            'enabled_modules',
+            'branch_settings',
+            'sync_protocol_version',
+        ]])
+        ->assertJsonPath('data.business_uuid', $business->uuid)
+        ->assertJsonPath('data.branch_uuid', $branch->uuid)
+        ->assertJsonPath('data.business_name', 'Ada Stores')
+        ->assertJsonPath('data.branch_name', 'Main Branch')
+        ->assertJsonPath('data.subscription_state', 'trialing')
+        ->assertJsonPath('data.sync_protocol_version', '1.0');
 
     $credential = $response->json('data.credential');
     $device = Device::query()->where('business_id', $business->id)->firstOrFail();
@@ -155,10 +182,62 @@ it('activates a Shop App with a single-use code and returns credential once', fu
         ->assertUnprocessable();
 });
 
+it('returns active Platform-approved Client App devices for an activated Business Server', function (): void {
+    [$user, $business, $branch] = deviceActivationFixture(deviceActivationPlan(['More Client App devices']));
+    $result = app(ShopAppActivationService::class)->createActivation($business, $branch, $user, [
+        'device_label' => 'Main Business Server',
+        'device_type' => 'shop_app',
+        'expires_at' => now()->addMinutes(30),
+        'application_version_id' => null,
+    ]);
+
+    $credential = $this
+        ->withHeader('Accept', 'application/json')
+        ->postJson(route('api.v1.device.activate'), [
+            'activation_code' => $result['code'],
+            'device_identity' => 'machine-guid-123',
+            'app_version' => '1.0.0',
+        ])
+        ->json('data.credential');
+
+    $approved = Device::query()->create([
+        'business_id' => $business->id,
+        'branch_id' => $branch->id,
+        'name' => 'Front Counter Client App',
+        'type' => 'client_app',
+        'status' => DeviceStatus::Active,
+    ]);
+
+    Device::query()->create([
+        'business_id' => $business->id,
+        'branch_id' => $branch->id,
+        'name' => 'Pending Client App',
+        'type' => 'client_app',
+        'status' => DeviceStatus::Pending,
+    ]);
+
+    $this
+        ->withToken($credential)
+        ->getJson(route('api.v1.device.approved-client-apps'))
+        ->assertOk()
+        ->assertJsonPath('data.devices.0.uuid', $approved->uuid)
+        ->assertJsonPath('data.devices.0.name', 'Front Counter Client App')
+        ->assertJsonPath('data.devices.0.type', 'client_app')
+        ->assertJsonPath('data.devices.0.status', 'active')
+        ->assertJsonCount(1, 'data.devices');
+});
+it('exposes a public activation ping for Business Server connection tests', function (): void {
+    $this
+        ->getJson(route('api.v1.activation.ping'))
+        ->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('data.status', 'ok');
+});
+
 it('rejects expired activation codes and audits failures', function (): void {
     [$user, $business, $branch] = deviceActivationFixture();
     $result = app(ShopAppActivationService::class)->createActivation($business, $branch, $user, [
-        'device_label' => 'Expired Shop App',
+        'device_label' => 'Expired Business Server',
         'device_type' => 'shop_app',
         'expires_at' => now()->subMinute(),
         'application_version_id' => null,
@@ -180,7 +259,7 @@ it('enforces business subscription branch device and application version policy'
     [$user, $business, $branch] = deviceActivationFixture(subscriptionStatus: SubscriptionStatus::Cancelled);
 
     app(ShopAppActivationService::class)->createActivation($business, $branch, $user, [
-        'device_label' => 'Blocked Shop App',
+        'device_label' => 'Blocked Business Server',
         'device_type' => 'shop_app',
         'expires_at' => now()->addMinutes(30),
         'application_version_id' => null,
@@ -192,7 +271,7 @@ it('rejects activation for suspended branches', function (): void {
     $branch->forceFill(['status' => BranchStatus::Suspended])->save();
 
     app(ShopAppActivationService::class)->createActivation($business, $branch, $user, [
-        'device_label' => 'Blocked Shop App',
+        'device_label' => 'Blocked Business Server',
         'device_type' => 'shop_app',
         'expires_at' => now()->addMinutes(30),
         'application_version_id' => null,
@@ -204,13 +283,13 @@ it('enforces device limits for the current subscription', function (): void {
     Device::query()->create([
         'business_id' => $business->id,
         'branch_id' => $branch->id,
-        'name' => 'Existing Shop App',
+        'name' => 'Existing Business Server',
         'type' => 'shop_app',
         'status' => DeviceStatus::Active,
     ]);
 
     app(ShopAppActivationService::class)->createActivation($business, $branch, $user, [
-        'device_label' => 'Second Shop App',
+        'device_label' => 'Second Business Server',
         'device_type' => 'shop_app',
         'expires_at' => now()->addMinutes(30),
         'application_version_id' => null,
@@ -221,7 +300,7 @@ it('rejects assigned application version mismatches', function (): void {
     [$user, $business, $branch] = deviceActivationFixture(deviceActivationPlan(['More Client App devices']));
     $version = publishedShopVersion('3.0.0');
     $result = app(ShopAppActivationService::class)->createActivation($business, $branch, $user, [
-        'device_label' => 'Versioned Shop App',
+        'device_label' => 'Versioned Business Server',
         'device_type' => 'shop_app',
         'expires_at' => now()->addMinutes(30),
         'application_version_id' => $version->id,
@@ -240,7 +319,7 @@ it('rejects assigned application version mismatches', function (): void {
 it('supports device status heartbeat and revocation without re-exposing credentials', function (): void {
     [$user, $business, $branch] = deviceActivationFixture(deviceActivationPlan(['More Client App devices']));
     $result = app(ShopAppActivationService::class)->createActivation($business, $branch, $user, [
-        'device_label' => 'Main Shop App',
+        'device_label' => 'Main Business Server',
         'device_type' => 'shop_app',
         'expires_at' => now()->addMinutes(30),
         'application_version_id' => null,

@@ -1,7 +1,7 @@
 <div class="flex flex-col gap-6">
   <x-app.page-header
     title="Monitoring users"
-    description="Invite Platform users for remote visibility without creating Shop App operational users."
+    description="Invite Platform users for remote visibility without creating Business Server operational users."
   />
 
   @if ($errors->any())

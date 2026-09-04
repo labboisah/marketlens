@@ -7,7 +7,7 @@
 
     @php
       $pageTitle = $title ?? 'MarketLens | See Every Sale. Control Every Stock.';
-      $pageDescription = 'MarketLens is an offline-first sales, inventory, debt, expense and business-monitoring platform for shops, supermarkets, wholesalers and multi-branch retail businesses.';
+      $pageDescription = 'MarketLens is an offline-first sales, inventory, debt, expense and business-monitoring platform for businesses, supermarkets, wholesalers and multi-branch retail businesses.';
       $canonicalUrl = url()->current();
       $structuredData = [
           '@context' => 'https://schema.org',

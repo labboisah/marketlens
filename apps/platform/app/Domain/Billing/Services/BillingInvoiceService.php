@@ -135,7 +135,8 @@ class BillingInvoiceService
                 'recorded_at' => $paidAt,
             ]);
 
-            $account->forceFill(['balance_minor' => $account->balance_minor + $amountMinor])->save();
+            $currentBalanceMinor = (int) $account->getRawOriginal('balance_minor');
+            $account->forceFill(['balance_minor' => $currentBalanceMinor + $amountMinor])->save();
 
             return $payment;
         });

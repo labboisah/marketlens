@@ -111,7 +111,7 @@ it('supports read unread and resolution state changes', function (): void {
     $alert = app(AlertNotificationService::class)->create($business, [
         'branch_id' => $branch->id,
         'type' => 'device_offline',
-        'title' => 'Shop App device offline',
+        'title' => 'Business Server device offline',
         'dedupe_key' => 'device-offline-main',
     ]);
 

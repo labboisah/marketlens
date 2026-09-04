@@ -206,7 +206,7 @@ class SupportCentreService
         }
 
         if (! empty($data['device_id']) && ! Device::query()->where('business_id', $business->id)->whereKey($data['device_id'])->exists()) {
-            throw ValidationException::withMessages(['relatedDeviceId' => 'The selected Shop App device does not belong to this business.']);
+            throw ValidationException::withMessages(['relatedDeviceId' => 'The selected Business Server device does not belong to this business.']);
         }
 
         if (! empty($data['sync_batch_id']) && ! SyncBatch::query()->where('business_id', $business->id)->whereKey($data['sync_batch_id'])->exists()) {
@@ -278,7 +278,7 @@ class SupportCentreService
     {
         return [
             ['name' => 'Getting started', 'slug' => 'getting-started', 'description' => 'Account setup, branches, and first synchronization guidance.'],
-            ['name' => 'Devices', 'slug' => 'devices', 'description' => 'Shop App activation, device limits, updates, and revocation.'],
+            ['name' => 'Devices', 'slug' => 'devices', 'description' => 'Business Server activation, device limits, updates, and revocation.'],
             ['name' => 'Synchronization', 'slug' => 'synchronization', 'description' => 'Batch health, failed records, conflicts, and retry guidance.'],
             ['name' => 'Billing and subscription', 'slug' => 'billing', 'description' => 'Plans, usage limits, renewals, and billing-profile support.'],
             ['name' => 'Reports and exports', 'slug' => 'reports', 'description' => 'Report filters, export queues, secure links, and history.'],
@@ -290,7 +290,7 @@ class SupportCentreService
     {
         return [
             ['name' => 'General support', 'slug' => 'general', 'description' => 'General product questions and account help.'],
-            ['name' => 'Device issue', 'slug' => 'device', 'description' => 'Shop App activation, status, update, or revocation issues.'],
+            ['name' => 'Device issue', 'slug' => 'device', 'description' => 'Business Server activation, status, update, or revocation issues.'],
             ['name' => 'Synchronization issue', 'slug' => 'synchronization', 'description' => 'Failed batches, conflicts, delayed devices, or sync health.'],
             ['name' => 'Billing or subscription', 'slug' => 'billing', 'description' => 'Plan, renewal, cancellation, and payment-history help.'],
             ['name' => 'Reports or exports', 'slug' => 'reports', 'description' => 'Report filters, scheduled reports, CSV/PDF exports, and download links.'],
@@ -303,7 +303,7 @@ class SupportCentreService
     {
         return [
             ['category' => 'getting-started', 'slug' => 'choose-business-context', 'title' => 'Choosing the right business and branch context', 'summary' => 'Use the Platform context switcher before reviewing data or opening a ticket.', 'body' => 'Business and branch context controls what synchronized data appears across dashboards, reports, devices, and support tickets. Confirm the selected branch before raising a branch-specific issue.', 'is_faq' => false],
-            ['category' => 'devices', 'slug' => 'shop-app-device-activation', 'title' => 'How Shop App device activation works', 'summary' => 'Activation codes are short-lived and credentials are only shown to the Shop App once.', 'body' => 'Generate a device activation from the Platform, enter it in the Shop App, and confirm the device appears as active. Revoke unused activations and compromised devices from the device page.', 'is_faq' => true],
+            ['category' => 'devices', 'slug' => 'shop-app-device-activation', 'title' => 'How Business Server device activation works', 'summary' => 'Activation codes are short-lived and credentials are only shown to the Business Server once.', 'body' => 'Generate a device activation from the Platform, enter it in the Business Server, and confirm the device appears as active. Revoke unused activations and compromised devices from the device page.', 'is_faq' => true],
             ['category' => 'synchronization', 'slug' => 'failed-sync-batch-triage', 'title' => 'What to send when a sync batch fails', 'summary' => 'Attach the redacted error report and select the related synchronization batch.', 'body' => 'Open Synchronization, review failed records, download the redacted error report, then create a support ticket from that page so the batch context is attached securely.', 'is_faq' => true],
             ['category' => 'billing', 'slug' => 'subscription-expiration-data-retention', 'title' => 'What happens when a subscription expires?', 'summary' => 'Premium features can be restricted without immediately deleting synchronized data.', 'body' => 'MarketLens keeps safe account and billing access available. Synchronized data is preserved according to the configured retention policy while plan limits and premium features are enforced.', 'is_faq' => true],
             ['category' => 'reports', 'slug' => 'large-export-queues', 'title' => 'Why large exports are queued', 'summary' => 'Large CSV and PDF exports run through queues and produce secure expiring links.', 'body' => 'Queued exports protect dashboard performance and keep large report files behind signed download links. Check report history after queue processing completes.', 'is_faq' => false],

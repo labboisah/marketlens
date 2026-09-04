@@ -58,6 +58,6 @@ Link: <https://docs.marketlens.example/api/versioning>; rel="deprecation"
 
 ## Version Compatibility
 
-Shop App to Platform synchronization must remain tolerant of older Shop App
+Business Server to Platform synchronization must remain tolerant of older Business Server
 versions during rollout. Sync batches include `protocol_version`, app version,
 and schema version where available.

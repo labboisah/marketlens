@@ -1,12 +1,12 @@
-# Shop App Schema
+# Business Server Schema
 
-The Shop App uses SQLite as the local source of truth for branch operations.
+The Business Server uses SQLite as the local source of truth for branch operations.
 The schema should support fast LAN workflows, offline operation, auditability,
 and deterministic synchronization to the Platform.
 
 ## Common Columns
 
-Most synchronized Shop App tables should include:
+Most synchronized Business Server tables should include:
 
 ```text
 id INTEGER PRIMARY KEY
@@ -28,10 +28,10 @@ must not be soft-deleted.
 
 | Table | Purpose | Notes |
 | --- | --- | --- |
-| `shop_settings` | Local Shop App configuration. | Store non-secret settings; secrets stay outside Git and should be encrypted where needed. |
+| `shop_settings` | Local Business Server configuration. | Store non-secret settings; secrets stay outside Git and should be encrypted where needed. |
 | `branches` | Local branch metadata. | Include `business_uuid`, `branch_uuid`, status, and sync fields. |
 | `warehouses` | Stock locations within a branch. | Unique name per branch; soft-delete allowed when unused by open operations. |
-| `users` | Operational users registered locally. | Shop App authoritative; include status and limited sync profile fields. |
+| `users` | Operational users registered locally. | Business Server authoritative; include status and limited sync profile fields. |
 | `roles` | Local operational roles. | Examples: cashier, storekeeper, manager, accountant. |
 | `permissions` | Permission catalog. | Stable permission keys. |
 | `user_roles` | User-to-role assignments. | Unique `(user_id, role_id)`. |
@@ -188,7 +188,7 @@ erDiagram
 
 ## Migration Order
 
-Create Shop App tables in dependency order:
+Create Business Server tables in dependency order:
 
 1. Configuration and identity: `shop_settings`, `branches`, `warehouses`.
 2. Security: `users`, `roles`, `permissions`, `user_roles`,

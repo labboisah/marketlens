@@ -5,7 +5,7 @@ production migrations.
 
 ## Principles
 
-- Migrations must preserve offline operation for Shop Apps.
+- Migrations must preserve offline operation for Business Servers.
 - Synchronized identity must use UUIDs from the first migration.
 - Local numeric IDs may support local joins, but must not be exposed as cloud
   identities.
@@ -17,7 +17,7 @@ production migrations.
 - Write audit logs for important schema-impacting state changes where
   application behavior changes.
 
-## Shop App Migration Order
+## Business Server Migration Order
 
 1. Local configuration and branch identity.
 2. Users, roles, permissions, sessions, devices, and login logs.
@@ -59,7 +59,7 @@ Prefer expand-and-contract migrations:
 
 ## Synchronization Compatibility
 
-Synchronization migrations must account for old Shop Apps that may not upgrade
+Synchronization migrations must account for old Business Servers that may not upgrade
 immediately.
 
 Rules:
@@ -76,7 +76,7 @@ Rollback should be designed before a migration ships.
 
 - Additive migrations are easiest to roll back in code.
 - Destructive migrations require backups and explicit approval.
-- Shop App migrations should create a local backup before high-risk schema
+- Business Server migrations should create a local backup before high-risk schema
   changes.
 - Platform migrations should use database backups, migration dry runs, and
   staging restores.

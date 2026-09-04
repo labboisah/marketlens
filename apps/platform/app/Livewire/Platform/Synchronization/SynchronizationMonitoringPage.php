@@ -96,7 +96,7 @@ class SynchronizationMonitoringPage extends Component
         $this->authorize('manage', $business);
 
         $monitoring->revokeDevice($business->id, $deviceId, auth()->user());
-        $this->dispatch('notify', tone: 'danger', title: 'Device revoked', message: 'The Shop App device can no longer synchronize.');
+        $this->dispatch('notify', tone: 'danger', title: 'Device revoked', message: 'The Business Server device can no longer synchronize.');
     }
 
     public function requireApplicationUpdate(int $deviceId, BusinessContext $businessContext, SynchronizationMonitoringService $monitoring): void

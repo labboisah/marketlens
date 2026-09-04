@@ -9,7 +9,7 @@
 <div class="flex flex-col gap-6">
   <x-app.page-header
     title="Business overview"
-    description="Synchronized sales, payment, stock, debt, cashier, and branch summaries from Shop Apps."
+    description="Synchronized sales, payment, stock, debt, cashier, and branch summaries from Business Servers."
   >
     <x-slot:actions>
       <x-app.status-badge tone="{{ ($freshness['is_stale'] ?? true) ? 'warning' : 'success' }}">
@@ -23,7 +23,7 @@
   @unless ($hasData)
     <x-app.empty-state
       title="No synchronized dashboard summaries yet"
-      message="This dashboard stays empty until a Shop App synchronizes summary records for the selected business and branch."
+      message="This dashboard stays empty until a Business Server synchronizes summary records for the selected business and branch."
     />
   @endunless
 

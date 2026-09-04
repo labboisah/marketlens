@@ -7,7 +7,7 @@ The MVP must preserve the four-application architecture:
 
 - Platform manages cloud administration, sync APIs, reporting summaries, and
   Monitoring App access.
-- Shop App owns local shop operations and SQLite persistence.
+- Business Server owns local business operations and SQLite persistence.
 - Client App provides role-based workstations over the local network.
 - Monitoring App reads synchronized Platform data only.
 
@@ -23,9 +23,9 @@ The MVP must preserve the four-application architecture:
 - Dashboard summaries.
 - Application-version management.
 
-## MVP Shop App
+## MVP Business Server
 
-- Shop configuration.
+- Business configuration.
 - Users.
 - Roles and permissions.
 - Products.
@@ -79,7 +79,7 @@ The MVP must preserve the four-application architecture:
 
 - Shops must continue selling without internet.
 - Client Apps must never directly open SQLite.
-- Monitoring App must never connect directly to Shop Apps.
+- Monitoring App must never connect directly to Business Servers.
 - Completed sales must not be deleted.
 - Stock changes must use inventory movements.
 - Customer debt must be ledger-based.

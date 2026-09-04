@@ -14,7 +14,7 @@
 <div class="flex flex-col gap-6">
   <x-app.page-header
     title="Sales monitoring"
-    description="Read-only monitoring from synchronized Shop App sales records. Completed sales cannot be edited on the Platform."
+    description="Read-only monitoring from synchronized Business Server sales records. Completed sales cannot be edited on the Platform."
   >
     <x-slot:actions>
       <button type="button" wire:click="exportCsv" class="rounded-md border border-border px-3 py-2 text-sm font-semibold hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-primary">
@@ -245,7 +245,7 @@
                 <td class="font-mono">{{ $this->money($sale->gross_profit_minor) }}</td>
               </tr>
             @empty
-              <tr><td colspan="9"><x-app.empty-state title="No synchronized sales" message="Sales appear here after Shop Apps synchronize sale records." /></td></tr>
+              <tr><td colspan="9"><x-app.empty-state title="No synchronized sales" message="Sales appear here after Business Servers synchronize sale records." /></td></tr>
             @endforelse
           </tbody>
         </x-app.table>

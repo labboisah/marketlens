@@ -75,7 +75,7 @@ function supportCentreFixture(): array
     $device = Device::query()->create([
         'business_id' => $business->id,
         'branch_id' => $branch->id,
-        'name' => 'Main Shop App',
+        'name' => 'Main Business Server',
         'type' => 'shop_app',
         'status' => DeviceStatus::Active,
         'last_seen_at' => now(),
@@ -106,7 +106,7 @@ it('renders authenticated support centre with knowledge base faq ticket form and
         ->assertSee('Knowledge base')
         ->assertSee('Frequently asked questions')
         ->assertSee('Submit support ticket')
-        ->assertSee('Shop App device activation works');
+        ->assertSee('Business Server device activation works');
 
     $this->actingAs($user)
         ->withSession(['platform.business_id' => $business->id, 'platform.branch_id' => $branch->id])
@@ -185,7 +185,7 @@ it('rejects unsafe attachments and cross tenant related records', function (): v
     $otherDevice = Device::query()->create([
         'business_id' => $otherBusiness->id,
         'branch_id' => $otherBranch->id,
-        'name' => 'Hidden Shop App',
+        'name' => 'Hidden Business Server',
         'type' => 'shop_app',
         'status' => DeviceStatus::Active,
     ]);

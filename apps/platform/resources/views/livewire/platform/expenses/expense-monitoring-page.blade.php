@@ -16,7 +16,7 @@
 <div class="flex flex-col gap-6">
   <x-app.page-header
     title="Expense monitoring"
-    description="Read-only expense reporting from synchronized Shop App records. Expense corrections and approvals remain local Shop App operations."
+    description="Read-only expense reporting from synchronized Business Server records. Expense corrections and approvals remain local Business Server operations."
   >
     <x-slot:actions>
       <button type="button" wire:click="exportCsv" class="rounded-md border border-border px-3 py-2 text-sm font-semibold hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-primary">CSV export</button>
@@ -151,7 +151,7 @@
                 <td>{{ $expense->updated_at?->format('M j, Y H:i') }}</td>
               </tr>
             @empty
-              <tr><td colspan="12"><x-app.empty-state title="No synchronized expenses" message="Expenses appear here after Shop Apps synchronize expense records." /></td></tr>
+              <tr><td colspan="12"><x-app.empty-state title="No synchronized expenses" message="Expenses appear here after Business Servers synchronize expense records." /></td></tr>
             @endforelse
           </tbody>
         </x-app.table>

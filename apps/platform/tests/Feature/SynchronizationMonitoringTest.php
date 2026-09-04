@@ -72,7 +72,7 @@ function syncMonitoringFixture(): array
     $device = Device::query()->create([
         'business_id' => $business->id,
         'branch_id' => $branch->id,
-        'name' => 'Main Shop App',
+        'name' => 'Main Business Server',
         'type' => 'shop_app',
         'status' => DeviceStatus::Active,
         'app_version' => '1.0.0',
@@ -142,7 +142,7 @@ it('renders synchronization dashboard metrics and sidebar link', function (): vo
         ->get(route('platform.synchronization'))
         ->assertOk()
         ->assertSee('Synchronization monitoring')
-        ->assertSee('Active Shop App devices')
+        ->assertSee('Active Business Server devices')
         ->assertSee('Failed batches')
         ->assertSee('Conflicting records')
         ->assertSee('Last successful synchronization by branch')
@@ -182,7 +182,7 @@ it('shows device batches failed records conflicts heartbeats protocol and versio
         ->withQueryParams(['view' => 'devices'])
         ->test(SynchronizationMonitoringPage::class)
         ->assertSee('Device synchronization overview')
-        ->assertSee('Main Shop App')
+        ->assertSee('Main Business Server')
         ->assertSee('Online');
 
     Livewire::actingAs($user)
@@ -210,7 +210,7 @@ it('shows device batches failed records conflicts heartbeats protocol and versio
         ->withQueryParams(['view' => 'heartbeats'])
         ->test(SynchronizationMonitoringPage::class)
         ->assertSee('Device heartbeat history')
-        ->assertSee('Main Shop App');
+        ->assertSee('Main Business Server');
 
     Livewire::actingAs($user)
         ->withQueryParams(['view' => 'protocols'])
@@ -228,7 +228,7 @@ it('shows device batches failed records conflicts heartbeats protocol and versio
 it('records heartbeat history from the device heartbeat endpoint', function (): void {
     [$user, $business, $branch] = syncMonitoringFixture();
     $activation = app(ShopAppActivationService::class)->createActivation($business, $branch, $user, [
-        'device_label' => 'Heartbeat Shop App',
+        'device_label' => 'Heartbeat Business Server',
         'device_type' => 'shop_app',
         'expires_at' => now()->addMinutes(30),
         'application_version_id' => null,
@@ -288,7 +288,7 @@ it('keeps synchronization monitoring tenant isolated', function (): void {
     $otherDevice = Device::query()->create([
         'business_id' => $otherBusiness->id,
         'branch_id' => $otherBranch->id,
-        'name' => 'Hidden Shop App',
+        'name' => 'Hidden Business Server',
         'type' => 'shop_app',
         'status' => DeviceStatus::Active,
     ]);
@@ -297,8 +297,8 @@ it('keeps synchronization monitoring tenant isolated', function (): void {
     Livewire::actingAs($user)
         ->withQueryParams(['view' => 'devices'])
         ->test(SynchronizationMonitoringPage::class)
-        ->assertSee('Main Shop App')
-        ->assertDontSee('Hidden Shop App');
+        ->assertSee('Main Business Server')
+        ->assertDontSee('Hidden Business Server');
 
     Livewire::actingAs($user)
         ->test(SynchronizationMonitoringPage::class)

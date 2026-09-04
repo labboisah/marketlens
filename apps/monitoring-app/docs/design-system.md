@@ -2,7 +2,7 @@
 
 The MarketLens Monitoring App is an Android-first Flutter app for business
 owners and authorized remote users. It reads synchronized Platform data only and
-must never imply direct access to a Shop App.
+must never imply direct access to a Business Server.
 
 Use the shared MarketLens design system in
 `docs/product/design-system.md`. Flutter should map the same semantic color

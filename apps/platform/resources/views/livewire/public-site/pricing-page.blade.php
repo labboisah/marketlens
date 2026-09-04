@@ -12,9 +12,9 @@
       <x-public.breadcrumbs :items="[['label' => 'Pricing']]" />
       <div class="mt-8 max-w-3xl">
         <x-public.status-badge tone="information">Pricing</x-public.status-badge>
-        <h1 class="mt-5 text-4xl font-bold tracking-normal text-foreground sm:text-5xl">Plans for shops, supermarkets, wholesalers, and growing branches.</h1>
+        <h1 class="mt-5 text-4xl font-bold tracking-normal text-foreground sm:text-5xl">Plans for businesses, supermarkets, wholesalers, and growing branches.</h1>
         <p class="mt-5 text-lg leading-8 text-muted">
-          Prices and included features are loaded from configured Platform plan data. Hosting and Platform access are included, and customers do not need to purchase a domain for each shop.
+          Prices and included features are loaded from configured Platform plan data. Hosting and Platform access are included, and customers do not need to purchase a domain for each business.
         </p>
       </div>
 
@@ -131,7 +131,7 @@
       <x-public.section-heading eyebrow="Pricing FAQ" title="Frequently asked pricing questions" />
       <div class="mt-8 grid gap-3">
         <x-public.faq-item question="Is hosting included?">Yes. Hosting and Platform access are included in MarketLens plans.</x-public.faq-item>
-        <x-public.faq-item question="Does each shop need to buy a domain?">No. Customers do not need to purchase a domain for each shop.</x-public.faq-item>
+        <x-public.faq-item question="Does each business need to buy a domain?">No. Customers do not need to purchase a domain for each business.</x-public.faq-item>
         <x-public.faq-item question="Is there a trial?">Yes. Trial length comes from configured plan data and is shown on each plan.</x-public.faq-item>
         <x-public.faq-item question="Can I pay monthly or annually?">Yes. Active monthly and annual plan prices are displayed when configured.</x-public.faq-item>
         <x-public.faq-item question="Can I change plans later?">Plan changes will be handled through Platform subscription management when that workflow is implemented.</x-public.faq-item>

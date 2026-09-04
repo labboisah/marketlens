@@ -22,9 +22,9 @@ Required categories:
 - Queue tests for sync processing, reports, notifications, and retries.
 - Livewire tests for administrator and owner dashboard components.
 
-## Shop App
+## Business Server
 
-Shop App tests must prove the local source of truth remains correct while
+Business Server tests must prove the local source of truth remains correct while
 offline.
 
 Required categories:
@@ -46,7 +46,7 @@ Required categories:
 
 ## Client App
 
-Client App tests must prove role-based UI behavior and Shop App API dependence.
+Client App tests must prove role-based UI behavior and Business Server API dependence.
 
 Required categories:
 

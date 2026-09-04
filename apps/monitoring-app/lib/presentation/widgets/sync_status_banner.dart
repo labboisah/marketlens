@@ -20,7 +20,7 @@ class SyncStatusBanner extends StatelessWidget {
       child: ListTile(
         leading: Icon(isStale ? Icons.sync_problem : Icons.sync, color: isStale ? colorScheme.error : colorScheme.secondary),
         title: Text(isStale ? 'Data may be stale' : 'Synchronized Platform data'),
-        subtitle: Text('Last successful shop sync: ${lastSuccessfulSyncAt.toLocal()}'),
+        subtitle: Text('Last successful business sync: ${lastSuccessfulSyncAt.toLocal()}'),
       ),
     );
   }

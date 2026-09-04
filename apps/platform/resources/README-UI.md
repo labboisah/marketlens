@@ -48,7 +48,7 @@ labels visible and validation messages close to the failing field.
 Permission-denied pages, destructive confirmations, loading states, and
 synchronization warnings must use the semantic status system. Monitoring-facing
 Platform APIs should be styled and documented as cloud Platform concerns, not
-direct Shop App connections.
+direct Business Server connections.
 
 ## Responsive Owner Dashboard
 

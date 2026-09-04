@@ -3,12 +3,12 @@
 MarketLens separates operational authority from cloud reporting authority. This
 keeps shops operational offline while still allowing secure remote visibility.
 
-## Shop App Authoritative Data
+## Business Server Authoritative Data
 
-The Shop App is authoritative for branch operations. It owns the local SQLite
+The Business Server is authoritative for branch operations. It owns the local SQLite
 database and validates all operational writes from Client Apps.
 
-Authoritative Shop App data:
+Authoritative Business Server data:
 
 - Operational users.
 - Roles and permissions.
@@ -27,7 +27,7 @@ Authoritative Shop App data:
 
 Rules:
 
-- Client Apps must submit writes through the Shop App API.
+- Client Apps must submit writes through the Business Server API.
 - Stock quantities must be derived from stock movements.
 - Customer debts and supplier balances must be derived from account ledger
   transactions.
@@ -58,15 +58,15 @@ Authoritative Platform data:
 Rules:
 
 - The Platform manages tenant and branch authorization for cloud APIs.
-- The Platform is not the authentication authority for Shop App operational
+- The Platform is not the authentication authority for Business Server operational
   users.
-- Platform device activation authorizes Shop Apps to synchronize, but does not
-  replace local Shop App authorization for daily operations.
+- Platform device activation authorizes Business Servers to synchronize, but does not
+  replace local Business Server authorization for daily operations.
 
 ## Platform Replicated Data
 
 The Platform stores replicated and summarized operational data received from
-Shop Apps. This data supports Monitoring App dashboards, owner reports, support
+Business Servers. This data supports Monitoring App dashboards, owner reports, support
 diagnostics, and consolidated business visibility.
 
 Replicated Platform data:

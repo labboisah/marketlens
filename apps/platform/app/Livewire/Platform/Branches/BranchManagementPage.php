@@ -134,7 +134,7 @@ class BranchManagementPage extends Component
         $branch = Branch::query()->findOrFail($branchId);
         $this->authorize('manage', $branch);
         $branchManagement->activate($branch, auth()->user());
-        $this->dispatch('notify', tone: 'success', title: 'Branch activated', message: 'Shop App device activation can continue for this branch.');
+        $this->dispatch('notify', tone: 'success', title: 'Branch activated', message: 'Business Server device activation can continue for this branch.');
     }
 
     public function suspendBranch(int $branchId, BranchManagement $branchManagement): void
@@ -142,7 +142,7 @@ class BranchManagementPage extends Component
         $branch = Branch::query()->findOrFail($branchId);
         $this->authorize('manage', $branch);
         $branchManagement->suspend($branch, auth()->user());
-        $this->dispatch('notify', tone: 'warning', title: 'Branch suspended', message: 'This branch cannot activate new Shop App devices while suspended.');
+        $this->dispatch('notify', tone: 'warning', title: 'Branch suspended', message: 'This branch cannot activate new Business Server devices while suspended.');
     }
 
     public function designateHeadOffice(int $branchId, BranchManagement $branchManagement): void

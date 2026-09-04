@@ -31,6 +31,12 @@ class DeviceActivationPage extends Component
 
     public ?string $generatedCode = null;
 
+    public ?string $generatedDeviceLabel = null;
+
+    public ?string $generatedBranchName = null;
+
+    public ?string $generatedExpiresAt = null;
+
     public function render(BusinessContext $businessContext)
     {
         $business = $this->currentBusiness($businessContext);
@@ -84,10 +90,14 @@ class DeviceActivationPage extends Component
             'application_version_id' => $validated['applicationVersionId'],
         ]);
 
-        $this->generatedCode = $result['code'];
+        $this->generatedCode = (string) $result['code'];
+        $this->generatedDeviceLabel = (string) $validated['deviceLabel'];
+        $this->generatedBranchName = $branch->name;
+        $this->generatedExpiresAt = $result['activation']->expires_at?->format('M j, Y g:i A');
         $this->deviceLabel = '';
+        $this->resetValidation();
         session()->flash('device_status', 'Activation code generated. It is shown once.');
-        $this->dispatch('notify', tone: 'success', title: 'Activation code generated', message: 'Share the short-lived code with the Shop App. It is shown only once.');
+        $this->dispatch('notify', tone: 'success', title: 'Activation code generated', message: 'Share the short-lived code with the Business Server. It is shown only once.');
     }
 
     public function revokeActivation(int $activationId, ShopAppActivationService $activationService, BusinessContext $businessContext): void
@@ -113,7 +123,7 @@ class DeviceActivationPage extends Component
             ->findOrFail($deviceId);
 
         $activationService->revokeDevice($device, auth()->user());
-        $this->dispatch('notify', tone: 'danger', title: 'Device revoked', message: 'The Shop App credential is no longer authorized for synchronization.');
+        $this->dispatch('notify', tone: 'danger', title: 'Device revoked', message: 'The Business Server credential is no longer authorized for synchronization.');
     }
 
     private function currentBusiness(BusinessContext $businessContext): Business

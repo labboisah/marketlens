@@ -82,7 +82,7 @@ function subscriptionBusiness(User $user, Plan $plan, SubscriptionStatus $status
 
 it('renders owner subscription management with plan usage history options and billing profile', function (): void {
     $owner = subscriptionOwner();
-    $plan = subscriptionPlan('Growth', 25000, ['Sales', 'Reports', '3 Branches', '2 Shop App devices', '5 Monitoring users']);
+    $plan = subscriptionPlan('Growth', 25000, ['Sales', 'Reports', '3 Branches', '2 Business Server devices', '5 Monitoring users']);
     [$business, $branch, $subscription] = subscriptionBusiness($owner, $plan, SubscriptionStatus::Trialing, now()->addDays(10));
     $subscription->payments()->create([
         'amount_minor' => 25000,
@@ -99,7 +99,7 @@ it('renders owner subscription management with plan usage history options and bi
         ->assertSee('Current plan')
         ->assertSee('Growth')
         ->assertSee('Usage against limits')
-        ->assertSee('Shop App devices')
+        ->assertSee('Business Server devices')
         ->assertSee('Trial status')
         ->assertSee('Payment history')
         ->assertSee('Cancellation request')
@@ -140,11 +140,11 @@ it('saves billing profiles and records cancellation requests without deleting bu
 it('warns before downgrade requests when usage exceeds target plan limits', function (): void {
     $owner = subscriptionOwner();
     $basic = subscriptionPlan('Basic', 10000, ['Sales']);
-    $growth = subscriptionPlan('Growth', 50000, ['Sales', 'Reports', '5 Branches', '3 Shop App devices']);
+    $growth = subscriptionPlan('Growth', 50000, ['Sales', 'Reports', '5 Branches', '3 Business Server devices']);
     [$business, $branch] = subscriptionBusiness($owner, $growth);
     Branch::query()->create(['business_id' => $business->id, 'name' => 'Second Branch', 'code' => 'SECOND', 'status' => BranchStatus::Active]);
-    Device::query()->create(['business_id' => $business->id, 'branch_id' => $branch->id, 'name' => 'Main Shop App', 'type' => 'shop_app', 'status' => DeviceStatus::Active]);
-    Device::query()->create(['business_id' => $business->id, 'branch_id' => $branch->id, 'name' => 'Backup Shop App', 'type' => 'shop_app', 'status' => DeviceStatus::Active]);
+    Device::query()->create(['business_id' => $business->id, 'branch_id' => $branch->id, 'name' => 'Main Business Server', 'type' => 'shop_app', 'status' => DeviceStatus::Active]);
+    Device::query()->create(['business_id' => $business->id, 'branch_id' => $branch->id, 'name' => 'Backup Business Server', 'type' => 'shop_app', 'status' => DeviceStatus::Active]);
 
     Livewire::actingAs($owner)
         ->test(SubscriptionManagementPage::class)
@@ -156,7 +156,7 @@ it('warns before downgrade requests when usage exceeds target plan limits', func
     expect($request->type)->toBe('downgrade')
         ->and($request->warnings)->not->toBeEmpty()
         ->and(collect($request->warnings)->implode(' '))->toContain('Branches usage is 2')
-        ->and(collect($request->warnings)->implode(' '))->toContain('Shop App devices usage is 2');
+        ->and(collect($request->warnings)->implode(' '))->toContain('Business Server devices usage is 2');
 });
 
 it('restricts premium features after the configurable grace period while keeping billing access', function (): void {
@@ -183,19 +183,19 @@ it('restricts premium features after the configurable grace period while keeping
 
 it('uses plan limits for device activation', function (): void {
     $owner = subscriptionOwner();
-    $plan = subscriptionPlan('Device Growth', 30000, ['2 Shop App devices']);
+    $plan = subscriptionPlan('Device Growth', 30000, ['2 Business Server devices']);
     [$business, $branch] = subscriptionBusiness($owner, $plan);
-    Device::query()->create(['business_id' => $business->id, 'branch_id' => $branch->id, 'name' => 'Main Shop App', 'type' => 'shop_app', 'status' => DeviceStatus::Active]);
+    Device::query()->create(['business_id' => $business->id, 'branch_id' => $branch->id, 'name' => 'Main Business Server', 'type' => 'shop_app', 'status' => DeviceStatus::Active]);
 
     app(ShopAppActivationService::class)->createActivation($business, $branch, $owner, [
-        'device_label' => 'Second Shop App',
+        'device_label' => 'Second Business Server',
         'device_type' => 'shop_app',
         'expires_at' => now()->addMinutes(30),
         'application_version_id' => null,
     ]);
 
     app(ShopAppActivationService::class)->createActivation($business, $branch, $owner, [
-        'device_label' => 'Third Shop App',
+        'device_label' => 'Third Business Server',
         'device_type' => 'shop_app',
         'expires_at' => now()->addMinutes(30),
         'application_version_id' => null,
@@ -206,11 +206,11 @@ it('uses plan limits for device activation', function (): void {
 it('allows device activation during the configured past-due grace period', function (): void {
     config(['marketlens.billing.grace_days' => 3]);
     $owner = subscriptionOwner();
-    $plan = subscriptionPlan('Grace Device Plan', 30000, ['2 Shop App devices']);
+    $plan = subscriptionPlan('Grace Device Plan', 30000, ['2 Business Server devices']);
     [$business, $branch] = subscriptionBusiness($owner, $plan, SubscriptionStatus::PastDue, now()->subDay());
 
     $result = app(ShopAppActivationService::class)->createActivation($business, $branch, $owner, [
-        'device_label' => 'Grace Shop App',
+        'device_label' => 'Grace Business Server',
         'device_type' => 'shop_app',
         'expires_at' => now()->addMinutes(30),
         'application_version_id' => null,

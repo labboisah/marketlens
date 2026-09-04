@@ -50,9 +50,9 @@ synced_at TIMESTAMP WITH TIME ZONE NOT NULL
 
 | Table | Purpose | Notes |
 | --- | --- | --- |
-| `devices` | Registered Shop App devices. | Distinguish Shop App and supported client/device types. |
+| `devices` | Registered Business Server devices. | Distinguish Business Server and supported client/device types. |
 | `device_activations` | Activation attempts and approvals. | Platform authoritative. |
-| `monitoring_users` | Remote monitoring users. | Platform auth users, not Shop App operational auth authority. |
+| `monitoring_users` | Remote monitoring users. | Platform auth users, not Business Server operational auth authority. |
 | `personal_access_tokens` | API tokens. | Laravel Sanctum storage. |
 
 ### Synchronization Control
@@ -60,7 +60,7 @@ synced_at TIMESTAMP WITH TIME ZONE NOT NULL
 | Table | Purpose | Notes |
 | --- | --- | --- |
 | `sync_batches` | Received batch headers. | Unique source batch UUID. |
-| `sync_receipts` | Acknowledgements returned to Shop Apps. | Platform authoritative for cloud ack. |
+| `sync_receipts` | Acknowledgements returned to Business Servers. | Platform authoritative for cloud ack. |
 | `sync_failures` | Failed records or batches. | Include reason, retry state, and source IDs. |
 
 ### Replicated Operational Data

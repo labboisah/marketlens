@@ -1,30 +1,30 @@
-# Shop App Foundation Audit
+# Business Server Foundation Audit
 
-This document verifies the MarketLens Shop App foundation against the approved local operational architecture.
+This document verifies the MarketLens Business Server foundation against the approved local operational architecture.
 
 ## Verified Components
 
 - Electron main process
-  - `apps/desktop/apps/shop-app/src/main/index.ts`
+  - `C:\laragon\www\business-server\src\main\index.ts`
   - `BrowserWindow` configured with `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`, `webSecurity: true`
   - Local server is started before the main window loads
 
 - Secure preload API
-  - `apps/desktop/apps/shop-app/src/preload/index.ts`
+  - `C:\laragon\www\business-server\src\preload\index.ts`
   - `contextBridge.exposeInMainWorld` used for typed API only
   - no direct `window.require` or unrestricted Node access exposed
 
 - React renderer
-  - `apps/desktop/apps/shop-app/src/renderer/src/main.tsx`
+  - `C:\laragon\www\business-server\src\renderer\src\main.tsx`
   - `App` renderer shell with Tailwind and shared UI components
 
 - Fastify local server
-  - `apps/desktop/apps/shop-app/src/server/local-server.ts`
+  - `C:\laragon\www\business-server\src\server\local-server.ts`
   - Error handler returns structured API errors
   - Socket.IO mounted onto the same server instance
 
 - SQLite initialization
-  - `apps/desktop/apps/shop-app/src/database/sqlite.ts`
+  - `C:\laragon\www\business-server\src\database\sqlite.ts`
   - SQLite path resolved and parent directory created
   - PRAGMA configuration includes:
     - `journal_mode = WAL`
@@ -38,36 +38,36 @@ This document verifies the MarketLens Shop App foundation against the approved l
   - `drizzle-orm/better-sqlite3` integration is configured with schema support
 
 - Drizzle ORM configuration
-  - `apps/desktop/apps/shop-app/src/database/schema.ts`
-  - `apps/desktop/apps/shop-app/src/database/sqlite.ts`
-  - `apps/desktop/apps/shop-app/src/database/migrations.ts`
+  - `C:\laragon\www\business-server\src\database\schema.ts`
+  - `C:\laragon\www\business-server\src\database\sqlite.ts`
+  - `C:\laragon\www\business-server\src\database\migrations.ts`
 
 - Database migration system
-  - `apps/desktop/apps/shop-app/src/database/migrations.ts`
+  - `C:\laragon\www\business-server\src\database\migrations.ts`
   - Foundational table creation wrapped in `runFoundationalMigrations`
 
 - Zod validation
-  - `apps/desktop/apps/shop-app/src/shared/environment.ts`
-  - `apps/desktop/apps/shop-app/src/server/routes/auth-routes.ts`
-  - `apps/desktop/apps/shop-app/src/server/routes/device-routes.ts`
+  - `C:\laragon\www\business-server\src\shared\environment.ts`
+  - `C:\laragon\www\business-server\src\server\routes\auth-routes.ts`
+  - `C:\laragon\www\business-server\src\server\routes\device-routes.ts`
 
 - Socket.IO server
-  - `apps/desktop/apps/shop-app/src/server/local-server.ts`
+  - `C:\laragon\www\business-server\src\server\local-server.ts`
   - Emits `serverStatus`, `syncStatus`, `deviceConnected`, `deviceDisconnected`, `userLoggedIn`
 
 - Pino logging
-  - `apps/desktop/apps/shop-app/src/server/local-server.ts` uses application logger instance
+  - `C:\laragon\www\business-server\src\server\local-server.ts` uses application logger instance
   - application logger is created in `src/services/application/shop-application.ts`
 
 - Vitest
-  - `apps/desktop/apps/shop-app/package.json` includes `test` script
-  - `apps/desktop/apps/shop-app/tests` contains baseline tests
+  - `C:\laragon\www\business-server\package.json` includes `test` script
+  - `C:\laragon\www\business-server\tests` contains baseline tests
 
 - Playwright
-  - `apps/desktop/apps/shop-app/package.json` includes `test:e2e` script
+  - `C:\laragon\www\business-server\package.json` includes `test:e2e` script
 
 - Electron Forge
-  - `apps/desktop/apps/shop-app/forge.config.ts`
+  - `C:\laragon\www\business-server\forge.config.ts`
   - `package.json` includes `package` and `make` scripts
 
 - Application packaging
@@ -78,7 +78,7 @@ This document verifies the MarketLens Shop App foundation against the approved l
   - Auto-update is not implemented yet; no unsafe platform secrets are exposed
 
 - Environment handling
-  - `apps/desktop/apps/shop-app/src/shared/environment.ts` validates environment variables with Zod
+  - `C:\laragon\www\business-server\src\shared\environment.ts` validates environment variables with Zod
   - `.env.example` documents local development defaults
 
 - Shared desktop packages

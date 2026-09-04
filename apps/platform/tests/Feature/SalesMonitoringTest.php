@@ -139,7 +139,7 @@ it('stores replicated sale item and payment records from synchronized sales', fu
     $deviceUser = User::factory()->create();
 
     $activation = app(ShopAppActivationService::class)->createActivation($business, $branch, $deviceUser, [
-        'device_label' => 'Sales Shop App',
+        'device_label' => 'Sales Business Server',
         'device_type' => 'shop_app',
         'expires_at' => now()->addMinutes(30),
         'application_version_id' => null,

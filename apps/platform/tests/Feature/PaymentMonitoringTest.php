@@ -133,7 +133,7 @@ it('stores replicated cashier settlements from synchronized records', function (
     [, $business, $branch] = paymentMonitoringFixture();
     $deviceUser = User::factory()->create();
     $activation = app(ShopAppActivationService::class)->createActivation($business, $branch, $deviceUser, [
-        'device_label' => 'Payment Shop App',
+        'device_label' => 'Payment Business Server',
         'device_type' => 'shop_app',
         'expires_at' => now()->addMinutes(30),
         'application_version_id' => null,

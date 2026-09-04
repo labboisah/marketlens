@@ -14,6 +14,6 @@ Navigation:
 
 Notes:
 
-- All monitoring records are sourced from Shop App synchronization and are read-only on the Platform.
+- All monitoring records are sourced from Business Server synchronization and are read-only on the Platform.
 - Summaries are cached to avoid expensive real-time aggregation. Use `php artisan services:refresh-summaries {business_id}` to refresh cached summaries.
 - Authorization must use module access checks and tenant isolation.

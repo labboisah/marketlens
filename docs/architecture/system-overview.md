@@ -1,7 +1,7 @@
 # MarketLens System Overview
 
 MarketLens is an offline-first retail platform built around one central rule:
-shops must continue operating locally even when the internet is unavailable,
+businesses must continue operating locally even when the internet is unavailable,
 while owners still receive secure remote visibility through synchronized cloud
 data.
 
@@ -11,7 +11,7 @@ data.
 Client App
     | Local LAN/Wi-Fi
     v
-Shop App
+Business Server
     | Internet synchronization
     v
 Platform
@@ -27,15 +27,15 @@ It provides role-based interfaces for daily work and communicates with the Shop
 App through the local network.
 
 The Client App does not directly access SQLite. It sends authenticated requests
-to the Shop App local API, receives validated responses, and listens for
+to the Business Server local API, receives validated responses, and listens for
 real-time updates through the approved local communication layer.
 
-## Shop App
+## Business Server
 
-The Shop App runs on the main computer in each shop or branch. It is the local
+The Business Server runs on the main computer in each business or branch. It is the local
 source of truth for operational activity in that branch.
 
-The Shop App owns:
+The Business Server owns:
 
 - Local API server behavior.
 - Local SQLite persistence.
@@ -54,7 +54,7 @@ The Platform is the central cloud application. It is multi-tenant and manages
 businesses, branches, subscriptions, devices, synchronized records, reporting,
 remote APIs, and cloud-side authorization.
 
-The Platform receives synchronized data from Shop Apps over the internet. It
+The Platform receives synchronized data from Business Servers over the internet. It
 must maintain tenant and branch isolation for every stored record, API response,
 background job, and report.
 
@@ -64,7 +64,7 @@ The Monitoring App is an Android-first mobile app for business owners and
 authorized remote users. It connects only to the Platform through secure cloud
 APIs.
 
-The Monitoring App must never connect directly to a Shop App. It displays
+The Monitoring App must never connect directly to a Business Server. It displays
 remote business information using synchronized Platform data.
 
 ## Synchronization Principles
@@ -78,7 +78,7 @@ remote business information using synchronized Platform data.
 
 ## Data Ownership
 
-- Operational writes are owned locally by the Shop App.
+- Operational writes are owned locally by the Business Server.
 - Cloud reporting and remote monitoring are owned by the Platform.
 - Client Apps submit local operational requests; they do not own persistence.
 - Monitoring App consumes remote reporting data; it does not own operational
@@ -86,8 +86,8 @@ remote business information using synchronized Platform data.
 
 ## Security Boundaries
 
-- Client App to Shop App: local LAN or Wi-Fi, authenticated and authorized.
-- Shop App to Platform: internet synchronization, authenticated and encrypted.
+- Client App to Business Server: local LAN or Wi-Fi, authenticated and authorized.
+- Business Server to Platform: internet synchronization, authenticated and encrypted.
 - Monitoring App to Platform: secure cloud API, authenticated and authorized.
 
 Tenant isolation, branch isolation, strict validation, and role-based

@@ -61,7 +61,7 @@ function applicationVersionOwnerDevice($testCase, string $appVersion = '1.0.0'):
     ]);
 
     $activation = app(ShopAppActivationService::class)->createActivation($business, $branch, $owner, [
-        'device_label' => 'Main Shop App',
+        'device_label' => 'Main Business Server',
         'device_type' => 'shop_app',
         'expires_at' => now()->addMinutes(30),
         'application_version_id' => null,

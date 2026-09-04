@@ -94,7 +94,7 @@ it('stores branch performance summaries from synchronization records', function 
     [, $business, $branch] = multiBranchMonitoringFixture();
     $deviceUser = User::factory()->create();
     $activation = app(ShopAppActivationService::class)->createActivation($business, $branch, $deviceUser, [
-        'device_label' => 'Branch Shop App',
+        'device_label' => 'Branch Business Server',
         'device_type' => 'shop_app',
         'expires_at' => now()->addMinutes(30),
         'application_version_id' => null,

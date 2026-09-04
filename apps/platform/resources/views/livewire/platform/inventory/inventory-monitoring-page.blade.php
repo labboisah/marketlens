@@ -19,7 +19,7 @@
 @endphp
 
 <div class="flex flex-col gap-6">
-  <x-app.page-header title="Inventory monitoring" description="Cloud inventory is for monitoring only. The Shop App remains authoritative for local stock operations." />
+  <x-app.page-header title="Inventory monitoring" description="Cloud inventory is for monitoring only. The Business Server remains authoritative for local stock operations." />
 
   <x-app.card title="Filters" description="Filter synchronized stock by branch, warehouse, product, category, brand, stock status, and date range.">
     <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -125,7 +125,7 @@
           @forelse ($stocks as $stock)
             <tr><td><button type="button" wire:click="showDetails('{{ $stock->product_uuid }}')" class="font-semibold text-primary hover:underline">{{ $stock->product_name }}</button></td><td>{{ $stock->sku }}</td><td>{{ $stock->barcode }}</td><td>{{ $stock->branch?->name }}</td><td>{{ $stock->warehouse_name }}</td><td class="font-mono">{{ $this->quantity($stock->available_quantity) }}</td><td class="font-mono">{{ $this->quantity($stock->reserved_quantity) }}</td><td>{{ str($stock->stock_status)->replace('_', ' ')->title() }}</td><td class="font-mono">{{ $this->money($stock->stock_value_minor) }}</td><td>{{ $stock->last_synchronized_at?->format('M j, Y H:i') }}</td></tr>
           @empty
-            <tr><td colspan="10"><x-app.empty-state title="No synchronized inventory" message="Inventory appears after Shop Apps synchronize stock summaries." /></td></tr>
+            <tr><td colspan="10"><x-app.empty-state title="No synchronized inventory" message="Inventory appears after Business Servers synchronize stock summaries." /></td></tr>
           @endforelse
         </tbody></x-app.table><div class="mt-4">{{ $stocks?->links() }}</div>
       </x-app.card>

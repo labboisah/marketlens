@@ -75,7 +75,7 @@
           </dl>
         </x-app.card>
       @empty
-        <x-app.empty-state title="No branch summaries" message="Branch performance cards appear after Shop Apps synchronize branch summary records." />
+        <x-app.empty-state title="No branch summaries" message="Branch performance cards appear after Business Servers synchronize branch summary records." />
       @endforelse
     </section>
 

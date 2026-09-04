@@ -10,15 +10,19 @@ repository. Read and follow these rules before changing code or documentation.
   application or package, when that file exists.
 - Use [docs/architecture/system-overview.md](docs/architecture/system-overview.md)
   as the baseline system architecture reference.
+- The desktop applications are maintained as standalone sibling projects:
+  `C:\laragon\www\business-server` for the Business Server/local server and
+  `C:\laragon\www\business-app` for the Client App. Do not recreate or maintain
+  duplicate desktop sources under `apps/desktop`.
 
 ## Architecture Rules
 
-- Preserve the four-application architecture: Platform, Shop App, Client App,
+- Preserve the four-application architecture: Platform, Business Server, Client App,
   and Monitoring App.
-- Keep the Shop App as the local source of truth for shop operations.
+- Keep the Business Server as the local source of truth for business operations.
 - Never let Client Apps write directly to SQLite.
-- Never let Client Apps bypass the Shop App local API for operational writes.
-- Never let the Monitoring App connect directly to a Shop App.
+- Never let Client Apps bypass the Business Server local API for operational writes.
+- Never let the Monitoring App connect directly to a Business Server.
 - Keep the Monitoring App dependent on synchronized Platform data only.
 - Maintain tenant and branch data isolation in storage, APIs, background jobs,
   synchronization, reporting, and authorization checks.
@@ -65,7 +69,7 @@ repository. Read and follow these rules before changing code or documentation.
 - Nginx.
 - S3-compatible storage.
 
-### Shop App
+### Business Server
 
 - Electron.
 - TypeScript.

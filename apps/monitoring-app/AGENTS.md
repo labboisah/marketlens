@@ -6,15 +6,15 @@ owners and authorized remote users.
 ## Application Boundary
 
 - The Monitoring App connects only to the MarketLens Platform.
-- It must never connect directly to Shop Apps.
-- It displays synchronized Platform data, not live Shop App databases.
+- It must never connect directly to Business Servers.
+- It displays synchronized Platform data, not live Business Server databases.
 - It should retrieve summaries and report aggregates rather than full
   transaction databases.
 - Business and branch access must follow Platform authorization.
 
 ## Data Freshness
 
-- Always show the last successful shop synchronization time where synchronized
+- Always show the last successful business synchronization time where synchronized
   data is displayed.
 - Clearly identify stale data.
 - Cached reports may be available for offline viewing.

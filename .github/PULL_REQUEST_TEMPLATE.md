@@ -5,19 +5,19 @@ Describe the change and why it is needed.
 ## Scope
 
 - [ ] Platform
-- [ ] Shop App
+- [ ] Business Server
 - [ ] Client App
 - [ ] Monitoring App
-- [ ] Shared desktop package
+- [ ] Standalone desktop package
 - [ ] Documentation
 - [ ] Infrastructure
 
 ## Architecture Checklist
 
 - [ ] Preserves the four-application architecture.
-- [ ] Keeps Shop App as the local operational source of truth.
+- [ ] Keeps Business Server as the local operational source of truth.
 - [ ] Does not allow Client Apps to write directly to SQLite.
-- [ ] Does not allow Monitoring App to connect directly to Shop App.
+- [ ] Does not allow Monitoring App to connect directly to Business Server.
 - [ ] Maintains tenant and branch isolation.
 - [ ] Preserves immutable transactional records.
 - [ ] Uses stock movements for inventory changes.

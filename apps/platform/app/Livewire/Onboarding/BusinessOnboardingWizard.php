@@ -129,7 +129,7 @@ class BusinessOnboardingWizard extends Component
             'plans' => Plan::query()->with('features')->active()->orderBy('sort_order')->get(),
             'businessTypes' => [
                 'supermarket' => 'Supermarket',
-                'provision_shop' => 'Provision shop',
+                'provision_shop' => 'Provision business',
                 'wholesale_distributor' => 'Wholesale distributor',
                 'pharmacy' => 'Pharmacy',
                 'building_materials' => 'Building materials',
