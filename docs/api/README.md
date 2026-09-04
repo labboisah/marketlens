@@ -2,7 +2,7 @@
 
 This document defines shared API standards for all MarketLens API boundaries:
 
-- Client App to Business Server local API.
+- Business App to Business Server local API.
 - Business Server to Platform synchronization and cloud APIs.
 - Monitoring App to Platform cloud API.
 
@@ -130,7 +130,7 @@ responses return `trace_id`, which may equal the correlation ID.
 
 Rate limits are applied by API boundary:
 
-- Client App to Business Server: per client device, user, and LAN source where useful.
+- Business App to Business Server: per client device, user, and LAN source where useful.
 - Business Server to Platform: per business, branch, device, and endpoint group.
 - Monitoring App to Platform: per user, business, token, and endpoint group.
 

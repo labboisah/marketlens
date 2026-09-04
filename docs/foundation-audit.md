@@ -8,7 +8,7 @@ documentation work. It focuses on structure, boundaries, stack consistency,
 contracts, environment templates, security, tests, CI, Docker readiness, and
 whether documentation matches the current implementation.
 
-The Business Server/local server and Client App are now maintained as standalone
+The Business Server/local server and Business App are now maintained as standalone
 sibling projects at `C:\laragon\www\business-server` and
 `C:\laragon\www\business-app`. The former `apps/desktop` workspace was removed
 from the main `marketlens` repository to avoid duplicate desktop sources.
@@ -18,7 +18,7 @@ from the main `marketlens` repository to avoid duplicate desktop sources.
 - Updated the root `Makefile` so Monitoring App commands use Flutter now that
   the app exists.
 - Updated the root `Makefile` so Platform frontend build uses `npm run build`,
-  matching `apps/platform/package.json`.
+  matching `package.json`.
 - Updated `platform-install` to install Platform frontend dependencies with
   `npm install`.
 - Aligned Platform API success and error resource scaffolds with the documented
@@ -35,7 +35,7 @@ from the main `marketlens` repository to avoid duplicate desktop sources.
 - Root documentation, contribution files, security policy, Makefile, and
   application folders exist.
 - The four-application structure is present:
-  - `apps/platform`
+  - the repository root
   - `C:\laragon\www\business-server`
   - `C:\laragon\www\business-app`
   - `apps/monitoring-app`
@@ -52,10 +52,10 @@ from the main `marketlens` repository to avoid duplicate desktop sources.
 
 - Root `README.md` and root `AGENTS.md` exist and define the four-application
   architecture.
-- Application-level `AGENTS.md` files exist for Platform, Business Server, Client App,
-  and Monitoring App. The Business Server and Client App guidance lives in their
+- Application-level `AGENTS.md` files exist for Platform, Business Server, Business App,
+  and Monitoring App. The Business Server and Business App guidance lives in their
   standalone sibling projects.
-- Application-level README files exist for Platform, Business Server, Client App, and
+- Application-level README files exist for Platform, Business Server, Business App, and
   Monitoring App.
 - Shared package README files exist for all desktop packages.
 
@@ -67,7 +67,7 @@ from the main `marketlens` repository to avoid duplicate desktop sources.
 - Business Server stack matches the approved direction: Electron, TypeScript, React,
   Vite, Tailwind, shadcn config, Fastify, SQLite, better-sqlite3, Drizzle, Zod,
   Socket.IO, Pino, Vitest, Playwright, and Electron Forge.
-- Client App stack matches the approved direction: Electron, TypeScript, React,
+- Business App stack matches the approved direction: Electron, TypeScript, React,
   Vite, Tailwind, shadcn config, TanStack Query, Zustand, React Hook Form, Zod,
   TanStack Table/Virtual, Socket.IO Client, safeStorage, Vitest, Playwright, and
   Electron Forge.
@@ -78,7 +78,7 @@ from the main `marketlens` repository to avoid duplicate desktop sources.
 ### Environment Templates
 
 - Environment templates exist for:
-  - `apps/platform/.env.example`
+  - `.env.example`
   - `C:\laragon\www\business-server\.env.example`
   - `C:\laragon\www\business-app\.env.example`
   - `apps/monitoring-app/.env.example`
@@ -92,7 +92,7 @@ from the main `marketlens` repository to avoid duplicate desktop sources.
 - Database documentation exists under `docs/database`.
 - Data ownership is documented for Business Server authoritative data, Platform
   authoritative data, Platform replicated data, and Monitoring App cached data.
-- Shop and Platform schema table groups are documented.
+- Business Server and Platform schema table groups are documented.
 - Indexing, migration order, retention, archiving, and Mermaid ER diagrams are
   documented.
 
@@ -105,7 +105,7 @@ from the main `marketlens` repository to avoid duplicate desktop sources.
   codes, and deprecation policy are documented.
 - `@marketlens/api-contracts` exports Zod schemas and inferred TypeScript types.
 - `@marketlens/sync-contracts` exports Zod schemas and inferred TypeScript types.
-- Platform OpenAPI foundation exists at `apps/platform/docs/openapi.yaml`.
+- Platform OpenAPI foundation exists at `docs/openapi.yaml`.
 
 ### Synchronization Documentation
 
@@ -136,12 +136,12 @@ from the main `marketlens` repository to avoid duplicate desktop sources.
 - Desktop UI package contains shared tokens and reusable components.
 - Monitoring App Material 3 theme exists and matches the MarketLens semantic
   color direction.
-- Business Server and Client App import shared desktop UI tokens.
+- Business Server and Business App import shared desktop UI tokens.
 
 ### Testing Setup
 
 - Testing strategy exists under `docs/testing`.
-- Test expectations are defined for Platform, Business Server, Client App, Monitoring
+- Test expectations are defined for Platform, Business Server, Business App, Monitoring
   App, and shared packages.
 - Scaffold/boundary tests exist in Platform, Desktop packages, Business Server, Client
   App, and Monitoring App.
@@ -159,12 +159,12 @@ from the main `marketlens` repository to avoid duplicate desktop sources.
 
 - Business Server documentation and scaffold state it is the local source of truth.
 - Business Server owns SQLite and initializes required SQLite PRAGMAs.
-- Client App documentation and code avoid SQLite, Drizzle, and better-sqlite3.
+- Business App documentation and code avoid SQLite, Drizzle, and better-sqlite3.
 - Monitoring App documentation and screens state that it connects only to the
   Platform and never directly to Business Servers.
 - Platform AGENTS and docs state that only limited operational-user profiles are
   synchronized for reporting.
-- Electron security settings are enabled in Business Server and Client App:
+- Electron security settings are enabled in Business Server and Business App:
   `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`, and
   `webSecurity: true`.
 
@@ -271,7 +271,7 @@ from the main `marketlens` repository to avoid duplicate desktop sources.
    sync documentation.
 7. Add Docker/deployment documentation and operational runbooks.
 8. Add branch/tenant isolation tests before implementing real reporting.
-9. Add tests that prove Client App cannot import SQLite/better-sqlite3/Drizzle.
+9. Add tests that prove Business App cannot import SQLite/better-sqlite3/Drizzle.
 10. Add release signing and secure update documentation before installer work.
 
 ## Ordered Next Steps

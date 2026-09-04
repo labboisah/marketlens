@@ -2,17 +2,17 @@
 
 Authentication depends on the API boundary.
 
-## Client App to Business Server
+## Business App to Business Server
 
-The Client App authenticates against the Business Server local API.
+The Business App authenticates against the Business Server local API.
 
 Requirements:
 
 - Device pairing is required before login.
 - User authentication is handled by the Business Server.
-- Client App permissions come from the Business Server.
+- Business App permissions come from the Business Server.
 - All transaction writes must include an authenticated session.
-- Client Apps must never bypass the Business Server API or open SQLite.
+- Business Apps must never bypass the Business Server API or open SQLite.
 
 Recommended headers:
 

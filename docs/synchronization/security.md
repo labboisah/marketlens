@@ -138,14 +138,14 @@ must not become Platform authority for Business Server login.
 
 ```mermaid
 sequenceDiagram
-    participant Shop as Business Server
+    participant Server as Business Server
     participant Platform as Platform
     participant Audit as Platform Audit Log
 
-    Shop->>Platform: POST signed sync batch
+    Server->>Platform: POST signed sync batch
     Platform->>Platform: Verify device credential
     Platform->>Platform: Detect revoked or invalid credential
     Platform->>Audit: Record authentication failure
-    Platform-->>Shop: 401 or 403 with server_time
-    Shop->>Shop: Stop upload and show device authorization status
+    Platform-->>Server: 401 or 403 with server_time
+    Server->>Shop: Stop upload and show device authorization status
 ```

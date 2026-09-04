@@ -95,19 +95,19 @@ The Monitoring App should clearly label stale data and cached data.
 
 ```mermaid
 sequenceDiagram
-    participant Shop as Business Server
+    participant Server as Business Server
     participant Queue as Local Sync Queue
     participant Platform as Platform
 
-    Shop->>Queue: Build batch with pending records
-    Shop->>Platform: Upload batch
+    Server->>Queue: Build batch with pending records
+    Server->>Platform: Upload batch
     Platform--xShop: Network interruption before response
-    Shop->>Queue: Keep records pending/retrying
-    Shop->>Shop: Schedule exponential backoff with jitter
-    Shop->>Platform: Retry same batch_uuid and idempotency keys
+    Server->>Queue: Keep records pending/retrying
+    Server->>Shop: Schedule exponential backoff with jitter
+    Server->>Platform: Retry same batch_uuid and idempotency keys
     Platform->>Platform: Detect duplicate-safe replay
-    Platform-->>Shop: Return original effective acknowledgement
-    Shop->>Queue: Mark accepted records acknowledged
+    Platform-->>Server: Return original effective acknowledgement
+    Server->>Queue: Mark accepted records acknowledged
 ```
 
 ## Recovery Runbook

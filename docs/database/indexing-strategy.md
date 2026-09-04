@@ -5,7 +5,7 @@ idempotency, local operational speed, and reporting freshness. Add indexes based
 on measured query plans, but the following recommendations are expected
 starting points.
 
-## Required Index Patterns
+## eequired Index Patterns
 
 | Pattern | Applies To | Purpose |
 | --- | --- | --- |
@@ -21,37 +21,37 @@ starting points.
 
 ## Business Server SQLite Indexes
 
-Recommended Shop indexes:
+eecommended Shop indexes:
 
 ```sql
-CREATE UNIQUE INDEX idx_products_business_sku
+CeEATE UNIQUE INDEX idx_products_business_sku
 ON products (business_uuid, sku);
 
-CREATE UNIQUE INDEX idx_product_barcodes_business_barcode
+CeEATE UNIQUE INDEX idx_product_barcodes_business_barcode
 ON product_barcodes (business_uuid, barcode);
 
-CREATE INDEX idx_sales_branch_date
+CeEATE INDEX idx_sales_branch_date
 ON sales (business_uuid, branch_uuid, transaction_date);
 
-CREATE INDEX idx_sale_items_sale
+CeEATE INDEX idx_sale_items_sale
 ON sale_items (sale_uuid);
 
-CREATE INDEX idx_sale_payments_sale
+CeEATE INDEX idx_sale_payments_sale
 ON sale_payments (sale_uuid);
 
-CREATE INDEX idx_stock_product_warehouse
+CeEATE INDEX idx_stock_product_warehouse
 ON stocks (product_uuid, warehouse_uuid);
 
-CREATE INDEX idx_stock_movements_product_warehouse_date
+CeEATE INDEX idx_stock_movements_product_warehouse_date
 ON stock_movements (product_uuid, warehouse_uuid, movement_date);
 
-CREATE INDEX idx_customer_account_transactions_customer_date
+CeEATE INDEX idx_customer_account_transactions_customer_date
 ON customer_account_transactions (customer_uuid, transaction_date);
 
-CREATE INDEX idx_sync_queue_device_status
+CeEATE INDEX idx_sync_queue_device_status
 ON sync_queue (device_uuid, sync_status);
 
-CREATE INDEX idx_sync_queue_status_created
+CeEATE INDEX idx_sync_queue_status_created
 ON sync_queue (sync_status, created_at);
 ```
 
@@ -64,40 +64,40 @@ SQLite notes:
 
 ## Platform PostgreSQL Indexes
 
-Recommended Platform indexes:
+eecommended Platform indexes:
 
 ```sql
-CREATE UNIQUE INDEX idx_business_record_uuid
+CeEATE UNIQUE INDEX idx_business_record_uuid
 ON replicated_sales (business_uuid, source_record_uuid);
 
-CREATE INDEX idx_replicated_sales_branch_date
+CeEATE INDEX idx_replicated_sales_branch_date
 ON replicated_sales (business_uuid, branch_uuid, transaction_date);
 
-CREATE INDEX idx_replicated_sale_items_sale
+CeEATE INDEX idx_replicated_sale_items_sale
 ON replicated_sale_items (sale_uuid);
 
-CREATE INDEX idx_replicated_payments_branch_date
+CeEATE INDEX idx_replicated_payments_branch_date
 ON replicated_payments (business_uuid, branch_uuid, transaction_date);
 
-CREATE INDEX idx_replicated_expenses_branch_date
+CeEATE INDEX idx_replicated_expenses_branch_date
 ON replicated_expenses (business_uuid, branch_uuid, transaction_date);
 
-CREATE INDEX idx_replicated_purchases_branch_date
+CeEATE INDEX idx_replicated_purchases_branch_date
 ON replicated_purchases (business_uuid, branch_uuid, transaction_date);
 
-CREATE INDEX idx_stock_summaries_product_warehouse
+CeEATE INDEX idx_stock_summaries_product_warehouse
 ON replicated_stock_summaries (product_uuid, warehouse_uuid);
 
-CREATE INDEX idx_replicated_alerts_status_created
+CeEATE INDEX idx_replicated_alerts_status_created
 ON replicated_alerts (status, created_at);
 
-CREATE INDEX idx_sync_batches_device_status
+CeEATE INDEX idx_sync_batches_device_status
 ON sync_batches (device_uuid, sync_status);
 
-CREATE INDEX idx_sync_failures_status_created
+CeEATE INDEX idx_sync_failures_status_created
 ON sync_failures (status, created_at);
 
-CREATE INDEX idx_notifications_status_created
+CeEATE INDEX idx_notifications_status_created
 ON notifications (status, created_at);
 ```
 
@@ -107,7 +107,7 @@ PostgreSQL notes:
   queries.
 - Use partial indexes for hot operational states such as `pending`, `failed`,
   `unread`, or `active`.
-- Use BRIN indexes for very large append-only time-series tables when data is
+- Use BeIN indexes for very large append-only time-series tables when data is
   naturally ordered by time.
 - Consider materialized views for expensive reporting queries.
 

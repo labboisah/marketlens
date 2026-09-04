@@ -10,18 +10,28 @@ repository. Read and follow these rules before changing code or documentation.
   application or package, when that file exists.
 - Use [docs/architecture/system-overview.md](docs/architecture/system-overview.md)
   as the baseline system architecture reference.
-- The desktop applications are maintained as standalone sibling projects:
+- The Laravel Platform application lives at the repository root. The desktop applications are maintained as standalone sibling projects:
   `C:\laragon\www\business-server` for the Business Server/local server and
-  `C:\laragon\www\business-app` for the Client App. Do not recreate or maintain
+  `C:\laragon\www\business-app` for the Business App. Do not recreate or maintain
   duplicate desktop sources under `apps/desktop`.
 
+## Platform Root App
+
+The repository root is the MarketLens cloud Platform Laravel app. It is multi-tenant and owns cloud-side administration, reporting, subscription, device, synchronization, and Monitoring App API concerns.
+
+- The Platform does not operate business sales directly.
+- The Platform receives synchronized records from Business Servers.
+- The Platform authenticates Monitoring App users.
+- The Platform manages subscriptions, businesses, branches, and Business Server devices.
+- The Platform must not become the authentication authority for operational Business Server users.
+- Only limited operational-user profiles are synchronized for reporting.
 ## Architecture Rules
 
-- Preserve the four-application architecture: Platform, Business Server, Client App,
+- Preserve the four-application architecture: Platform, Business Server, Business App,
   and Monitoring App.
 - Keep the Business Server as the local source of truth for business operations.
-- Never let Client Apps write directly to SQLite.
-- Never let Client Apps bypass the Business Server local API for operational writes.
+- Never let Business Apps write directly to SQLite.
+- Never let Business Apps bypass the Business Server local API for operational writes.
 - Never let the Monitoring App connect directly to a Business Server.
 - Keep the Monitoring App dependent on synchronized Platform data only.
 - Maintain tenant and branch data isolation in storage, APIs, background jobs,
@@ -90,7 +100,7 @@ repository. Read and follow these rules before changing code or documentation.
 - Playwright.
 - Electron Forge.
 
-### Client App
+### Business App
 
 - Electron.
 - TypeScript.

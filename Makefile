@@ -16,8 +16,8 @@ help:
 install: platform-install desktop-install monitoring-install
 
 platform-install:
-	cd apps/platform && composer install --ignore-platform-req=ext-pcntl --ignore-platform-req=ext-posix
-	cd apps/platform && npm install
+	composer install --ignore-platform-req=ext-pcntl --ignore-platform-req=ext-posix
+	npm install
 
 desktop-install:
 	cd ../business-server && npm install
@@ -27,25 +27,25 @@ monitoring-install:
 	cd apps/monitoring-app && flutter pub get
 
 test:
-	cd apps/platform && php artisan test
+	php artisan test
 	cd ../business-server && npm test
 	cd ../business-app && npm test
 	cd apps/monitoring-app && flutter test
 
 lint:
-	cd apps/platform && vendor/bin/phpstan analyse
+	vendor/bin/phpstan analyse
 	cd ../business-server && npm run lint
 	cd ../business-app && npm run lint
 	cd apps/monitoring-app && flutter analyze
 
 format:
-	cd apps/platform && vendor/bin/pint
+	vendor/bin/pint
 	cd ../business-server && npm exec -- prettier . --write
 	cd ../business-app && npm exec -- prettier . --write
 	cd apps/monitoring-app && dart format .
 
 build:
-	cd apps/platform && npm run build
+	npm run build
 	cd ../business-server && npm run build
 	cd ../business-app && npm run build
 	cd apps/monitoring-app && flutter build apk --debug

@@ -48,9 +48,9 @@ The Business Server is installed on the main computer in each business or branch
 the local source of truth, runs the local API server, stores operational records
 locally, registers operational users, and synchronizes records to the Platform.
 
-### MarketLens Client App
+### MarketLens Business App
 
-The Client App is installed on cashier, storekeeper, manager, and accountant
+The Business App is installed on cashier, storekeeper, manager, and accountant
 computers. It connects to the Business Server over LAN or Wi-Fi, uses role-based
 interfaces, and never accesses the local SQLite database directly.
 
@@ -63,7 +63,7 @@ never connects directly to a Business Server.
 ## High-Level Data Flow
 
 ```text
-Client App
+Business App
     | Local LAN/Wi-Fi
     v
 Business Server
@@ -75,7 +75,7 @@ Platform
 Monitoring App
 ```
 
-Operational writes begin at the Business Server. Client Apps submit requests to the
+Operational writes begin at the Business Server. Business Apps submit requests to the
 Business Server local API. The Business Server validates permissions, applies business rules,
 persists records in SQLite, and later synchronizes eligible records to the
 Platform. The Monitoring App consumes Platform APIs only.
@@ -94,7 +94,7 @@ Electron, TypeScript, React, Vite, Tailwind CSS, shadcn/ui, Lucide Icons,
 Node.js LTS, Fastify, SQLite, better-sqlite3, Drizzle ORM, Zod, Socket.IO,
 Pino, Vitest, Playwright, and Electron Forge.
 
-### Client App
+### Business App
 
 Electron, TypeScript, React, Vite, Tailwind CSS, shadcn/ui, Lucide Icons,
 TanStack Query, Zustand, React Hook Form, Zod, TanStack Table, TanStack
@@ -111,26 +111,32 @@ Test.
 
 ```text
 laragon/www/
-|-- business-server/
+|-- business-server/          # standalone Business Server project
 |   |-- packages/
 |   `-- src/
-|-- business-app/
+|-- business-app/             # standalone Business App project
 |   |-- packages/
 |   `-- src/
-|-- marketlens/
-|-- apps/
-|   |-- platform/
-|   `-- monitoring-app/
-|-- docs/
-|-- infrastructure/
-`-- .github/
+`-- marketlens/               # Laravel Platform root app and repository docs
+    |-- app/
+    |-- bootstrap/
+    |-- config/
+    |-- database/
+    |-- public/
+    |-- resources/
+    |-- routes/
+    |-- tests/
+    |-- apps/
+    |   `-- monitoring-app/
+    |-- docs/
+    `-- .github/
 ```
 
 The desktop applications are maintained as sibling standalone projects outside
 the main `marketlens` repository:
 
 - `C:\laragon\www\business-server`: MarketLens Business Server / local server.
-- `C:\laragon\www\business-app`: MarketLens Client App.
+- `C:\laragon\www\business-app`: MarketLens Business App.
 
 Each desktop app keeps its own copied shared packages and dependency tree so it
 can be installed, tested, built, and packaged independently. Do not reintroduce
@@ -148,16 +154,14 @@ can be installed, tested, built, and packaged independently. Do not reintroduce
 
 ## Local Setup Overview
 
-Application scaffolding has not been implemented yet. The intended setup flow
-is:
+The Laravel Platform app now lives at the repository root. Typical Platform setup is:
 
-1. Clone the repository.
-2. Install dependencies for the specific application being developed.
-3. Copy documented example environment files to local, ignored environment
-   files.
-4. Start required infrastructure services.
-5. Run database migrations or local schema setup for the target application.
-6. Run the relevant test suite before opening a pull request.
+1. Clone the repository and enter `C:\laragon\www\marketlens`.
+2. Run `composer install` and `npm install`.
+3. Copy `.env.example` to `.env` and run `php artisan key:generate`.
+4. Start required PostgreSQL and Redis services.
+5. Run `php artisan migrate`.
+6. Run `php artisan test` before opening a pull request.
 
 ## Environment-File Policy
 

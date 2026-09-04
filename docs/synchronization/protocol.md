@@ -203,18 +203,18 @@ The Monitoring App must show:
 
 ```mermaid
 sequenceDiagram
-    participant Shop as Business Server
+    participant Server as Business Server
     participant Queue as Local Sync Queue
     participant Platform as Platform
     participant Monitor as Monitoring App
 
-    Shop->>Queue: Select pending records
-    Shop->>Shop: Build batch_uuid and signed envelope
-    Shop->>Platform: POST /api/v1/sync/batches
+    Server->>Queue: Select pending records
+    Server->>Shop: Build batch_uuid and signed envelope
+    Server->>Platform: POST /api/v1/sync/batches
     Platform->>Platform: Authenticate device and validate records
     Platform->>Platform: Store replicated records idempotently
-    Platform-->>Shop: accepted response
-    Shop->>Queue: Mark records accepted
+    Platform-->>Server: accepted response
+    Server->>Queue: Mark records accepted
     Platform-->>Monitor: Last sync timestamp available via API
 ```
 
@@ -222,15 +222,15 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Shop as Business Server
+    participant Server as Business Server
     participant Queue as Local Sync Queue
     participant Platform as Platform
 
-    Shop->>Queue: Select pending records
-    Shop->>Platform: Upload batch
+    Server->>Queue: Select pending records
+    Server->>Platform: Upload batch
     Platform->>Platform: Accept valid records
     Platform->>Platform: Reject invalid records
-    Platform-->>Shop: status partial with accepted and rejected arrays
-    Shop->>Queue: Mark accepted records acknowledged
-    Shop->>Queue: Keep rejected records with diagnostics
+    Platform-->>Server: status partial with accepted and rejected arrays
+    Server->>Queue: Mark accepted records acknowledged
+    Server->>Queue: Keep rejected records with diagnostics
 ```

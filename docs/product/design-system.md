@@ -5,7 +5,7 @@ calm under pressure, and easy for users with limited technical experience. The
 visual language should communicate business visibility, inventory control, sales
 intelligence, and operational confidence without becoming visually busy.
 
-This document is the shared source of truth for Platform, Business Server, Client App,
+This document is the shared source of truth for Platform, Business Server, Business App,
 and Monitoring App styling. Application components must use semantic tokens and
 shared primitives instead of scattering hard-coded colors through views.
 
@@ -219,7 +219,7 @@ Offline and synchronization indicators:
 
 - Always distinguish offline, connected, syncing, delayed, failed, and synced.
 - Include last successful sync time where available.
-- Business Server and Client App should show local server connection state in app
+- Business Server and Business App should show local server connection state in app
   chrome.
 - Monitoring App should show cached-data and last-sync status.
 
@@ -244,7 +244,7 @@ hero layouts inside authenticated product workflows.
 
 ## Desktop Styling
 
-Business Server and Client App use Electron, React, Tailwind CSS, shadcn/ui, and
+Business Server and Business App use Electron, React, Tailwind CSS, shadcn/ui, and
 Lucide Icons. The standalone apps live at `C:\laragon\www\business-server` and
 `C:\laragon\www\business-app`. Each app carries its own copied `packages/ui`
 package and must keep those tokens aligned with the Platform design system.
@@ -288,7 +288,7 @@ never imply a direct connection to a Business Server.
 
 - Meet strong contrast requirements for text, controls, charts, badges, and
   status indicators.
-- Support keyboard navigation in Platform, Business Server, and Client App.
+- Support keyboard navigation in Platform, Business Server, and Business App.
 - Provide visible focus states.
 - Use large touch targets for POS and mobile workflows. Prefer at least 44px
   target size where practical.

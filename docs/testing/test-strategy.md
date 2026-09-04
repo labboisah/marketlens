@@ -44,9 +44,9 @@ Required categories:
 - Socket.IO tests for connection and sync status events.
 - Electron smoke tests for secure BrowserWindow settings and preload exposure.
 
-## Client App
+## Business App
 
-Client App tests must prove role-based UI behavior and Business Server API dependence.
+Business App tests must prove role-based UI behavior and Business Server API dependence.
 
 Required categories:
 

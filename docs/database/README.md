@@ -11,13 +11,13 @@ MarketLens has two authoritative persistence systems:
   activation, monitoring access, reporting aggregates, and synchronized
   replicated data.
 
-Client Apps do not own databases. Monitoring Apps may cache read-only summaries
+Business Apps do not own databases. Monitoring Apps may cache read-only summaries
 for offline viewing, but they do not own operational records.
 
 ## Documents
 
 - [Platform Schema](platform-schema.md)
-- [Shop Schema](shop-schema.md)
+- [Business Server Schema](business-server-schema.md)
 - [Data Ownership](data-ownership.md)
 - [Indexing Strategy](indexing-strategy.md)
 - [Migration Strategy](migration-strategy.md)
@@ -75,12 +75,12 @@ Quantities should use sufficient precision for fractional units, for example
 
 ```mermaid
 erDiagram
-    SHOP_BRANCH ||--o{ SHOP_SALE : records
-    SHOP_BRANCH ||--o{ STOCK_MOVEMENT : owns
-    SHOP_SALE ||--o{ SALE_ITEM : contains
-    SHOP_SALE ||--o{ SALE_PAYMENT : receives
-    SHOP_CUSTOMER ||--o{ CUSTOMER_ACCOUNT_TRANSACTION : has
-    SHOP_APP ||--o{ SYNC_BATCH : uploads
+    BUSINESS_BRANCH ||--o{ BUSINESS_SALE : records
+    BUSINESS_BRANCH ||--o{ STOCK_MOVEMENT : owns
+    BUSINESS_SALE ||--o{ SALE_ITEM : contains
+    BUSINESS_SALE ||--o{ SALE_PAYMENT : receives
+    BUSINESS_CUSTOMER ||--o{ CUSTOMER_ACCOUNT_TRANSACTION : has
+    BUSINESS_SERVER ||--o{ SYNC_BATCH : uploads
     SYNC_BATCH ||--o{ PLATFORM_REPLICATED_SALE : acknowledges
     PLATFORM_BUSINESS ||--o{ PLATFORM_BRANCH : has
     PLATFORM_BUSINESS ||--o{ PLATFORM_SUBSCRIPTION : owns

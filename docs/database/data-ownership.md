@@ -6,7 +6,7 @@ keeps shops operational offline while still allowing secure remote visibility.
 ## Business Server Authoritative Data
 
 The Business Server is authoritative for branch operations. It owns the local SQLite
-database and validates all operational writes from Client Apps.
+database and validates all operational writes from Business Apps.
 
 Authoritative Business Server data:
 
@@ -27,7 +27,7 @@ Authoritative Business Server data:
 
 Rules:
 
-- Client Apps must submit writes through the Business Server API.
+- Business Apps must submit writes through the Business Server API.
 - Stock quantities must be derived from stock movements.
 - Customer debts and supplier balances must be derived from account ledger
   transactions.

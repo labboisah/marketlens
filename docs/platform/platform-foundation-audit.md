@@ -2,7 +2,7 @@
 
 Audit date: 2026-07-28
 
-This audit inspected `apps/platform` before implementing product features. It
+This audit inspected the repository root before implementing product features. It
 checks installed dependencies, versions, configuration status, missing
 components, security risks, architectural conflicts, required corrections, and
 test results.
@@ -13,11 +13,11 @@ test results.
   - `config/horizon.php`
   - `config/sanctum.php`
   - `config/reverb.php`
-- Added `apps/platform/compose.yaml` for local PostgreSQL, Redis, and Mailpit.
-- Aligned `apps/platform/.env.example` with the local Compose database and
+- Added `the repository root/compose.yaml` for local PostgreSQL, Redis, and Mailpit.
+- Aligned `.env.example` with the local Compose database and
   Mailpit ports.
 - Updated Platform README setup commands from `pnpm` to `npm`, matching
-  `apps/platform/package.json`.
+  `package.json`.
 - Added scheduler foundation for `horizon:snapshot`.
 - Made Horizon middleware and Reverb allowed origins environment-driven.
 - Added Platform currency convention keys to `config/marketlens.php`.
@@ -249,7 +249,7 @@ models use branch scope in the scaffold.
 
 - Documentation says Docker Compose is part of the development foundation; this
   was missing before the audit and has now been added for Platform.
-- Platform README previously used `pnpm` while `apps/platform/package.json` uses
+- Platform README previously used `pnpm` while `package.json` uses
   npm. This was corrected.
 - API docs required the standard envelope, while Platform resource scaffolds
   previously used an older response shape. This was corrected.
@@ -262,7 +262,7 @@ models use branch scope in the scaffold.
    intentionally add and configure a Predis fallback.
 2. Start PostgreSQL and Redis through Docker Compose, WSL, Laragon services, or
    another documented local service path.
-3. Run `npm install` in `apps/platform` and commit a frontend lockfile.
+3. Run `npm install` in the repository root and commit a frontend lockfile.
 4. Add the approved Lucide/Blade icon package or document the final Platform
    icon strategy.
 5. Add Horizon production authorization.

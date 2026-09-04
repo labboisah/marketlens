@@ -2,7 +2,7 @@
 
 This guide defines the shared development tooling for the MarketLens repository.
 It covers Windows and Ubuntu setup for the four-application architecture:
-Platform, Business Server, Client App, and Monitoring App.
+Platform, Business Server, Business App, and Monitoring App.
 
 Do not commit real environment files, passwords, Firebase credentials, API keys,
 private keys, production tokens, customer data, or local database files. Commit
@@ -303,7 +303,7 @@ Recommended extensions:
 
 ## Platform Tools
 
-The Platform is the cloud Laravel application in `apps/platform`.
+The Platform is the cloud Laravel application in the repository root.
 
 Required local tools:
 
@@ -343,7 +343,7 @@ MarketLens Platform development also expects:
 When the Platform is scaffolded:
 
 ```bash
-cd apps/platform
+cd C:\laragon\www\marketlens
 composer install
 npm install
 cp .env.example .env
@@ -364,7 +364,7 @@ laravel --version
 The desktop apps are standalone sibling projects beside the main repository:
 
 - `C:\laragon\www\business-server` contains the Business Server/local server.
-- `C:\laragon\www\business-app` contains the Client App.
+- `C:\laragon\www\business-app` contains the Business App.
 
 Each app includes its own copied `packages/` directory and dependency tree so
 the server and client can be installed, tested, built, and packaged separately.
@@ -482,7 +482,7 @@ only after the app package manifests exist.
 Copy example files to local ignored files:
 
 ```bash
-cp apps/platform/.env.example apps/platform/.env
+cp .env.example .env
 cp ../business-server/.env.example ../business-server/.env
 cp ../business-app/.env.example ../business-app/.env
 cp apps/monitoring-app/.env.example apps/monitoring-app/.env
@@ -491,7 +491,7 @@ cp apps/monitoring-app/.env.example apps/monitoring-app/.env
 PowerShell equivalent:
 
 ```powershell
-Copy-Item apps/platform/.env.example apps/platform/.env
+Copy-Item .env.example .env
 Copy-Item ..\business-server\.env.example ..\business-server\.env
 Copy-Item ..\business-app\.env.example ..\business-app\.env
 Copy-Item apps/monitoring-app/.env.example apps/monitoring-app/.env
@@ -533,7 +533,7 @@ Cloud Platform configuration:
   Horizon, and synchronization ingress.
 - Owns tenant-aware cloud APIs and monitoring API endpoints.
 
-Client App server-discovery configuration:
+Business App server-discovery configuration:
 
 - Points to a Business Server local API on LAN or Wi-Fi.
 - May use manual host and port values during development.
@@ -615,11 +615,11 @@ Monitoring API configuration:
 - On Windows, inspect ports with `netstat -ano`.
 - On Ubuntu, inspect ports with `ss -ltnp`.
 
-### Windows Firewall Blocking Client App Connections
+### Windows Firewall Blocking Business App Connections
 
 - Confirm the Business Server local API binds to the intended LAN interface.
 - Allow the Business Server executable or development server through Windows Defender
   Firewall for private networks.
-- Verify the Client App can reach `http://SHOP_HOST:SHOP_PORT/health` or the
+- Verify the Business App can reach `http://SHOP_HOST:SHOP_PORT/health` or the
   eventual health endpoint.
 - Keep firewall access restricted to trusted business networks.

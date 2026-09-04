@@ -25,7 +25,7 @@ Include:
 - Validate every external input at the application boundary.
 - Authorize every protected action based on role and business context.
 - Keep Business Server local APIs protected from unauthorized LAN clients.
-- Never allow Client Apps to write directly to SQLite.
+- Never allow Business Apps to write directly to SQLite.
 - Never allow the Monitoring App to connect directly to a Business Server.
 - Keep transactional records immutable and auditable.
 - Store secrets outside Git.

@@ -2,7 +2,7 @@
 
 Security in MarketLens is built around strict ownership boundaries: the Business Server
 owns local operations, the Platform owns cloud administration and monitoring
-authorization, Client Apps never open SQLite, and the Monitoring App connects
+authorization, Business Apps never open SQLite, and the Monitoring App connects
 only to the Platform.
 
 ## Required Gates
@@ -46,7 +46,7 @@ only to the Platform.
 - Business Server authenticates operational users locally.
 - Business Server remains usable for daily operations without the Platform.
 - Session tokens must expire and be revocable.
-- Client Apps authenticate through the Business Server; they must never authenticate by
+- Business Apps authenticate through the Business Server; they must never authenticate by
   reading local storage or SQLite.
 
 ### Platform User Authentication
@@ -60,7 +60,7 @@ only to the Platform.
 ### Device Authentication
 
 - Business Server devices require Platform activation before cloud sync.
-- Client App devices require Business Server pairing before local operational access.
+- Business App devices require Business Server pairing before local operational access.
 - Device credentials must be revocable.
 - Lost or stolen devices must be revoked promptly.
 
@@ -68,13 +68,13 @@ only to the Platform.
 
 - Sessions must expire.
 - Sensitive actions should require re-authentication where appropriate.
-- Business Server and Client App local sessions must be tied to authorized devices.
+- Business Server and Business App local sessions must be tied to authorized devices.
 - Monitoring App tokens must be stored with secure storage.
 
 ## Role-Based Permissions
 
 - Business Server enforces operational permissions for local users.
-- Client App UI may hide features, but the Business Server API must enforce permission
+- Business App UI may hide features, but the Business Server API must enforce permission
   checks server-side.
 - Platform enforces owner, support, and monitoring permissions.
 - Permission checks require automated tests for critical workflows.
@@ -102,7 +102,7 @@ Audit logs should be append-only and protected from ordinary user edits.
 
 ## Electron Security
 
-Business Server and Client App must use:
+Business Server and Business App must use:
 
 - `contextIsolation: true`
 - `nodeIntegration: false`

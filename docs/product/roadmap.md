@@ -111,7 +111,7 @@ Build the Business Server as the local source of truth for daily retail operatio
 - Backup and recovery guide.
 - Local reports guide.
 
-## Milestone 3: Local Client App
+## Milestone 3: Local Business App
 
 ### Goal
 
@@ -142,8 +142,8 @@ Provide role-based workstations that connect to the Business Server over LAN or 
 
 ### Acceptance Criteria
 
-- Client App never opens SQLite.
-- Client App only connects to an authorized Business Server.
+- Business App never opens SQLite.
+- Business App only connects to an authorized Business Server.
 - POS transaction status remains pending until confirmed by Business Server.
 - Role navigation follows Business Server permissions.
 - Receipt printing uses controlled preload APIs.
@@ -160,7 +160,7 @@ Provide role-based workstations that connect to the Business Server over LAN or 
 
 ### Documentation Required
 
-- Client App setup guide.
+- Business App setup guide.
 - Pairing and manual server configuration guide.
 - Receipt printing guide.
 - Role navigation guide.
@@ -336,7 +336,7 @@ Validate MarketLens with real pilot businesses before commercial launch.
 ### Dependencies
 
 - Business operations.
-- Client App POS workflows.
+- Business App POS workflows.
 - Synchronization.
 - Platform reporting.
 - Monitoring App MVP.

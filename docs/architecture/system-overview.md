@@ -8,9 +8,6 @@ data.
 ## Application Flow
 
 ```text
-Client App
-    | Local LAN/Wi-Fi
-    v
 Business Server
     | Internet synchronization
     v
@@ -20,13 +17,13 @@ Platform
 Monitoring App
 ```
 
-## Client App
+## Business App
 
-The Client App runs on cashier, storekeeper, manager, and accountant computers.
+The Business App runs on cashier, storekeeper, manager, and accountant computers.
 It provides role-based interfaces for daily work and communicates with the Shop
 App through the local network.
 
-The Client App does not directly access SQLite. It sends authenticated requests
+The Business App does not directly access SQLite. It sends authenticated requests
 to the Business Server local API, receives validated responses, and listens for
 real-time updates through the approved local communication layer.
 
@@ -80,13 +77,13 @@ remote business information using synchronized Platform data.
 
 - Operational writes are owned locally by the Business Server.
 - Cloud reporting and remote monitoring are owned by the Platform.
-- Client Apps submit local operational requests; they do not own persistence.
+- Business Apps submit local operational requests; they do not own persistence.
 - Monitoring App consumes remote reporting data; it does not own operational
   writes.
 
 ## Security Boundaries
 
-- Client App to Business Server: local LAN or Wi-Fi, authenticated and authorized.
+- Business App to Business Server: local LAN or Wi-Fi, authenticated and authorized.
 - Business Server to Platform: internet synchronization, authenticated and encrypted.
 - Monitoring App to Platform: secure cloud API, authenticated and authorized.
 

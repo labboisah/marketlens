@@ -103,18 +103,18 @@ codes.
 
 ```mermaid
 sequenceDiagram
-    participant Shop as Business Server
+    participant Server as Business Server
     participant Queue as Local Sync Queue
     participant Platform as Platform
     participant Manager as Manager Review
 
-    Shop->>Platform: Upload product update
+    Server->>Platform: Upload product update
     Platform->>Platform: Detect master-data conflict
-    Platform-->>Shop: conflicts array with resolution hint
-    Shop->>Queue: Keep record in conflict state
-    Shop-->>Manager: Show review-required status
-    Manager->>Shop: Resolve locally or create correction
-    Shop->>Platform: Upload resolved version or correction record
+    Platform-->>Server: conflicts array with resolution hint
+    Server->>Queue: Keep record in conflict state
+    Server-->>Manager: Show review-required status
+    Manager->>Server: Resolve locally or create correction
+    Server->>Platform: Upload resolved version or correction record
 ```
 
 ## Audit Requirements
