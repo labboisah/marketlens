@@ -119,6 +119,7 @@ class PlatformShell
             ['label' => 'Cashier & Staff', 'href' => route('platform.staff-performance'), 'section' => 'Monitoring', 'feature' => 'base', 'icon' => 'user-check', 'permission' => 'view-cashiers'],
             ['label' => 'Branch Performance', 'href' => route('platform.branch-monitoring'), 'section' => 'Monitoring', 'feature' => 'base', 'icon' => 'bar-chart-3', 'permission' => 'view-branches'],
             ['label' => 'Branches', 'href' => route('platform.branches'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'building-2', 'permission' => 'view-branches'],
+            ['label' => 'Backups & Restore', 'href' => route('platform.restore-points'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'database', 'permission' => 'backups.view'],
             ['label' => 'Devices', 'href' => route('platform.devices'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'monitor', 'permission' => 'view-devices'],
             ['label' => 'Synchronization', 'href' => route('platform.synchronization'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'refresh-cw', 'permission' => 'view-synchronization'],
             ['label' => 'Alerts', 'href' => route('platform.notifications'), 'section' => 'Control', 'feature' => 'security alerts', 'icon' => 'bell-ring', 'permission' => 'view-alerts'],

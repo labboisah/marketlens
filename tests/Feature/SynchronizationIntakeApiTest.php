@@ -11,6 +11,7 @@ use App\Domain\Synchronization\Jobs\ProcessSyncBatch;
 use App\Domain\Synchronization\Models\OperationalUserProfile;
 use App\Domain\Synchronization\Models\SyncBatch;
 use App\Domain\Synchronization\Models\SyncRecord;
+use App\Domain\Synchronization\Services\SynchronizedOperationalData;
 use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Models\Business;
 use App\Enums\BranchStatus;
@@ -253,6 +254,63 @@ it('supports partial success when one record is invalid', function (): void {
         ->assertJsonCount(1, 'data.rejected');
 });
 
+it('accepts retained operational service ownership stock and workstation entities', function (): void {
+    Queue::fake();
+    [$business, $branch, $device, $credential] = syncIntakeFixture();
+    $entities = [
+        'product', 'sale_stock_allocation', 'service_order_item', 'service_order',
+        'service_payment', 'service_revenue_allocation', 'service_revenue_share_rule',
+        'service_staff_assignment', 'service_work_bill_receipt', 'service_workstation_receipt',
+        'service_workstation_request', 'share_class', 'share_ownership_transaction',
+        'shareholder', 'staff_earning_transaction', 'stock_reconciliation',
+        'inventory_stock', 'supplier', 'workstation_bill', 'workstation_checkout',
+    ];
+    $records = array_map(fn (string $entity): array => syncRecord($entity), $entities);
+    $body = json_encode(syncEnvelope($business, $branch, $device, $records), JSON_THROW_ON_ERROR);
+
+    signedSyncRequest($this, 'POST', route('api.v1.sync.batches.store'), $credential, $body)
+        ->assertOk()
+        ->assertJsonPath('data.status', 'accepted')
+        ->assertJsonCount(count($entities), 'data.accepted')
+        ->assertJsonPath('data.rejected', []);
+
+    expect(SyncRecord::query()->whereIn('entity', $entities)->count())->toBe(count($entities));
+});
+
+it('rejects sensitive fields and mismatched uuids in generic operational records', function (): void {
+    Queue::fake();
+    [$business, $branch, $device, $credential] = syncIntakeFixture();
+    $records = [
+        syncRecord('supplier', ['payload' => ['password' => 'must-not-sync']]),
+        syncRecord('service_order', ['payload' => ['uuid' => (string) Str::uuid()]]),
+    ];
+    $body = json_encode(syncEnvelope($business, $branch, $device, $records), JSON_THROW_ON_ERROR);
+
+    signedSyncRequest($this, 'POST', route('api.v1.sync.batches.store'), $credential, $body)
+        ->assertOk()
+        ->assertJsonPath('data.status', 'rejected')
+        ->assertJsonPath('data.rejected.0.code', 'SENSITIVE_FIELD_REJECTED')
+        ->assertJsonPath('data.rejected.1.code', 'UUID_MISMATCH');
+
+    expect(SyncRecord::query()->whereIn('record_uuid', array_column($records, 'record_uuid'))->exists())->toBeFalse();
+});
+it('accepts the same source uuid for different operational entity types', function (): void {
+    Queue::fake();
+    [$business, $branch, $device, $credential] = syncIntakeFixture();
+    $sharedUuid = (string) Str::uuid();
+    $records = [
+        syncRecord('service_workstation_receipt', ['record_uuid' => $sharedUuid]),
+        syncRecord('workstation_checkout', ['record_uuid' => $sharedUuid]),
+    ];
+    $body = json_encode(syncEnvelope($business, $branch, $device, $records), JSON_THROW_ON_ERROR);
+
+    signedSyncRequest($this, 'POST', route('api.v1.sync.batches.store'), $credential, $body)
+        ->assertOk()
+        ->assertJsonPath('data.status', 'accepted')
+        ->assertJsonCount(2, 'data.accepted');
+
+    expect(SyncRecord::query()->where('record_uuid', $sharedUuid)->count())->toBe(2);
+});
 it('prevents idempotency key reuse with different payloads', function (): void {
     Queue::fake();
     [$business, $branch, $device, $credential] = syncIntakeFixture();
@@ -432,4 +490,54 @@ it('connects replicated staff profiles to cashier and staff reporting summaries'
         ->and($profile->activitySummaries()->first()?->sales_count)->toBe(3)
         ->and(DashboardCashierException::query()->first()?->operationalUserProfile?->uuid)->toBe($userUuid)
         ->and(StaffActivitySummary::query()->first()?->operationalUserProfile?->uuid)->toBe($userUuid);
+});
+it('projects synchronized service and ownership records into owner monitoring data', function (): void {
+    Queue::fake();
+    [$business, $branch, $device, $credential] = syncIntakeFixture();
+
+    $record = function (string $entity, array $payload): array {
+        $record = syncRecord($entity);
+        $record['payload'] = ['uuid' => $record['record_uuid'], ...$payload];
+
+        return $record;
+    };
+
+    $serviceUuid = (string) Str::uuid();
+    $shareholderUuid = (string) Str::uuid();
+    $shareClassUuid = (string) Str::uuid();
+    $orderUuid = (string) Str::uuid();
+
+    $records = [
+        syncRecord('service', [
+            'record_uuid' => $serviceUuid,
+            'payload' => ['uuid' => $serviceUuid, 'name' => 'Consultation', 'code' => 'CONSULT', 'active' => '1'],
+        ]),
+        $record('service_order', ['order_number' => 'SVC-OWNER-1', 'status' => 'completed']),
+        $record('service_payment', ['order_uuid' => $orderUuid, 'amount' => '5000', 'payment_method' => 'cash']),
+        syncRecord('shareholder', [
+            'record_uuid' => $shareholderUuid,
+            'payload' => ['uuid' => $shareholderUuid, 'name' => 'Owner One', 'status' => 'active'],
+        ]),
+        syncRecord('share_class', [
+            'record_uuid' => $shareClassUuid,
+            'payload' => ['uuid' => $shareClassUuid, 'name' => 'Ordinary'],
+        ]),
+        $record('share_ownership_transaction', [
+            'transaction_type' => 'issue',
+            'share_class_uuid' => $shareClassUuid,
+            'to_shareholder_uuid' => $shareholderUuid,
+            'units' => '25',
+        ]),
+    ];
+
+    $body = json_encode(syncEnvelope($business, $branch, $device, $records), JSON_THROW_ON_ERROR);
+    signedSyncRequest($this, 'POST', route('api.v1.sync.batches.store'), $credential, $body)
+        ->assertOk()
+        ->assertJsonCount(count($records), 'data.accepted');
+
+    $projection = app(SynchronizedOperationalData::class);
+
+    expect($projection->services($business->id, $branch->id)['summary']['services_count'])->toBe(1)
+        ->and($projection->shareholders($business->id, $branch->id)['summary']['shareholders_count'])->toBe(1)
+        ->and($projection->shareholders($business->id, $branch->id)['summary']['units_held'])->toBe(25.0);
 });

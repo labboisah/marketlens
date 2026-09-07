@@ -22,6 +22,19 @@
   </div>
 
   <nav class="flex flex-1 flex-col gap-5 overflow-y-auto px-3 py-4" aria-label="Primary">
+    <div>
+      <p class="px-3 text-xs font-semibold uppercase tracking-wide text-muted">Downloads</p>
+      <div class="mt-2 flex flex-col gap-1">
+        <a href="{{ route('public.desktop-download', ['application' => 'business-server']) }}" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted hover:bg-surface-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary" title="Download Business Server for Windows (x64)">
+          <x-app.icon name="monitor" class="h-4 w-4 shrink-0" />
+          <span>Business Server</span>
+        </a>
+        <a href="{{ route('public.desktop-download', ['application' => 'business-app']) }}" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted hover:bg-surface-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary" title="Download Business App for Windows (x64)">
+          <x-app.icon name="monitor-smartphone" class="h-4 w-4 shrink-0" />
+          <span>Business App</span>
+        </a>
+      </div>
+    </div>
     @foreach ($items as $section => $sectionItems)
       <div>
         <p class="px-3 text-xs font-semibold uppercase tracking-wide text-muted">{{ $section }}</p>

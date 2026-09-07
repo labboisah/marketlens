@@ -75,6 +75,19 @@ records.
 | `idempotency_key` | Yes | Unique operation key. Replays must be safe. |
 | `occurred_at` | Yes | Business event time. |
 | `payload` | Yes | Entity-specific payload. |
+### Supported operational records
+
+In addition to specialized sales, purchasing, inventory-summary, reporting, and
+operational-user processors, protocol `1.0` accepts tenant-scoped replicated
+records for products, sale stock allocations, services and revenue sharing,
+shareholders and share ownership, staff earnings, stock reconciliations,
+suppliers, receipts, workstation requests, bills, and checkouts.
+
+Generic operational payloads are limited to 1 MiB, must use the same `uuid` as
+`record_uuid` when a payload UUID is present, and must not contain passwords,
+PINs, access or refresh tokens, device credentials, or secrets. These records
+remain operationally authoritative on the Business Server; the Platform copy is
+for cloud reporting, monitoring, and recovery visibility.
 
 ## Response Format
 

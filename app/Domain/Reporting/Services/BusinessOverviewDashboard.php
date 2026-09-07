@@ -28,7 +28,15 @@ class BusinessOverviewDashboard
             $range['end']->toDateString(),
         ]);
 
-        return Cache::remember($cacheKey, now()->addMinutes(5), fn (): array => $this->freshData($businessId, $branchId, $range));
+        $data = Cache::remember($cacheKey, now()->addMinutes(5), fn (): array => $this->freshData($businessId, $branchId, $range));
+
+        foreach (['last_successful_sync_at', 'summarized_at'] as $key) {
+            if (is_string($data['freshness'][$key] ?? null)) {
+                $data['freshness'][$key] = CarbonImmutable::parse($data['freshness'][$key]);
+            }
+        }
+
+        return $data;
     }
 
     /**
@@ -53,8 +61,8 @@ class BusinessOverviewDashboard
             'today' => $this->metrics(collect($todaySummary ? [$todaySummary] : [])),
             'comparisons' => $this->comparisons($businessId, $branchId),
             'freshness' => [
-                'last_successful_sync_at' => $latestSummary?->last_successful_sync_at,
-                'summarized_at' => $latestSummary?->summarized_at,
+                'last_successful_sync_at' => $latestSummary?->last_successful_sync_at?->toISOString(),
+                'summarized_at' => $latestSummary?->summarized_at?->toISOString(),
                 'is_stale' => ! $latestSummary?->last_successful_sync_at || $latestSummary->last_successful_sync_at->lt(now()->subHours(2)),
             ],
             'salesTrend' => $this->salesTrend($summaries),

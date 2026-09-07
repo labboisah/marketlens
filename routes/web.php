@@ -62,6 +62,8 @@ Route::get('/features', FeaturesPage::class)->name('public.features');
 Route::get('/business-types', BusinessTypesPage::class)->name('public.business-types');
 Route::get('/how-it-works', HowItWorksPage::class)->name('public.how-it-works');
 Route::get('/pricing', PricingPage::class)->name('public.pricing');
+Route::get('/downloads/{application}', \App\Http\Controllers\Platform\DesktopDownloadController::class)
+    ->whereIn('application', ['business-server', 'business-app'])->name('public.desktop-download');
 Route::get('/legal', LegalIndexPage::class)->name('legal.index');
 Route::middleware(['auth', 'verified', 'account.active'])->get('/legal/acceptance', LegalAcceptancePage::class)->name('legal.acceptance');
 Route::get('/legal/{slug}', LegalDocumentPage::class)->name('legal.show');
@@ -102,6 +104,7 @@ Route::middleware(['auth', 'verified', 'account.active', 'legal.accepted', 'supe
     ->name('super-admin.')
     ->group(function (): void {
         Route::get('/', SuperAdminDashboardPage::class)->name('dashboard');
+        Route::get('/restore-points', \App\Livewire\Platform\Backups\RestorePointManagementPage::class)->name('restore-points');
         Route::get('/application-versions', ApplicationVersionManagementPage::class)->name('application-versions');
         Route::get('/plans', BillingPlansPage::class)->name('plans');
         Route::get('/subscription-requests', BillingSubscriptionsPage::class)->name('subscription-requests');
@@ -119,6 +122,7 @@ Route::middleware(['auth', 'verified', 'account.active', 'legal.accepted', 'onbo
     Route::get('/staff/performance', StaffPerformanceMonitoringPage::class)->name('platform.staff-performance');
     Route::get('/branches/monitoring', MultiBranchMonitoringPage::class)->name('platform.branch-monitoring');
     Route::get('/branches', BranchManagementPage::class)->name('platform.branches');
+    Route::get('/restore-points', \App\Livewire\Platform\Backups\RestorePointManagementPage::class)->name('platform.restore-points');
     Route::get('/devices', DeviceActivationPage::class)->name('platform.devices');
     Route::get('/synchronization', SynchronizationMonitoringPage::class)->name('platform.synchronization');
     Route::get('/alerts', NotificationCentrePage::class)->name('platform.notifications');
@@ -139,3 +143,5 @@ Route::middleware(['auth', 'verified', 'account.active', 'legal.accepted', 'onbo
 
 
 
+
+Route::get('/restore-points/{uuid}/recovery-copy', \App\Http\Controllers\Platform\RecoveryCopyDownloadController::class)->middleware(['auth', 'verified', 'account.active', 'legal.accepted', 'platform.context'])->name('platform.restore-points.download');

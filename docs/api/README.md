@@ -146,3 +146,18 @@ Shared TypeScript contracts live in:
 
 Contracts use Zod schemas as runtime validators and inferred TypeScript types.
 Breaking changes require versioning and documentation.
+
+## Business Server Subscription Refresh
+
+An activated Business Server refreshes its subscription through `GET /api/v1/device/status` using its bearer device credential. In addition to device heartbeat fields, `data` includes:
+
+- `business_uuid` and `branch_uuid` for local identity validation.
+- `subscription_state` and `subscription_plan` (`uuid`, `name`, `billing_interval`, `starts_at`, `ends_at`).
+- `plan_features`, `enabled_modules`, and `branch_settings` for the current subscription.
+- `feature_catalog`, containing each active-plan feature with an `available` boolean so the local UI can show both included and unavailable features.
+
+The Business Server caches a successful response for offline use. This is a backward-compatible extension of the existing device-status response; credentials are never returned by this endpoint.
+
+### Disaster recovery credential rotation
+
+`POST /api/v1/device/restore-points/rotate-credential` accepts `{ "credential": "<96 lowercase hexadecimal characters>" }` with the currently valid device bearer credential. It rotates only that authenticated device, rechecks the credential under a row lock, and audits the action. Retrying with the new credential and the same body is idempotent, covering a lost success response. The old credential is invalid after rotation. Recovered Business Servers retain their synchronization hold until rotation and local administrator confirmation complete.

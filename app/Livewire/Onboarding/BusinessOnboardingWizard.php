@@ -45,7 +45,6 @@ class BusinessOnboardingWizard extends Component
         'address' => '',
         'state' => '',
         'local_government_area' => '',
-        'is_head_office' => true,
     ];
 
     public array $plan = [
@@ -188,7 +187,6 @@ class BusinessOnboardingWizard extends Component
                 'branch.address' => ['required', 'string', 'max:500'],
                 'branch.state' => ['required', 'string', 'max:120'],
                 'branch.local_government_area' => ['required', 'string', 'max:120'],
-                'branch.is_head_office' => ['boolean'],
             ],
             3 => [
                 'plan.plan_id' => ['required', 'integer', Rule::exists('plans', 'id')->where('is_active', true)],

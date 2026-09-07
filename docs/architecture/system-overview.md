@@ -89,3 +89,10 @@ remote business information using synchronized Platform data.
 
 Tenant isolation, branch isolation, strict validation, and role-based
 authorization are required across all boundaries.
+
+
+## Recovery and desktop release trust
+
+The Business Server owns local backup, restore and recovery execution. Platform restore requests require local confirmation; the Platform stores encrypted copies and authorizes tenant/branch-scoped access. Replacement recovery uses an independently stored encrypted kit and retains the original server identity, disables historical operational access and pauses synchronization pending reconciliation and device credential rotation. The original server must be retired. Operational authentication remains local.
+
+Desktop release manifests/catalog downloads remain Platform responsibilities. Packaged desktop updates verify the artifact checksum and a valid signature against publisher certificates pinned at build time. Business Server upgrades drain local work before taking their pre-update snapshot. See [the remediation report](../audits/2026-09-07-production-remediation.md) for verification and deployment gates.

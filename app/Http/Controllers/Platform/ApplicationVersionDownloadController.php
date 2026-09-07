@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Platform;
 
 use App\Domain\Versions\Models\ApplicationVersion;
+use App\Enums\ApplicationVersionStatus;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -11,6 +12,7 @@ class ApplicationVersionDownloadController extends Controller
 {
     public function __invoke(ApplicationVersion $version): StreamedResponse
     {
+        abort_unless($version->status === ApplicationVersionStatus::Published && $version->is_active && (! $version->released_at || $version->released_at->lte(now())), 404);
         abort_unless($version->hasDownload(), 404);
         abort_unless(Storage::disk($version->download_disk)->exists($version->download_path), 404);
 

@@ -64,16 +64,16 @@ class ApplicationVersionManagementPage extends Component
             'application' => ['required', Rule::in(['shop_app', 'client_app'])],
             'platform' => ['nullable', 'string', 'max:80'],
             'architecture' => ['nullable', 'string', 'max:80'],
-            'version' => ['required', 'string', 'max:80'],
+            'version' => ['required', 'string', 'max:80', 'regex:/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/'],
             'releaseChannel' => ['required', Rule::in(['stable', 'beta', 'internal'])],
             'status' => ['required', Rule::enum(ApplicationVersionStatus::class)],
             'releaseNotes' => ['nullable', 'string', 'max:10000'],
-            'minimumSupportedVersion' => ['nullable', 'string', 'max:80'],
+            'minimumSupportedVersion' => ['nullable', 'string', 'max:80', 'regex:/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/'],
             'recommendedVersion' => ['nullable', 'string', 'max:80'],
             'mandatoryUpdate' => ['boolean'],
             'isActive' => ['boolean'],
             'releasedAt' => ['nullable', 'date'],
-            'download' => ['nullable', 'file', 'max:204800'],
+            'download' => ['required_if:status,published', 'nullable', 'file', 'max:768000'],
         ]);
 
         $versions->createVersion(auth()->user(), [

@@ -2,17 +2,22 @@
 
 use App\Domain\Billing\Models\Plan;
 use App\Domain\Billing\Models\Subscription;
+use App\Domain\Branches\Services\MultiBranchMonitoringService;
+use App\Domain\Reporting\Jobs\RefreshDashboardSummaries;
 use App\Domain\Reporting\Models\BusinessDashboardDailySummary;
 use App\Domain\Reporting\Models\DashboardBranchSummary;
 use App\Domain\Reporting\Models\DashboardBusinessActivity;
 use App\Domain\Reporting\Models\DashboardCashierException;
 use App\Domain\Reporting\Models\DashboardProductSummary;
 use App\Domain\Reporting\Services\BusinessOverviewDashboard;
+use App\Domain\Sales\Models\ReplicatedSale;
+use App\Domain\Sales\Models\ReplicatedSalePayment;
 use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Models\Business;
 use App\Enums\AccountStatus;
 use App\Enums\SubscriptionStatus;
 use App\Models\User;
+use Carbon\CarbonInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -213,4 +218,83 @@ it('caches dashboard summary reads by business branch and date range', function 
 
     expect($first['metrics']['net_sales_minor'])->toBe(100000)
         ->and($second['metrics']['net_sales_minor'])->toBe(100000);
+});
+it('stores dashboard freshness timestamps as cache-safe strings', function (): void {
+    Cache::flush();
+
+    $user = overviewDashboardUser();
+    [$business, $branch] = overviewDashboardBusiness($user);
+
+    BusinessDashboardDailySummary::query()->create([
+        'business_id' => $business->id,
+        'branch_id' => $branch->id,
+        'summary_date' => today(),
+        'last_successful_sync_at' => now(),
+        'summarized_at' => now(),
+    ]);
+
+    $data = app(BusinessOverviewDashboard::class)->data($business->id, $branch->id, 'today');
+    $cacheKey = implode(':', [
+        'business-overview-dashboard',
+        $business->id,
+        $branch->id,
+        'today',
+        today()->toDateString(),
+        today()->toDateString(),
+    ]);
+    $cached = Cache::get($cacheKey);
+
+    expect($data['freshness']['last_successful_sync_at'])->toBeInstanceOf(CarbonInterface::class)
+        ->and($cached['freshness']['last_successful_sync_at'])->toBeString()
+        ->and($cached['freshness']['summarized_at'])->toBeString();
+});
+it('derives overview and branch performance summaries from replicated operational records', function (): void {
+    Cache::flush();
+    $user = overviewDashboardUser();
+    [$business, $branch] = overviewDashboardBusiness($user);
+    $saleUuid = (string) Str::uuid();
+
+    ReplicatedSale::query()->create([
+        'business_id' => $business->id,
+        'branch_id' => $branch->id,
+        'uuid' => $saleUuid,
+        'sale_number' => 'SALE-DERIVED-1',
+        'status' => 'completed',
+        'payment_status' => 'paid',
+        'sold_at' => now(),
+        'subtotal_minor' => 125000,
+        'total_minor' => 120000,
+        'cost_minor' => 70000,
+        'gross_profit_minor' => 50000,
+        'source_idempotency_key' => 'sale-derived-1',
+        'source_occurred_at' => now(),
+    ]);
+    ReplicatedSalePayment::query()->create([
+        'business_id' => $business->id,
+        'branch_id' => $branch->id,
+        'uuid' => (string) Str::uuid(),
+        'sale_uuid' => $saleUuid,
+        'method' => 'bank_transfer',
+        'status' => 'completed',
+        'amount_minor' => 120000,
+        'paid_at' => now(),
+        'source_idempotency_key' => 'payment-derived-1',
+        'source_occurred_at' => now(),
+    ]);
+
+    (new RefreshDashboardSummaries($business->id, $branch->id, today()->toDateString()))->handle();
+
+    $overview = app(BusinessOverviewDashboard::class)->data($business->id, $branch->id, 'today');
+    $branchData = app(MultiBranchMonitoringService::class)->data(
+        $business->id,
+        app(MultiBranchMonitoringService::class)->range('today'),
+        'net_sales_minor',
+    );
+
+    expect($overview['metrics']['net_sales_minor'])->toBe(120000)
+        ->and($overview['metrics']['bank_transfer_payments_minor'])->toBe(120000)
+        ->and($overview['metrics']['completed_sales_count'])->toBe(1)
+        ->and($branchData['selectedBranch']['net_sales_minor'])->toBe(120000)
+        ->and($branchData['selectedBranch']['gross_profit_minor'])->toBe(50000)
+        ->and($branchData['selectedBranch']['has_data'])->toBeTrue();
 });

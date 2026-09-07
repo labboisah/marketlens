@@ -2,6 +2,7 @@
   <section class="rounded-lg border border-border bg-surface p-5">
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
+
         <p class="text-sm font-semibold uppercase text-muted">Release operations</p>
         <h1 class="mt-2 text-2xl font-bold">Application-Version Management</h1>
         <p class="mt-2 max-w-3xl text-sm text-muted">Manage Business Server and Business App releases, rollout channels, minimum supported versions, and secure signed downloads.</p>
@@ -9,6 +10,12 @@
       <a href="{{ route('super-admin.dashboard', ['module' => 'application-versions']) }}" class="rounded-md border border-border px-3 py-2 text-sm font-semibold hover:border-primary/50">Dashboard module</a>
     </div>
   </section>
+
+  <div class="mb-4 rounded border p-4 text-sm">
+    <p>Desktop updates: upload the Windows .exe installer, select Windows and its exact architecture (x64, arm64, or ia32), and publish an active release with a higher version. ZIP files are not offered to desktop updaters.</p>
+    <p>Business Server manifest: <code>{{ route('api.v1.releases.manifest', ['application' => 'business-server']) }}</code></p>
+    <p>Business App manifest: <code>{{ route('api.v1.releases.manifest', ['application' => 'business-app']) }}</code></p>
+  </div>
 
   <section class="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
     <form wire:submit="createVersion" class="rounded-lg border border-border bg-surface p-4">

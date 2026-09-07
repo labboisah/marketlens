@@ -8,6 +8,7 @@ use App\Domain\Synchronization\Services\EntityProcessors\CashierShiftProcessor;
 use App\Domain\Synchronization\Services\EntityProcessors\CustomerDebtSummaryProcessor;
 use App\Domain\Synchronization\Services\EntityProcessors\DailySalesSummaryProcessor;
 use App\Domain\Synchronization\Services\EntityProcessors\ExpenseProcessor;
+use App\Domain\Synchronization\Services\EntityProcessors\OperationalRecordProcessor;
 use App\Domain\Synchronization\Services\EntityProcessors\OperationalUserProfileProcessor;
 use App\Domain\Synchronization\Services\EntityProcessors\PurchaseItemProcessor;
 use App\Domain\Synchronization\Services\EntityProcessors\PurchasePaymentProcessor;
@@ -46,6 +47,29 @@ class SyncEntityProcessorRegistry
         'security_alert' => SecurityAlertProcessor::class,
         'daily_sales_summary' => DailySalesSummaryProcessor::class,
         'branch_performance_summary' => BranchPerformanceSummaryProcessor::class,
+        'product' => OperationalRecordProcessor::class,
+        'service_category' => OperationalRecordProcessor::class,
+        'service' => OperationalRecordProcessor::class,
+        'service_price' => OperationalRecordProcessor::class,
+        'sale_stock_allocation' => OperationalRecordProcessor::class,
+        'service_order_item' => OperationalRecordProcessor::class,
+        'service_order' => OperationalRecordProcessor::class,
+        'service_payment' => OperationalRecordProcessor::class,
+        'service_revenue_allocation' => OperationalRecordProcessor::class,
+        'service_revenue_share_rule' => OperationalRecordProcessor::class,
+        'service_staff_assignment' => OperationalRecordProcessor::class,
+        'service_work_bill_receipt' => OperationalRecordProcessor::class,
+        'service_workstation_receipt' => OperationalRecordProcessor::class,
+        'service_workstation_request' => OperationalRecordProcessor::class,
+        'share_class' => OperationalRecordProcessor::class,
+        'share_ownership_transaction' => OperationalRecordProcessor::class,
+        'shareholder' => OperationalRecordProcessor::class,
+        'staff_earning_transaction' => OperationalRecordProcessor::class,
+        'stock_reconciliation' => OperationalRecordProcessor::class,
+        'inventory_stock' => OperationalRecordProcessor::class,
+        'supplier' => OperationalRecordProcessor::class,
+        'workstation_bill' => OperationalRecordProcessor::class,
+        'workstation_checkout' => OperationalRecordProcessor::class,
     ];
 
     public function supports(?string $entity): bool

@@ -1,13 +1,13 @@
 <?php
 
+use App\Exceptions\ModuleUnavailableException;
+use App\Http\Middleware\AttachTraceId;
 use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\EnsureApiVersion;
+use App\Http\Middleware\EnsureLegalDocumentsAreAccepted;
+use App\Http\Middleware\EnsureModuleIsAvailable;
 use App\Http\Middleware\EnsureOnboardingIsCompleted;
 use App\Http\Middleware\EnsureUserIsSuperAdmin;
-use App\Http\Middleware\AttachTraceId;
-use App\Http\Middleware\EnsureModuleIsAvailable;
-use App\Exceptions\ModuleUnavailableException;
-use App\Http\Middleware\EnsureLegalDocumentsAreAccepted;
 use App\Http\Middleware\ResolvePlatformContext;
 use App\Support\Observability\SensitiveDataSanitizer;
 use Illuminate\Foundation\Application;
@@ -66,6 +66,10 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->respond(function ($response, Throwable $e, $request) {
+            if ($e instanceof ModuleUnavailableException) {
+                return $response;
+            }
+
             if (! $request->is('api/*')) {
                 return $response;
             }
@@ -79,8 +83,3 @@ return Application::configure(basePath: dirname(__DIR__))
             ], $response->getStatusCode());
         });
     })->create();
-
-
-
-
-

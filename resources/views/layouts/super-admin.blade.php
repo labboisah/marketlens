@@ -51,7 +51,8 @@
                 <x-app.icon name="package-check" class="h-4 w-4 shrink-0" />
                 <span class="truncate">Application versions</span>
               </a>
-              <a
+              <a href="{{ route('super-admin.restore-points') }}" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted hover:bg-surface-muted">Backups & Restore</a>
+            <a
                 href="{{ route('super-admin.plans') }}"
                 class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium {{ request()->routeIs('super-admin.plans') ? 'bg-primary text-white' : 'text-muted hover:bg-surface-muted hover:text-foreground' }} focus:outline-none focus:ring-2 focus:ring-primary"
               >

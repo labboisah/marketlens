@@ -87,6 +87,15 @@ it('resolves module access from plan business and branch gates', function (bool 
     'branch enables business-enabled module' => [true, true, 'enabled', true],
 ]);
 
+it('enables subscribed modules by default when legacy module settings are absent', function (): void {
+    [, $business, $branch] = moduleAccessFixture();
+
+    $business->forceFill(['module_settings' => []])->save();
+    $branch->forceFill(['module_settings' => []])->save();
+    app(ModuleAccessService::class)->forget($business, $branch);
+
+    expect(app(ModuleAccessService::class)->available($business->refresh(), BusinessModule::Services, $branch->refresh()))->toBeTrue();
+});
 it('rejects branch enabled overrides when business or plan blocks the module', function (): void {
     [$user, $business, $branch] = moduleAccessFixture(planAllows: true, businessEnabled: false);
 

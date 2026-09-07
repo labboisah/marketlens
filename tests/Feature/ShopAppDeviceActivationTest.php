@@ -334,12 +334,19 @@ it('supports device status heartbeat and revocation without re-exposing credenti
         ])
         ->json('data.credential');
 
+    deviceActivationPlan(['Premium reports']);
+
     $this
         ->withToken($credential)
         ->getJson(route('api.v1.device.status'))
         ->assertOk()
         ->assertJsonMissing(['credential' => $credential])
-        ->assertJsonPath('data.status', 'active');
+        ->assertJsonPath('data.status', 'active')
+        ->assertJsonPath('data.subscription_state', 'trialing')
+        ->assertJsonPath('data.subscription_plan.name', 'Device Plan')
+        ->assertJsonFragment(['key' => 'More Business App devices', 'available' => true])
+        ->assertJsonFragment(['key' => 'Premium reports', 'available' => false])
+        ->assertJsonStructure(['data' => ['plan_features', 'enabled_modules', 'branch_settings', 'feature_catalog']]);
 
     $this
         ->withToken($credential)

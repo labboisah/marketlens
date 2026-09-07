@@ -106,6 +106,43 @@ class ApplicationVersionService
         return URL::temporarySignedRoute('platform.application-versions.download', now()->addMinutes(30), ['version' => $version->id]);
     }
 
+    /** @return array<string, mixed>|null */
+    public function desktopManifest(string $application, string $channel, string $architecture): ?array
+    {
+        $releases = ApplicationVersion::query()
+            ->where('application', $application)
+            ->where('release_channel', $channel)
+            ->where('status', ApplicationVersionStatus::Published)
+            ->where('is_active', true)
+            ->where(fn ($query) => $query->whereNull('released_at')->orWhere('released_at', '<=', now()))
+            ->whereRaw('lower(platform) = ?', ['windows'])
+            ->whereRaw('lower(architecture) = ?', [$architecture])
+            ->get()
+            ->filter(fn (ApplicationVersion $release): bool => preg_match('/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/', $release->version) === 1
+                && preg_match('/^[a-f0-9]{64}$/i', $release->checksum ?? '') === 1
+                && strtolower(pathinfo($release->download_original_name ?? '', PATHINFO_EXTENSION)) === 'exe'
+                && $release->hasDownload()
+                && Storage::disk($release->download_disk)->exists($release->download_path))
+            ->sort(fn (ApplicationVersion $a, ApplicationVersion $b): int => version_compare($b->version, $a->version));
+        $release = $releases->first();
+        if (! $release) {
+            return null;
+        }
+
+        return [
+            'application' => $application === 'shop_app' ? 'business-server' : 'business-app',
+            'platform' => 'windows',
+            'architecture' => $architecture,
+            'latestVersion' => $release->version,
+            'minimumSupportedVersion' => $release->minimum_supported_version ?: '0.0.0',
+            'mandatory' => (bool) $release->mandatory_update,
+            'releaseNotes' => $release->release_notes ?? '',
+            'downloadUrl' => $this->signedDownloadUrl($release),
+            'checksum' => strtolower($release->checksum),
+            'channel' => $channel,
+        ];
+    }
+
     private function latestVersion(string $application, ?string $platform, ?string $architecture, string $channel): ?ApplicationVersion
     {
         return ApplicationVersion::query()

@@ -52,7 +52,6 @@ function onboardingPayload(int $planId): array
         'branch.address' => '12 Market Road',
         'branch.state' => 'Lagos',
         'branch.local_government_area' => 'Ikeja',
-        'branch.is_head_office' => true,
         'plan.plan_id' => $planId,
         'monitoring.daily_report_preference' => 'daily',
         'monitoring.low_stock_alerts' => true,
@@ -119,6 +118,8 @@ it('creates business branch owner subscription and audit log transactionally', f
         $component->set($field, $value);
     }
 
+    $component->set('branch.is_head_office', false);
+
     $component
         ->call('nextStep')
         ->call('nextStep')
@@ -127,13 +128,15 @@ it('creates business branch owner subscription and audit log transactionally', f
         ->call('complete')
         ->assertRedirect(route('onboarding.completed'));
 
-    $businessId = Business::query()->where('name', 'Ada Stores')->value('id');
+    $business = Business::query()->where('name', 'Ada Stores')->firstOrFail();
+    $branch = Branch::query()->where('name', 'Main Branch')->firstOrFail();
 
-    expect(Business::query()->where('name', 'Ada Stores')->exists())->toBeTrue()
-        ->and(Branch::query()->where('name', 'Main Branch')->exists())->toBeTrue()
+    expect($business->default_branch_id)->toBe($branch->id)
+        ->and($branch->is_head_office)->toBeTrue()
+        ->and($branch->business_id)->toBe($business->id)
         ->and(BusinessOwner::query()->where('user_id', $user->id)->exists())->toBeTrue()
         ->and(Subscription::query()->where('plan_id', $plan->id)->where('status', SubscriptionStatus::Pending)->exists())->toBeTrue()
-        ->and(Invoice::query()->where('business_id', $businessId)->exists())->toBeTrue()
+        ->and(Invoice::query()->where('business_id', $business->id)->exists())->toBeTrue()
         ->and(AuditLog::query()->where('action', 'business_owner.onboarding_completed')->exists())->toBeTrue();
 });
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Domain\Modules\Services\ModuleAccessService;
+use App\Domain\Synchronization\Services\SynchronizedOperationalData;
 use App\Domain\Tenancy\Models\Business;
 use App\Enums\BusinessModule;
 use App\Exceptions\ModuleUnavailableException;
@@ -24,7 +25,7 @@ class MonitoringController extends Controller
         ]);
     }
 
-    public function services(Request $request, ModuleAccessService $moduleAccess): SuccessResource
+    public function services(Request $request, ModuleAccessService $moduleAccess, SynchronizedOperationalData $synchronizedData): SuccessResource
     {
         [$business, $branch] = $this->businessAndBranch($request);
         $access = $moduleAccess->resolve($business, BusinessModule::Services, $branch);
@@ -33,10 +34,13 @@ class MonitoringController extends Controller
             throw new ModuleUnavailableException($access);
         }
 
-        return new SuccessResource(['module_access' => $access->toArray(), 'records' => []]);
+        return new SuccessResource([
+            'module_access' => $access->toArray(),
+            ...$synchronizedData->services($business->id, $branch?->id),
+        ]);
     }
 
-    public function shareholders(Request $request, ModuleAccessService $moduleAccess): SuccessResource
+    public function shareholders(Request $request, ModuleAccessService $moduleAccess, SynchronizedOperationalData $synchronizedData): SuccessResource
     {
         [$business, $branch] = $this->businessAndBranch($request);
         $access = $moduleAccess->resolve($business, BusinessModule::Shareholders, $branch);
@@ -45,7 +49,42 @@ class MonitoringController extends Controller
             throw new ModuleUnavailableException($access);
         }
 
-        return new SuccessResource(['module_access' => $access->toArray(), 'records' => []]);
+        return new SuccessResource([
+            'module_access' => $access->toArray(),
+            ...$synchronizedData->shareholders($business->id, $branch?->id),
+        ]);
+    }
+
+    public function shareholder(Request $request, string $uuid, ModuleAccessService $moduleAccess, SynchronizedOperationalData $synchronizedData): SuccessResource
+    {
+        [$business, $branch] = $this->businessAndBranch($request);
+        $access = $moduleAccess->resolve($business, BusinessModule::Shareholders, $branch);
+
+        if (! $access->available) {
+            throw new ModuleUnavailableException($access);
+        }
+
+        $shareholder = $synchronizedData->shareholders($business->id, $branch?->id)['shareholders']
+            ->first(fn (array $record): bool => ($record['uuid'] ?? $record['_record_uuid']) === $uuid);
+
+        abort_unless($shareholder, 404);
+
+        return new SuccessResource(['shareholder' => $shareholder]);
+    }
+
+    public function ownership(Request $request, ModuleAccessService $moduleAccess, SynchronizedOperationalData $synchronizedData): SuccessResource
+    {
+        return $this->shareholders($request, $moduleAccess, $synchronizedData);
+    }
+
+    public function profitPeriods(): SuccessResource
+    {
+        return new SuccessResource(['records' => []]);
+    }
+
+    public function profitDistributions(): SuccessResource
+    {
+        return new SuccessResource(['records' => []]);
     }
 
     public function branches(): SuccessResource

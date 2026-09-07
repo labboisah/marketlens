@@ -72,7 +72,7 @@ class CompleteOwnerOnboarding
                 'role' => 'owner',
             ]);
 
-            Branch::query()->create([
+            $branch = Branch::query()->create([
                 'business_id' => $business->id,
                 'name' => data_get($data, 'branch.name'),
                 'code' => data_get($data, 'branch.code'),
@@ -81,9 +81,11 @@ class CompleteOwnerOnboarding
                 'address' => data_get($data, 'branch.address'),
                 'state' => data_get($data, 'branch.state'),
                 'local_government_area' => data_get($data, 'branch.local_government_area'),
-                'is_head_office' => (bool) data_get($data, 'branch.is_head_office', true),
+                'is_head_office' => true,
                 'status' => BranchStatus::Active,
             ]);
+
+            $business->forceFill(['default_branch_id' => $branch->id])->save();
 
             BillingProfile::query()->create([
                 'business_id' => $business->id,

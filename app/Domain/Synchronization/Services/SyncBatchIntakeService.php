@@ -139,7 +139,7 @@ class SyncBatchIntakeService
                 $device->forceFill(['last_synchronized_at' => now()])->save();
             }
 
-            ProcessSyncBatch::dispatch($batch->id);
+            ProcessSyncBatch::dispatchSync($batch->id);
 
             return $this->receipt($batch->refresh());
         });

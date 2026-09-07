@@ -109,7 +109,11 @@ class ModuleAccessService
         $businessSettings = $this->businessModuleSettings($business, $module);
         $branchSettings = $branch ? $this->branchModuleSettings($branch, $module) : [];
         $planAllows = $this->planAllows($business, $module);
-        $businessEnabled = (bool) ($businessSettings['enabled'] ?? false);
+        // A subscribed module is available by default until a business explicitly disables it.
+        // This keeps legacy businesses without module settings aligned with their plan.
+        $businessEnabled = array_key_exists('enabled', $businessSettings)
+            ? (bool) $businessSettings['enabled']
+            : $planAllows;
         $branchStatus = $branch ? (string) ($branchSettings['status'] ?? BranchModuleStatus::Inherit->value) : null;
         $branchEnabled = match ($branchStatus) {
             BranchModuleStatus::Enabled->value => true,

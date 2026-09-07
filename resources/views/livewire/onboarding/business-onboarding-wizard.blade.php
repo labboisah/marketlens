@@ -67,7 +67,6 @@
           <label class="grid gap-2 text-sm font-medium">State <input wire:model.defer="branch.state" class="ml-field"> @error('branch.state') <span class="text-xs text-danger">{{ $message }}</span> @enderror</label>
           <label class="grid gap-2 text-sm font-medium">Local government area <input wire:model.defer="branch.local_government_area" class="ml-field"> @error('branch.local_government_area') <span class="text-xs text-danger">{{ $message }}</span> @enderror</label>
         </div>
-        <label class="flex items-center gap-2 text-sm text-muted"><input type="checkbox" wire:model.defer="branch.is_head_office" class="h-4 w-4 rounded border-border"> Head-office status</label>
       </section>
     @endif
 
@@ -113,11 +112,11 @@
       <section class="grid gap-4 text-sm">
         <div class="rounded-lg border border-border bg-background p-4">
           <h2 class="font-semibold">Business information</h2>
-          <p class="mt-2 text-muted">{{ $business['name'] }} · {{ $business['business_type'] }} · {{ $business['email'] }}</p>
+          <p class="mt-2 text-muted">{{ $business['name'] }} &middot; {{ $business['business_type'] }} &middot; {{ $business['email'] }}</p>
         </div>
         <div class="rounded-lg border border-border bg-background p-4">
           <h2 class="font-semibold">Primary branch</h2>
-          <p class="mt-2 text-muted">{{ $branch['name'] }} · {{ $branch['code'] }} · {{ $branch['state'] }}</p>
+          <p class="mt-2 text-muted">{{ $branch['name'] }} &middot; {{ $branch['code'] }} &middot; {{ $branch['state'] }}</p>
         </div>
         <div class="rounded-lg border border-border bg-background p-4">
           <h2 class="font-semibold">Selected plan</h2>

@@ -221,3 +221,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
 - [Deployment Documentation](docs/deployment/README.md)
 - [Testing Documentation](docs/testing/README.md)
 - [Product Documentation](docs/product/README.md)
+
+## Desktop release publishing
+
+Super Admin > Application Versions hosts Windows installers and serves separate server/client manifests. See [Desktop release publishing](docs/deployment/desktop-releases.md) for endpoints, upload configuration, signing, and upgrading existing installations.

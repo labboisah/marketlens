@@ -60,5 +60,7 @@
     </button>
   </div>
 
+  <x-desktop-downloads class="border-t border-border px-4 py-1" />
+
   <x-public.mobile-menu :items="$navItems" />
 </header>

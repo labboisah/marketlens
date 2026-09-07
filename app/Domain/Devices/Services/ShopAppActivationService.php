@@ -3,6 +3,7 @@
 namespace App\Domain\Devices\Services;
 
 use App\Domain\Audit\Models\AuditLog;
+use App\Domain\Billing\Models\PlanFeature;
 use App\Domain\Billing\Services\SubscriptionManagementService;
 use App\Domain\Devices\Models\Device;
 use App\Domain\Devices\Models\DeviceActivation;
@@ -343,6 +344,28 @@ class ShopAppActivationService
 
     private function deviceStatusPayload(Device $device): array
     {
+        $business = Business::query()->with('currentSubscription.plan.features')->findOrFail($device->business_id);
+        $branch = Branch::query()->findOrFail($device->branch_id);
+        $subscription = $business->currentSubscription;
+        $plan = $subscription?->plan;
+        $planFeatures = $this->planFeatures($business);
+        $availableFeatures = array_fill_keys($planFeatures, true);
+
+        $featureCatalog = PlanFeature::query()
+            ->whereHas('plan', fn ($query) => $query->where('is_active', true))
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get()
+            ->unique(fn (PlanFeature $feature): string => (string) ($feature->key ?: $feature->name))
+            ->map(fn (PlanFeature $feature): array => [
+                'key' => (string) ($feature->key ?: $feature->name),
+                'name' => $feature->name,
+                'description' => $feature->tooltip,
+                'available' => isset($availableFeatures[(string) ($feature->key ?: $feature->name)]),
+            ])
+            ->values()
+            ->all();
+
         return [
             'device_uuid' => $device->uuid,
             'status' => $device->status->value,
@@ -353,6 +376,26 @@ class ShopAppActivationService
             'synchronization_errors' => $device->synchronization_errors ?? [],
             'requires_update' => $device->requires_update_at !== null,
             'required_version' => $device->required_version,
+            'business_uuid' => $business->uuid,
+            'branch_uuid' => $branch->uuid,
+            'subscription_state' => $subscription?->status->value ?? 'unknown',
+            'subscription_plan' => $plan ? [
+                'uuid' => $plan->uuid,
+                'name' => $plan->name,
+                'billing_interval' => $plan->billing_interval,
+                'starts_at' => $subscription?->starts_at?->toISOString(),
+                'ends_at' => $subscription?->ends_at?->toISOString(),
+            ] : null,
+            'plan_features' => $planFeatures,
+            'feature_catalog' => $featureCatalog,
+            'enabled_modules' => $this->enabledModules($business, $branch),
+            'branch_settings' => [
+                'business_modules' => $business->module_settings ?? [],
+                'branch_modules' => $branch->module_settings ?? [],
+                'branch_code' => $branch->code,
+                'timezone' => $business->timezone,
+                'currency' => $business->default_currency,
+            ],
         ];
     }
 
