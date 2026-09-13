@@ -228,6 +228,8 @@ class BusinessSettingsPage extends Component
         $this->authorize('manageSettings', $business);
 
         $validated = $this->validate([
+            'moduleSettings.production.enabled' => ['boolean'],
+            'moduleSettings.production.business_level_locks.prevent_branch_overrides' => ['boolean'],
             'moduleSettings.services.enabled' => ['boolean'],
             'moduleSettings.services.staff_revenue_sharing_enabled' => ['boolean'],
             'moduleSettings.services.default_calculation_basis' => ['required', Rule::enum(ServiceCalculationBasis::class)],
@@ -432,6 +434,7 @@ class BusinessSettingsPage extends Component
     private function defaultModuleSettings(Business $business): array
     {
         return array_replace_recursive([
+            'production' => ['enabled' => false, 'business_level_locks' => ['prevent_branch_overrides' => false]],
             'services' => [
                 'enabled' => false,
                 'staff_revenue_sharing_enabled' => false,

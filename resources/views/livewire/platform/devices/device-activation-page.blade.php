@@ -4,6 +4,7 @@
     description="Generate short-lived, single-use activation codes and monitor activated Business Server devices."
   >
     <x-slot:actions>
+      <a href="{{ route('public.client-setup-kit') }}" class="rounded-md border border-border px-3 py-2 text-sm font-semibold text-foreground hover:border-primary/50">Download setup pack (ZIP)</a>
       <a href="{{ route('platform.support', ['category' => 'device']) }}" class="rounded-md border border-border px-3 py-2 text-sm font-semibold text-foreground hover:border-primary/50">Get device support</a>
     </x-slot:actions>
   </x-app.page-header>

@@ -82,6 +82,11 @@
   <section>
     <x-app.card title="Modules and Business Capabilities" description="Plan availability, business enablement, and branch inheritance combine to determine module access.">
       <form wire:submit="saveModules" class="space-y-5">
+        <div class="rounded-md border border-border p-4">
+          <label class="flex items-center justify-between gap-3"><span><span class="font-semibold">Production and Profit Sharing</span><span class="mt-1 block text-xs text-muted">Plan: {{ $moduleAccess['production']->planAllows ? 'Allowed' : 'Unavailable' }}</span></span><input wire:model="moduleSettings.production.enabled" type="checkbox" class="rounded border-border text-primary" @disabled(! $moduleAccess['production']->planAllows)></label>
+          <p class="mt-2 text-sm text-muted">Enable production for this business. Owners register machines and staff and configure share percentages locally in the Business Server.</p>
+          <label class="mt-3 flex items-center gap-2 text-sm"><input wire:model="moduleSettings.production.business_level_locks.prevent_branch_overrides" type="checkbox">Prevent branch overrides</label>
+        </div>
         <div class="grid gap-4 xl:grid-cols-2">
           <div class="space-y-3 rounded-md border border-border p-4">
             <div class="flex items-center justify-between gap-3">

@@ -25,6 +25,7 @@ class PlanSeeder extends Seeder
                 $plan->features()->updateOrCreate(
                     ['name' => $feature['name']],
                     [
+                        'key' => $feature['key'] ?? null,
                         'tooltip' => $feature['tooltip'],
                         'is_highlighted' => $feature['is_highlighted'] ?? false,
                         'sort_order' => $index + 1,
@@ -92,6 +93,7 @@ class PlanSeeder extends Seeder
                     ['name' => 'Advanced audit reports', 'tooltip' => 'Review deeper audit activity for important records and users.'],
                     ['name' => 'Priority support', 'tooltip' => 'Prioritized product support for larger operations.'],
                     ['name' => 'More monitoring users and devices', 'tooltip' => 'Higher limits for Monitoring App users and Business Server or Business App devices.'],
+                    ['key' => 'module:production', 'name' => 'Production and Profit Sharing', 'tooltip' => 'Production materials, recipes, machines, staff, batches, finished stock, sales and expenses, with owner-configured staff and machine profit shares.', 'is_highlighted' => true],
                     ['key' => 'module:services', 'name' => 'Services and Revenue Sharing', 'tooltip' => 'Enable service revenue-sharing settings and branch-level service allocation controls.', 'is_highlighted' => true],
                     ['key' => 'module:shareholders', 'name' => 'Shareholders and Profit Distribution', 'tooltip' => 'Enable shareholder ownership, resolution, and profit-distribution settings.', 'is_highlighted' => true],
                 ],

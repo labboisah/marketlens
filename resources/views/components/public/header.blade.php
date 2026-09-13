@@ -5,8 +5,8 @@
       ['label' => 'Business types', 'href' => route('public.business-types')],
       ['label' => 'Pricing', 'href' => route('public.pricing')],
       ['label' => 'How it works', 'href' => route('public.how-it-works')],
-      ['label' => 'FAQ', 'href' => route('welcome').'#faq'],
-      ['label' => 'Contact', 'href' => route('welcome').'#contact'],
+      ['label' => 'Deployment', 'href' => route('public.deployment')],
+      ['label' => 'Setup kits', 'href' => route('public.setup-kits')],
   ];
 @endphp
 
@@ -59,8 +59,6 @@
       <x-public.icon name="x" class="h-5 w-5" x-cloak x-show="mobileOpen" />
     </button>
   </div>
-
-  <x-desktop-downloads class="border-t border-border px-4 py-1" />
 
   <x-public.mobile-menu :items="$navItems" />
 </header>

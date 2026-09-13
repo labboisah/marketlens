@@ -15,12 +15,13 @@ use App\Enums\SubscriptionStatus;
 use App\Livewire\SuperAdmin\ApplicationVersionManagementPage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
 
+require_once __DIR__.'/../Support/ManagedPackageFixture.php';
 uses(RefreshDatabase::class);
+beforeEach(fn () => Storage::fake('downloads'));
 
 function applicationVersionSuperAdmin(): User
 {
@@ -80,6 +81,7 @@ function applicationVersionOwnerDevice($testCase, string $appVersion = '1.0.0'):
 it('lets super admins create application versions with secure release files', function (): void {
     Storage::fake('local');
     $superAdmin = applicationVersionSuperAdmin();
+    $key = managedPackageFixture();
 
     Livewire::actingAs($superAdmin)
         ->test(ApplicationVersionManagementPage::class)
@@ -95,7 +97,7 @@ it('lets super admins create application versions with secure release files', fu
         ->set('mandatoryUpdate', true)
         ->set('isActive', true)
         ->set('releasedAt', now()->format('Y-m-d\TH:i'))
-        ->set('download', UploadedFile::fake()->create('shop-app-2.0.0.zip', 128, 'application/zip'))
+        ->set('managedPackage', $key)
         ->call('createVersion')
         ->assertHasNoErrors()
         ->assertDispatched('notify');
@@ -112,7 +114,7 @@ it('lets super admins create application versions with secure release files', fu
         ->and($version->checksum)->not->toBeNull()
         ->and($version->download_path)->not->toBeNull();
 
-    Storage::disk('local')->assertExists($version->download_path);
+    Storage::disk('downloads')->assertExists($version->download_path);
     expect(AuditLog::query()->where('action', 'application_version.created')->exists())->toBeTrue();
 
     $this->actingAs($superAdmin)
@@ -222,5 +224,3 @@ it('uses release channels and active published versions when checking updates', 
         ->assertJsonPath('data.update_available', true)
         ->assertJsonPath('data.mandatory_update', false);
 });
-
-

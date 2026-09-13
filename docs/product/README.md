@@ -11,3 +11,6 @@ visibility through synchronized Platform data.
 - [Product Roadmap](roadmap.md)
 - [MVP Scope](mvp-scope.md)
 - [Out of Scope](out-of-scope.md)
+- [Production and Profit-Sharing Extension Plan](production-and-profit-sharing-plan.md)
+
+- [Production operations and RBAC](production-operations.md)

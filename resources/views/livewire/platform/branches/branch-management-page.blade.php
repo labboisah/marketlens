@@ -176,7 +176,8 @@
                       @endforeach
                     </select>
                   </label>
-                  <label class="block font-medium">Settlement frequency
+                  @if ($module->value !== 'production')
+                    <label class="block font-medium">Settlement frequency
                     <select wire:model="moduleSettings.{{ $module->value }}.settlement_frequency" class="ml-field mt-1 w-full">
                       @foreach ($settlementFrequencies as $frequency)
                         <option value="{{ $frequency->value }}">{{ str($frequency->value)->title() }}</option>
@@ -186,6 +187,9 @@
                   <label class="block font-medium md:col-span-2">Default branch rule<input wire:model="moduleSettings.{{ $module->value }}.default_branch_rule" class="ml-field mt-1 w-full"></label>
                   <label class="flex items-center gap-2"><input wire:model="moduleSettings.{{ $module->value }}.require_manager_approval" type="checkbox" class="rounded border-border text-primary"> Approval requirements</label>
                   <label class="flex items-center gap-2"><input wire:model="moduleSettings.{{ $module->value }}.branch_service_pricing" type="checkbox" class="rounded border-border text-primary"> Branch service pricing</label>
+                    @else
+                    <p class="text-sm text-muted">Production share rules and approvals are managed locally by the business owner in the Business Server.</p>
+                    @endif
                 </div>
                 @if (($business->module_settings[$module->value]['business_level_locks']['prevent_branch_overrides'] ?? false) === true)
                   <x-app.status-badge tone="warning">Business-level lock prevents branch overrides</x-app.status-badge>

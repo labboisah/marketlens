@@ -17,6 +17,9 @@ use Illuminate\Validation\ValidationException;
 class MonitoringUserManagementService
 {
     public const PERMISSIONS = [
+        'view-production' => 'View production operations',
+        'view-production-finance' => 'View production costs and shares',
+        'export-production' => 'Export production reports',
         'view-dashboard' => 'View dashboard',
         'view-sales' => 'View sales',
         'view-inventory' => 'View inventory',

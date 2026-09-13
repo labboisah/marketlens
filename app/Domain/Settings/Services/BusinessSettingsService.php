@@ -219,6 +219,7 @@ class BusinessSettingsService
      */
     public function updateModules(Business $business, User $actor, array $settings): Business
     {
+        $production = (array) ($settings['production'] ?? ($business->module_settings['production'] ?? []));
         $services = (array) ($settings['services'] ?? []);
         $shareholders = (array) ($settings['shareholders'] ?? []);
 
@@ -235,6 +236,7 @@ class BusinessSettingsService
         }
 
         $moduleSettings = array_merge($business->module_settings ?? [], [
+            'production' => $production,
             'services' => $services,
             'shareholders' => $shareholders,
         ]);
@@ -243,7 +245,7 @@ class BusinessSettingsService
         app(ModuleAccessService::class)->forget($business);
 
         $this->audit($business, $actor, 'business_settings.modules_updated', $business, [
-            'modules' => ['services', 'shareholders'],
+            'modules' => ['production', 'services', 'shareholders'],
         ]);
 
         return $business->refresh();

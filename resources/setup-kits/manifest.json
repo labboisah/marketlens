@@ -1,0 +1,670 @@
+{
+  "productionDatasets": [
+    {
+      "key": "material",
+      "columns": [
+        "schema_version",
+        "product_sku",
+        "role"
+      ],
+      "minimumDatabaseSchema": 5
+    },
+    {
+      "key": "machine",
+      "columns": [
+        "schema_version",
+        "code",
+        "name",
+        "payee"
+      ],
+      "minimumDatabaseSchema": 5
+    },
+    {
+      "key": "staff",
+      "columns": [
+        "schema_version",
+        "username"
+      ],
+      "minimumDatabaseSchema": 5
+    },
+    {
+      "key": "recipe",
+      "columns": [
+        "schema_version",
+        "name",
+        "product_sku",
+        "output_quantity",
+        "material_sku",
+        "material_quantity"
+      ],
+      "minimumDatabaseSchema": 5
+    },
+    {
+      "key": "rule",
+      "columns": [
+        "schema_version",
+        "name",
+        "kind",
+        "participant_code",
+        "percent"
+      ],
+      "minimumDatabaseSchema": 5
+    },
+    {
+      "key": "batch",
+      "columns": [
+        "schema_version",
+        "reference",
+        "recipe_name",
+        "rule_name",
+        "material_store_code",
+        "output_store_code",
+        "planned_quantity"
+      ],
+      "minimumDatabaseSchema": 5
+    },
+    {
+      "key": "expense",
+      "columns": [
+        "schema_version",
+        "batch_reference",
+        "description",
+        "amount",
+        "reference"
+      ],
+      "minimumDatabaseSchema": 5
+    }
+  ],
+  "schemaVersion": 1,
+  "sourceApplicationVersion": "2.2.0",
+  "compatibility": "Business Server builds with CSV Data Setup & Transfers (schema 1). Verify feature availability; app version alone is insufficient.",
+  "datasets": [
+    {
+      "key": "categories",
+      "label": "Categories",
+      "optionalServiceModule": false,
+      "columns": [
+        {
+          "key": "code",
+          "required": true,
+          "description": "code (required)"
+        },
+        {
+          "key": "name",
+          "required": true,
+          "description": "name (required)"
+        },
+        {
+          "key": "parent_code",
+          "description": "parent code (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "description",
+          "description": "description (optional; blank preserves existing value on update)"
+        }
+      ]
+    },
+    {
+      "key": "brands",
+      "label": "Brands",
+      "optionalServiceModule": false,
+      "columns": [
+        {
+          "key": "code",
+          "required": true,
+          "description": "code (required)"
+        },
+        {
+          "key": "name",
+          "required": true,
+          "description": "name (required)"
+        },
+        {
+          "key": "description",
+          "description": "description (optional; blank preserves existing value on update)"
+        }
+      ]
+    },
+    {
+      "key": "units",
+      "label": "Units",
+      "optionalServiceModule": false,
+      "columns": [
+        {
+          "key": "code",
+          "required": true,
+          "description": "code (required)"
+        },
+        {
+          "key": "name",
+          "required": true,
+          "description": "name (required)"
+        },
+        {
+          "key": "is_base",
+          "description": "is base (optional; blank preserves existing value on update)"
+        }
+      ]
+    },
+    {
+      "key": "warehouses",
+      "label": "Warehouses",
+      "optionalServiceModule": false,
+      "columns": [
+        {
+          "key": "code",
+          "required": true,
+          "description": "code (required)"
+        },
+        {
+          "key": "name",
+          "required": true,
+          "description": "name (required)"
+        },
+        {
+          "key": "address",
+          "description": "address (optional; blank preserves existing value on update)"
+        }
+      ]
+    },
+    {
+      "key": "products",
+      "label": "Products",
+      "optionalServiceModule": false,
+      "columns": [
+        {
+          "key": "sku",
+          "required": true,
+          "description": "sku (required)"
+        },
+        {
+          "key": "name",
+          "required": true,
+          "description": "name (required)"
+        },
+        {
+          "key": "category_code",
+          "required": true,
+          "description": "category code (required)"
+        },
+        {
+          "key": "base_unit_code",
+          "required": true,
+          "description": "base unit code (required)"
+        },
+        {
+          "key": "brand_code",
+          "description": "brand code (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "purchase_unit_code",
+          "description": "purchase unit code (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "sales_unit_code",
+          "description": "sales unit code (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "description",
+          "description": "description (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "reorder_level",
+          "description": "reorder level (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "max_stock",
+          "description": "max stock (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "cost_price",
+          "description": "cost price (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "retail_price",
+          "description": "retail price (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "wholesale_price",
+          "description": "wholesale price (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "min_selling_price",
+          "description": "min selling price (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "active",
+          "description": "active (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "is_non_stock",
+          "description": "is non stock (optional; blank preserves existing value on update)"
+        }
+      ]
+    },
+    {
+      "key": "product_units",
+      "label": "Product unit conversions",
+      "optionalServiceModule": false,
+      "columns": [
+        {
+          "key": "sku",
+          "required": true,
+          "description": "sku (required)"
+        },
+        {
+          "key": "unit_code",
+          "required": true,
+          "description": "unit code (required)"
+        },
+        {
+          "key": "multiplier",
+          "required": true,
+          "description": "multiplier (required)"
+        }
+      ]
+    },
+    {
+      "key": "product_barcodes",
+      "label": "Product barcodes",
+      "optionalServiceModule": false,
+      "columns": [
+        {
+          "key": "sku",
+          "required": true,
+          "description": "sku (required)"
+        },
+        {
+          "key": "barcode",
+          "required": true,
+          "description": "barcode (required)"
+        }
+      ]
+    },
+    {
+      "key": "product_prices",
+      "label": "Product prices",
+      "optionalServiceModule": false,
+      "columns": [
+        {
+          "key": "sku",
+          "required": true,
+          "description": "sku (required)"
+        },
+        {
+          "key": "price_type",
+          "required": true,
+          "description": "price type (required)"
+        },
+        {
+          "key": "amount",
+          "required": true,
+          "description": "amount (required)"
+        },
+        {
+          "key": "currency",
+          "description": "currency (optional; blank preserves existing value on update)"
+        }
+      ]
+    },
+    {
+      "key": "customers",
+      "label": "Customers",
+      "optionalServiceModule": false,
+      "columns": [
+        {
+          "key": "code",
+          "required": true,
+          "description": "code (required)"
+        },
+        {
+          "key": "name",
+          "required": true,
+          "description": "name (required)"
+        },
+        {
+          "key": "type",
+          "required": true,
+          "description": "type (required)"
+        },
+        {
+          "key": "phone",
+          "description": "phone (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "address",
+          "description": "address (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "credit_limit",
+          "description": "credit limit (optional; blank preserves existing value on update)"
+        }
+      ]
+    },
+    {
+      "key": "suppliers",
+      "label": "Suppliers",
+      "optionalServiceModule": false,
+      "columns": [
+        {
+          "key": "code",
+          "required": true,
+          "description": "code (required)"
+        },
+        {
+          "key": "name",
+          "required": true,
+          "description": "name (required)"
+        },
+        {
+          "key": "contact_name",
+          "description": "contact name (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "contact_phone",
+          "description": "contact phone (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "contact_email",
+          "description": "contact email (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "address",
+          "description": "address (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "payment_terms",
+          "description": "payment terms (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "tax_number",
+          "description": "tax number (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "preferred",
+          "description": "preferred (optional; blank preserves existing value on update)"
+        }
+      ]
+    },
+    {
+      "key": "opening_stock",
+      "label": "Opening stock",
+      "optionalServiceModule": false,
+      "columns": [
+        {
+          "key": "source_id",
+          "required": true,
+          "description": "source id (required)"
+        },
+        {
+          "key": "sku",
+          "required": true,
+          "description": "sku (required)"
+        },
+        {
+          "key": "warehouse_code",
+          "required": true,
+          "description": "warehouse code (required)"
+        },
+        {
+          "key": "unit_code",
+          "required": true,
+          "description": "unit code (required)"
+        },
+        {
+          "key": "quantity",
+          "required": true,
+          "description": "quantity (required)"
+        },
+        {
+          "key": "unit_cost",
+          "required": true,
+          "description": "unit cost (required)"
+        },
+        {
+          "key": "as_of_date",
+          "required": true,
+          "description": "as of date (required)"
+        },
+        {
+          "key": "batch_number",
+          "description": "batch number (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "expiry_date",
+          "description": "expiry date (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "serial_numbers",
+          "description": "serial numbers (optional; blank preserves existing value on update)"
+        }
+      ]
+    },
+    {
+      "key": "opening_receivables",
+      "label": "Opening customer debts",
+      "optionalServiceModule": false,
+      "columns": [
+        {
+          "key": "source_id",
+          "required": true,
+          "description": "source id (required)"
+        },
+        {
+          "key": "code",
+          "required": true,
+          "description": "code (required)"
+        },
+        {
+          "key": "amount",
+          "required": true,
+          "description": "amount (required)"
+        },
+        {
+          "key": "as_of_date",
+          "required": true,
+          "description": "as of date (required)"
+        },
+        {
+          "key": "reference",
+          "description": "reference (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "due_date",
+          "description": "due date (optional; blank preserves existing value on update)"
+        }
+      ]
+    },
+    {
+      "key": "opening_payables",
+      "label": "Opening supplier debts",
+      "optionalServiceModule": false,
+      "columns": [
+        {
+          "key": "source_id",
+          "required": true,
+          "description": "source id (required)"
+        },
+        {
+          "key": "code",
+          "required": true,
+          "description": "code (required)"
+        },
+        {
+          "key": "amount",
+          "required": true,
+          "description": "amount (required)"
+        },
+        {
+          "key": "as_of_date",
+          "required": true,
+          "description": "as of date (required)"
+        },
+        {
+          "key": "reference",
+          "description": "reference (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "due_date",
+          "description": "due date (optional; blank preserves existing value on update)"
+        }
+      ]
+    },
+    {
+      "key": "purchase_headers",
+      "label": "Purchase invoice headers",
+      "optionalServiceModule": false,
+      "columns": [
+        {
+          "key": "invoice_key",
+          "required": true,
+          "description": "invoice key (required)"
+        },
+        {
+          "key": "supplier_code",
+          "required": true,
+          "description": "supplier code (required)"
+        },
+        {
+          "key": "invoice_date",
+          "required": true,
+          "description": "invoice date (required)"
+        },
+        {
+          "key": "currency",
+          "description": "currency (optional; blank preserves existing value on update)"
+        },
+        {
+          "key": "notes",
+          "description": "notes (optional; blank preserves existing value on update)"
+        }
+      ]
+    },
+    {
+      "key": "purchase_lines",
+      "label": "Purchase invoice lines",
+      "optionalServiceModule": false,
+      "columns": [
+        {
+          "key": "invoice_key",
+          "required": true,
+          "description": "invoice key (required)"
+        },
+        {
+          "key": "line_id",
+          "required": true,
+          "description": "line id (required)"
+        },
+        {
+          "key": "sku",
+          "required": true,
+          "description": "sku (required)"
+        },
+        {
+          "key": "unit_code",
+          "required": true,
+          "description": "unit code (required)"
+        },
+        {
+          "key": "quantity",
+          "required": true,
+          "description": "quantity (required)"
+        },
+        {
+          "key": "unit_cost",
+          "required": true,
+          "description": "unit cost (required)"
+        }
+      ]
+    },
+    {
+      "key": "stock_counts",
+      "label": "Stock count drafts",
+      "optionalServiceModule": false,
+      "columns": [
+        {
+          "key": "session_code",
+          "required": true,
+          "description": "session code (required)"
+        },
+        {
+          "key": "warehouse_code",
+          "required": true,
+          "description": "warehouse code (required)"
+        },
+        {
+          "key": "sku",
+          "required": true,
+          "description": "sku (required)"
+        },
+        {
+          "key": "unit_code",
+          "required": true,
+          "description": "unit code (required)"
+        },
+        {
+          "key": "counted_quantity",
+          "required": true,
+          "description": "counted quantity (required)"
+        },
+        {
+          "key": "note",
+          "description": "note (optional; blank preserves existing value on update)"
+        }
+      ]
+    },
+    {
+      "key": "service_categories",
+      "label": "Service categories",
+      "optionalServiceModule": true,
+      "columns": [
+        {
+          "key": "code",
+          "required": true,
+          "description": "code (required)"
+        },
+        {
+          "key": "name",
+          "required": true,
+          "description": "name (required)"
+        }
+      ]
+    },
+    {
+      "key": "services",
+      "label": "Service catalog",
+      "optionalServiceModule": true,
+      "columns": [
+        {
+          "key": "code",
+          "required": true,
+          "description": "code (required)"
+        },
+        {
+          "key": "name",
+          "required": true,
+          "description": "name (required)"
+        },
+        {
+          "key": "category_code",
+          "required": true,
+          "description": "category code (required)"
+        },
+        {
+          "key": "amount",
+          "required": true,
+          "description": "amount (required)"
+        }
+      ]
+    }
+  ],
+  "sourceHashes": {
+    "src/shared/csv.ts": "53ddf66d3d05e5fd31f9e3e36e2517b70aed4794d99d8bed3b1e52f5a142c0e7",
+    "src/shared/data-transfer-contract.ts": "312ab50ed3fa4ecee00dd479ae33732a9aac5669408c6cf82ea02a4e28fd91cb",
+    "src/services/data-transfer/csv-template-library.ts": "7a5ad7793d97c00eeb37bc1d6c886f39b07fe33478f181a2122769d9139ca921",
+    "src/production/templates.ts": "c027c3f2d63032687bbf30a835a952849a50208ae7a21d7298b04febc2ee2bf5"
+  },
+  "filename": "marketlens-client-setup-v1.zip",
+  "bytes": 57636,
+  "sha256": "4f211f7912055ba450c423aedfa70a2ae19d8c24f52eac675cabc590180ebf1b"
+}

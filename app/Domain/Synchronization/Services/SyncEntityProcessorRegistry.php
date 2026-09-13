@@ -28,6 +28,7 @@ class SyncEntityProcessorRegistry
 {
     /** @var array<string, class-string<SyncEntityProcessor>> */
     private array $processors = [
+        'production_record' => \App\Domain\Synchronization\Services\EntityProcessors\ProductionRecordProcessor::class,
         'operational_user_profile' => OperationalUserProfileProcessor::class,
         'sale' => SaleProcessor::class,
         'sale_item' => SaleItemProcessor::class,

@@ -75,3 +75,7 @@ Homestead.json
 Homestead.yaml
 .phpunit.result.cache
 .phpactor.json
+
+# Managed desktop binaries are deployed as release artifacts
+/downloads/*
+!/downloads/README.md

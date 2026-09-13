@@ -1,3 +1,7 @@
+# Managed download update
+
+Release files now come from the Platform downloads folder. The version-management upload field has been replaced with a prepared-package selector. See [managed downloads](managed-downloads.md) for current packaging and update steps.
+
 # Desktop release publishing and updates
 
 ## Platform setup
@@ -55,3 +59,10 @@ The public and owner-sidebar download menus resolve `/downloads/business-server`
 Before publishing: build with the real signing certificate; inspect the resulting signature/publisher and checksum; test clean install, upgrade over the previous version, restart, persistent identity/configuration, rollback/recovery, offline operation, interrupted download, and pairing on spare Windows machines. Verify representative database migrations and the post-update snapshot cutoff. Publish Platform support first, then Business Server, then Business App. Promote a small pilot before broad rollout.
 
 A source build is not evidence that a signed installer was made or deployed. Production APP_URL/HTTPS, reverse-proxy upload limits, private offsite storage credentials/lifecycle, monitoring, a real certificate, and installed upgrade/recovery acceptance remain deployment prerequisites.
+
+## Downloadable client setup templates
+
+The Platform offers one [client setup ZIP](client-setup-kit.md) alongside the
+Server/App installer downloads and on device activation. It includes all 18
+supported CSV template sets and new-installation/upgrade checklists. Regenerate
+and verify the pack from the exact Business Server source when CSV features change.

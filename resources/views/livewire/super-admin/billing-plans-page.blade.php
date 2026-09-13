@@ -100,6 +100,15 @@
     </div>
 
     <div class="mt-6 rounded-lg border border-border bg-background p-4">
+      <label class="inline-flex items-center gap-2 font-semibold">
+        <input type="checkbox" wire:model="productionEnabled" class="ml-checkbox" />
+        Production and Profit Sharing
+      </label>
+      <p class="mt-2 text-sm text-muted">Include materials, recipes, machines, staff, production batches, finished stock, sales, expenses and owner-configured profit shares. Businesses enable Production in their settings; local roles control access.</p>
+      @error('productionEnabled') <p class="text-sm text-danger">{{ $message }}</p> @enderror
+    </div>
+
+    <div class="mt-6 rounded-lg border border-border bg-background p-4">
       <div class="flex items-center justify-between gap-4">
         <div>
           <h3 class="text-base font-semibold">Plan features</h3>

@@ -4,6 +4,7 @@ namespace App\Livewire\SuperAdmin;
 
 use App\Domain\Billing\Models\Plan;
 use App\Domain\Billing\Models\PlanFeature;
+use App\Domain\Billing\Services\ProductionPlanFeature;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
@@ -17,16 +18,29 @@ class BillingPlansPage extends Component
     use AuthorizesRequests;
 
     public ?int $editingPlanId = null;
+
     public string $name = '';
+
     public string $slug = '';
+
     public string $description = '';
+
     public string $billingInterval = 'monthly';
+
     public int $priceMinor = 0;
+
     public string $currency = 'NGN';
+
     public int $trialDays = 0;
+
     public bool $isActive = true;
+
+    public bool $productionEnabled = false;
+
     public array $editingFeatures = [];
+
     public array $originalFeatureIds = [];
+
     public array $removedFeatureIds = [];
 
     public function mount(): void
@@ -36,7 +50,7 @@ class BillingPlansPage extends Component
 
     private function resetForm(): void
     {
-        $this->reset(['editingPlanId', 'name', 'slug', 'description', 'billingInterval', 'priceMinor', 'currency', 'trialDays', 'isActive', 'editingFeatures', 'originalFeatureIds', 'removedFeatureIds']);
+        $this->reset(['editingPlanId', 'name', 'slug', 'description', 'billingInterval', 'priceMinor', 'currency', 'trialDays', 'isActive', 'productionEnabled', 'editingFeatures', 'originalFeatureIds', 'removedFeatureIds']);
 
         $this->billingInterval = 'monthly';
         $this->currency = config('marketlens.currency.default', 'NGN');
@@ -58,13 +72,14 @@ class BillingPlansPage extends Component
 
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:160'],
-            'slug' => ['required', 'string', 'max:160', 'alpha_dash', Rule::unique('plans', 'slug')],
+            'slug' => ['required', 'string', 'max:160', 'alpha_dash', Rule::unique('plans', 'slug')->where('billing_interval', $this->billingInterval)],
             'description' => ['nullable', 'string', 'max:1000'],
             'billingInterval' => ['required', Rule::in(['monthly', 'annual'])],
             'priceMinor' => ['required', 'integer', 'min:0'],
             'currency' => ['required', 'string', 'size:3'],
             'trialDays' => ['required', 'integer', 'min:0'],
             'isActive' => ['boolean'],
+            'productionEnabled' => ['boolean'],
         ]);
 
         $plan = Plan::query()->create([
@@ -73,7 +88,7 @@ class BillingPlansPage extends Component
             'slug' => $validated['slug'],
             'description' => $validated['description'] ?? '',
             'billing_interval' => $validated['billingInterval'],
-            'price_minor' => $validated['priceMinor'],
+            'price_minor' => $validated['priceMinor'] / 100,
             'currency' => strtoupper($validated['currency']),
             'trial_days' => $validated['trialDays'],
             'sort_order' => (Plan::query()->max('sort_order') ?? 0) + 1,
@@ -95,7 +110,8 @@ class BillingPlansPage extends Component
             ]);
         }
 
-        $this->reset(['editingPlanId', 'name', 'slug', 'description', 'billingInterval', 'priceMinor', 'currency', 'trialDays', 'isActive', 'editingFeatures']);
+        app(ProductionPlanFeature::class)->sync($plan, $this->productionEnabled);
+        $this->reset(['editingPlanId', 'name', 'slug', 'description', 'billingInterval', 'priceMinor', 'currency', 'trialDays', 'isActive', 'productionEnabled', 'editingFeatures']);
         $this->billingInterval = 'monthly';
         $this->currency = config('marketlens.currency.default', 'NGN');
         $this->isActive = true;
@@ -130,7 +146,8 @@ class BillingPlansPage extends Component
         $this->currency = $plan->currency;
         $this->trialDays = $plan->trial_days;
         $this->isActive = $plan->is_active;
-        $this->editingFeatures = $plan->features()->orderBy('sort_order')->get()->map(fn (PlanFeature $feature): array => [
+        $this->productionEnabled = ProductionPlanFeature::query($plan)->exists();
+        $this->editingFeatures = $plan->features()->where(fn ($q) => $q->whereNull('key')->orWhere('key', '!=', ProductionPlanFeature::KEY))->where('name', '!=', ProductionPlanFeature::NAME)->orderBy('sort_order')->get()->map(fn (PlanFeature $feature): array => [
             'id' => $feature->id,
             'name' => $feature->name,
             'tooltip' => $feature->tooltip,
@@ -166,13 +183,14 @@ class BillingPlansPage extends Component
 
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:160'],
-            'slug' => ['required', 'string', 'max:160', 'alpha_dash', Rule::unique('plans', 'slug')->ignore($this->editingPlanId)],
+            'slug' => ['required', 'string', 'max:160', 'alpha_dash', Rule::unique('plans', 'slug')->where('billing_interval', $this->billingInterval)->ignore($this->editingPlanId)],
             'description' => ['nullable', 'string', 'max:1000'],
             'billingInterval' => ['required', Rule::in(['monthly', 'annual'])],
             'priceMinor' => ['required', 'integer', 'min:0'],
             'currency' => ['required', 'string', 'size:3'],
             'trialDays' => ['required', 'integer', 'min:0'],
             'isActive' => ['boolean'],
+            'productionEnabled' => ['boolean'],
             'editingFeatures.*.name' => ['nullable', 'string', 'max:160'],
             'editingFeatures.*.tooltip' => ['nullable', 'string', 'max:500'],
             'editingFeatures.*.is_highlighted' => ['boolean'],
@@ -184,7 +202,7 @@ class BillingPlansPage extends Component
             'slug' => $validated['slug'],
             'description' => $validated['description'] ?? '',
             'billing_interval' => $validated['billingInterval'],
-            'price_minor' => $validated['priceMinor'],
+            'price_minor' => $validated['priceMinor'] / 100,
             'currency' => strtoupper($validated['currency']),
             'trial_days' => $validated['trialDays'],
             'is_active' => $validated['isActive'],
@@ -192,7 +210,8 @@ class BillingPlansPage extends Component
 
         foreach ($this->editingFeatures as $featureRow) {
             if (! empty($featureRow['id']) && empty(trim($featureRow['name'] ?? ''))) {
-                PlanFeature::query()->where('id', $featureRow['id'])->delete();
+                $plan->features()->where('id', $featureRow['id'])->delete();
+
                 continue;
             }
 
@@ -201,12 +220,13 @@ class BillingPlansPage extends Component
             }
 
             if (! empty($featureRow['id'])) {
-                PlanFeature::query()->findOrFail($featureRow['id'])->forceFill([
+                $plan->features()->findOrFail($featureRow['id'])->forceFill([
                     'name' => $featureRow['name'],
                     'tooltip' => $featureRow['tooltip'] ?? null,
                     'is_highlighted' => (bool) $featureRow['is_highlighted'],
                     'sort_order' => $featureRow['sort_order'] ?? 0,
                 ])->save();
+
                 continue;
             }
 
@@ -220,13 +240,14 @@ class BillingPlansPage extends Component
             ]);
         }
 
+        app(ProductionPlanFeature::class)->sync($plan, $this->productionEnabled);
         $this->dispatch('notify', tone: 'success', title: 'Plan updated', message: 'The subscription plan was updated successfully.');
         $this->reset(['editingPlanId']);
     }
 
     public function cancelEditing(): void
     {
-        $this->reset(['editingPlanId', 'editingFeatures']);
+        $this->reset(['editingPlanId', 'editingFeatures', 'productionEnabled']);
         $this->billingInterval = 'monthly';
         $this->currency = config('marketlens.currency.default', 'NGN');
         $this->isActive = true;

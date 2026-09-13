@@ -32,6 +32,8 @@
     </nav>
 
     <nav class="grid gap-3 text-sm" aria-label="Footer support links">
+      <a class="text-muted hover:text-foreground" href="{{ route('public.deployment') }}">Deployment and upgrades</a>
+      <a class="text-muted hover:text-foreground" href="{{ route('public.setup-kits') }}">Setup kits and templates</a>
       <a class="font-semibold text-foreground" href="/support">Support</a>
       <a class="text-muted hover:text-foreground" href="/privacy">Privacy</a>
       <a class="text-muted hover:text-foreground" href="/terms">Terms</a>

@@ -4,19 +4,16 @@ namespace App\Livewire\SuperAdmin;
 
 use App\Domain\Versions\Models\ApplicationVersion;
 use App\Domain\Versions\Services\ApplicationVersionService;
+use App\Domain\Versions\Services\ManagedReleasePackages;
 use App\Enums\ApplicationVersionStatus;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
-use Livewire\WithFileUploads;
 
 #[Layout('layouts.super-admin')]
 class ApplicationVersionManagementPage extends Component
 {
-    use WithFileUploads;
-
     public string $application = 'shop_app';
 
     public string $platform = '';
@@ -41,7 +38,7 @@ class ApplicationVersionManagementPage extends Component
 
     public string $releasedAt = '';
 
-    public ?TemporaryUploadedFile $download = null;
+    public string $managedPackage = '';
 
     public function render(ApplicationVersionService $versions): View
     {
@@ -53,7 +50,22 @@ class ApplicationVersionManagementPage extends Component
                 $version->id => $versions->signedDownloadUrl($version),
             ]),
             'statuses' => ApplicationVersionStatus::cases(),
+            'packages' => app(ManagedReleasePackages::class)->all(),
         ])->title('Application Versions');
+    }
+
+    public function updatedManagedPackage(): void
+    {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+        $package = app(ManagedReleasePackages::class)->find($this->managedPackage);
+        if (! $package) {
+            return;
+        }
+        $this->application = $package['application'] === 'business-server' ? 'shop_app' : 'client_app';
+        $this->platform = 'windows';
+        $this->architecture = $package['architecture'];
+        $this->version = $package['version'];
+        $this->releaseChannel = $package['channel'];
     }
 
     public function createVersion(ApplicationVersionService $versions): void
@@ -73,10 +85,11 @@ class ApplicationVersionManagementPage extends Component
             'mandatoryUpdate' => ['boolean'],
             'isActive' => ['boolean'],
             'releasedAt' => ['nullable', 'date'],
-            'download' => ['required_if:status,published', 'nullable', 'file', 'max:768000'],
+            'managedPackage' => ['required', 'string', 'max:240'],
         ]);
 
         $versions->createVersion(auth()->user(), [
+            'managed_package' => $validated['managedPackage'],
             'application' => $validated['application'],
             'platform' => $validated['platform'] ?? '',
             'architecture' => $validated['architecture'] ?? '',
@@ -89,9 +102,9 @@ class ApplicationVersionManagementPage extends Component
             'mandatory_update' => $validated['mandatoryUpdate'] ?? false,
             'is_active' => $validated['isActive'] ?? true,
             'released_at' => $validated['releasedAt'] ?? null,
-        ], $this->download);
+        ], null);
 
-        $this->reset(['platform', 'architecture', 'version', 'releaseNotes', 'minimumSupportedVersion', 'recommendedVersion', 'releasedAt', 'download']);
+        $this->reset(['platform', 'architecture', 'version', 'releaseNotes', 'minimumSupportedVersion', 'recommendedVersion', 'releasedAt', 'managedPackage']);
         $this->mandatoryUpdate = false;
         $this->isActive = true;
         $this->status = 'draft';

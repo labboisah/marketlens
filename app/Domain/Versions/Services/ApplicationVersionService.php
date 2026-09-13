@@ -52,6 +52,10 @@ class ApplicationVersionService
             ];
         }
 
+        if (! empty($data['managed_package'])) {
+            $payload = [...$payload, ...app(ManagedReleasePackages::class)->installerMetadata($data)];
+        }
+
         $version = ApplicationVersion::query()->create($payload);
 
         AuditLog::query()->create([

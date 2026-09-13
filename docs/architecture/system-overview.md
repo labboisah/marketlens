@@ -96,3 +96,7 @@ authorization are required across all boundaries.
 The Business Server owns local backup, restore and recovery execution. Platform restore requests require local confirmation; the Platform stores encrypted copies and authorizes tenant/branch-scoped access. Replacement recovery uses an independently stored encrypted kit and retains the original server identity, disables historical operational access and pauses synchronization pending reconciliation and device credential rotation. The original server must be retired. Operational authentication remains local.
 
 Desktop release manifests/catalog downloads remain Platform responsibilities. Packaged desktop updates verify the artifact checksum and a valid signature against publisher certificates pinned at build time. Business Server upgrades drain local work before taking their pre-update snapshot. See [the remediation report](../audits/2026-09-07-production-remediation.md) for verification and deployment gates.
+
+## Production operations
+
+Production batch stock, immutable cost layers, profit-sharing rules and beneficiary ledgers remain owned by the Business Server. The Business App uses authenticated local production APIs. The Platform accepts versioned production_record snapshots and applies separate operational/financial monitoring permissions and branch scope. See [Production operations](../product/production-operations.md) for the implementation boundaries and upgrade sequence.

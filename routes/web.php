@@ -62,6 +62,9 @@ Route::get('/features', FeaturesPage::class)->name('public.features');
 Route::get('/business-types', BusinessTypesPage::class)->name('public.business-types');
 Route::get('/how-it-works', HowItWorksPage::class)->name('public.how-it-works');
 Route::get('/pricing', PricingPage::class)->name('public.pricing');
+Route::get('/deployment', \App\Livewire\PublicSite\DeploymentPage::class)->name('public.deployment');
+Route::get('/setup-kits', \App\Livewire\PublicSite\SetupKitsPage::class)->name('public.setup-kits');
+Route::get('/downloads/client-setup-kit', \App\Http\Controllers\Platform\ClientSetupKitDownloadController::class)->name('public.client-setup-kit');
 Route::get('/downloads/{application}', \App\Http\Controllers\Platform\DesktopDownloadController::class)
     ->whereIn('application', ['business-server', 'business-app'])->name('public.desktop-download');
 Route::get('/legal', LegalIndexPage::class)->name('legal.index');
@@ -127,6 +130,8 @@ Route::middleware(['auth', 'verified', 'account.active', 'legal.accepted', 'onbo
     Route::get('/synchronization', SynchronizationMonitoringPage::class)->name('platform.synchronization');
     Route::get('/alerts', NotificationCentrePage::class)->name('platform.notifications');
     Route::get('/reports', ReportCentrePage::class)->name('platform.reports');
+    Route::get('/production/export', \App\Http\Controllers\Platform\ProductionExportController::class)->middleware('module.available:production')->name('platform.production.export');
+    Route::get('/production', \App\Livewire\Platform\Production\ProductionPage::class)->middleware('module.available:production')->name('platform.production');
     Route::get('/services', ServicesModulePage::class)->middleware('module.available:services')->name('platform.services');
     Route::get('/shareholders', ShareholdersModulePage::class)->middleware('module.available:shareholders')->name('platform.shareholders');
     Route::get('/monitoring-users', MonitoringUserManagementPage::class)->name('platform.monitoring-users');

@@ -12,7 +12,8 @@
   </section>
 
   <div class="mb-4 rounded border p-4 text-sm">
-    <p>Desktop updates: upload the Windows .exe installer, select Windows and its exact architecture (x64, arm64, or ia32), and publish an active release with a higher version. ZIP files are not offered to desktop updaters.</p>
+    <p class="mb-2"><a href="{{ route('public.client-setup-kit') }}" class="font-semibold text-primary underline">Download client setup pack (ZIP)</a> ? CSV templates, examples, and installation/upgrade checklists.</p>
+    <p>Release ZIPs and installers are read from the Platform downloads folder. Select a prepared package below; its version, architecture and channel are filled automatically. Public downloads receive the setup ZIP; desktop updates receive the matching installer.</p>
     <p>Business Server manifest: <code>{{ route('api.v1.releases.manifest', ['application' => 'business-server']) }}</code></p>
     <p>Business App manifest: <code>{{ route('api.v1.releases.manifest', ['application' => 'business-app']) }}</code></p>
   </div>
@@ -20,25 +21,35 @@
   <section class="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
     <form wire:submit="createVersion" class="rounded-lg border border-border bg-surface p-4">
       <h2 class="font-semibold">Create release</h2>
+      <div class="mt-4"><label class="text-sm font-medium">Prepared release package
+          <select wire:model.live="managedPackage" class="ml-field mt-1 w-full">
+            <option value="">Select a package from downloads</option>
+            @foreach ($packages as $package)
+              <option value="{{ $package['key'] }}">{{ $package['application'] }} {{ $package['version'] }} / {{ $package['architecture'] }} / {{ $package['channel'] }}</option>
+            @endforeach
+          </select>
+          @error('managedPackage') <span class="text-xs text-danger">{{ $message }}</span> @enderror
+          @if (count($packages) === 0)<span class="block text-xs text-muted">No complete packages found. Run the release packaging command on the Platform host.</span>@endif
+        </label></div>
       <div class="mt-4 grid gap-3 md:grid-cols-2">
         <label class="text-sm font-medium">Application
-          <select wire:model="application" class="ml-field mt-1 w-full">
+          <select disabled wire:model="application" class="ml-field mt-1 w-full">
             <option value="shop_app">Business Server</option>
             <option value="client_app">Business App</option>
           </select>
         </label>
         <label class="text-sm font-medium">Version
-          <input wire:model="version" class="ml-field mt-1 w-full" placeholder="2.0.0">
+          <input readonly wire:model="version" class="ml-field mt-1 w-full" placeholder="2.0.0">
           @error('version') <span class="text-xs text-danger">{{ $message }}</span> @enderror
         </label>
         <label class="text-sm font-medium">Platform
-          <input wire:model="platform" class="ml-field mt-1 w-full" placeholder="windows, macos, linux, android">
+          <input readonly wire:model="platform" class="ml-field mt-1 w-full" placeholder="windows, macos, linux, android">
         </label>
         <label class="text-sm font-medium">Architecture
-          <input wire:model="architecture" class="ml-field mt-1 w-full" placeholder="x64, arm64">
+          <input readonly wire:model="architecture" class="ml-field mt-1 w-full" placeholder="x64, arm64">
         </label>
         <label class="text-sm font-medium">Release channel
-          <select wire:model="releaseChannel" class="ml-field mt-1 w-full">
+          <select disabled wire:model="releaseChannel" class="ml-field mt-1 w-full">
             <option value="stable">Stable</option>
             <option value="beta">Beta</option>
             <option value="internal">Internal</option>
@@ -60,10 +71,7 @@
         <label class="text-sm font-medium">Release date
           <input wire:model="releasedAt" type="datetime-local" class="ml-field mt-1 w-full">
         </label>
-        <label class="text-sm font-medium">Download file
-          <input wire:model="download" type="file" class="ml-field mt-1 w-full">
-          @error('download') <span class="text-xs text-danger">{{ $message }}</span> @enderror
-        </label>
+        
       </div>
 
       <label class="mt-3 block text-sm font-medium">Release notes

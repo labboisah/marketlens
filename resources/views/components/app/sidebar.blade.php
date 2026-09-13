@@ -33,6 +33,12 @@
           <x-app.icon name="monitor-smartphone" class="h-4 w-4 shrink-0" />
           <span>Business App</span>
         </a>
+        <a href="{{ route('public.client-setup-kit') }}" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted hover:bg-surface-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary" title="CSV templates and installation/upgrade guides">
+          <x-app.icon name="monitor" class="h-4 w-4 shrink-0" />
+          <span>Setup templates (ZIP)</span>
+        </a>
+        <a href="{{ route('public.deployment') }}" class="rounded-md px-3 py-2 text-sm font-medium text-muted hover:bg-surface-muted hover:text-foreground">Deployment guide</a>
+        <a href="{{ route('public.setup-kits') }}" class="rounded-md px-3 py-2 text-sm font-medium text-muted hover:bg-surface-muted hover:text-foreground">Browse setup kits</a>
       </div>
     </div>
     @foreach ($items as $section => $sectionItems)

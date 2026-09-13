@@ -6,6 +6,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
+beforeEach(fn () => Storage::fake('downloads'));
 
 function desktopRelease(array $overrides = []): ApplicationVersion
 {
@@ -80,8 +81,19 @@ it('routes owner downloads through the latest product release and rejects withdr
         $this->get($url)->assertOk();
         $version->update(['is_active' => false]);
         $this->get($url)->assertNotFound();
-        $this->get('/downloads/'.$slug)->assertNotFound();
+        $this->get('/downloads/'.$slug)->assertRedirect(route('public.deployment', ['architecture' => 'x64']))
+            ->assertSessionHas('download_unavailable');
+        $this->getJson('/downloads/'.$slug)->assertNotFound();
     }
     $this->get('/downloads/unknown')->assertNotFound();
     $this->getJson('/downloads/business-server?architecture=invalid')->assertUnprocessable();
+});
+
+it('explains unavailable installer downloads without a browser 404', function (): void {
+    foreach (['business-server' => 'Business Server', 'business-app' => 'Business App'] as $slug => $label) {
+        $this->get('/downloads/'.$slug.'?architecture=arm64')
+            ->assertRedirect(route('public.deployment', ['architecture' => 'arm64']))
+            ->assertSessionHas('download_unavailable', fn (string $message): bool => str_contains($message, $label.' for Windows arm64'));
+        $this->get('/deployment?architecture=arm64')->assertOk()->assertSee('Generate its managed setup package');
+    }
 });

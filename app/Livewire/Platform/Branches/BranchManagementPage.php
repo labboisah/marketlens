@@ -230,6 +230,7 @@ class BranchManagementPage extends Component
     private function defaultModuleSettings(?Branch $branch = null): array
     {
         return array_replace_recursive([
+            'production' => ['status' => BranchModuleStatus::Inherit->value, 'default_branch_rule' => '', 'require_manager_approval' => true, 'settlement_frequency' => SettlementFrequency::Monthly->value, 'branch_service_pricing' => false],
             'services' => [
                 'status' => BranchModuleStatus::Inherit->value,
                 'default_branch_rule' => '',

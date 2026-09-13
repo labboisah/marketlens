@@ -124,6 +124,7 @@ class PlatformShell
             ['label' => 'Synchronization', 'href' => route('platform.synchronization'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'refresh-cw', 'permission' => 'view-synchronization'],
             ['label' => 'Alerts', 'href' => route('platform.notifications'), 'section' => 'Control', 'feature' => 'security alerts', 'icon' => 'bell-ring', 'permission' => 'view-alerts'],
             ['label' => 'Reports', 'href' => route('platform.reports'), 'section' => 'Insights', 'feature' => 'reports', 'icon' => 'bar-chart-3', 'permission' => 'export-reports'],
+            ['label' => 'Production', 'href' => route('platform.production'), 'section' => 'Insights', 'feature' => 'module:production', 'icon' => 'package-check', 'permission' => 'view-production'],
             ['label' => 'Services and Revenue Sharing', 'href' => route('platform.services'), 'section' => 'Insights', 'feature' => 'module:services', 'icon' => 'hand-coins', 'permission' => 'view-sales'],
             ['label' => 'Shareholders and Profit Distribution', 'href' => route('platform.shareholders'), 'section' => 'Insights', 'feature' => 'module:shareholders', 'icon' => 'landmark', 'permission' => 'export-reports'],
             ['label' => 'Monitoring Users', 'href' => route('platform.monitoring-users'), 'section' => 'Account', 'feature' => 'base', 'icon' => 'user-plus', 'permission' => 'manage-monitoring-users'],
