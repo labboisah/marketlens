@@ -36,7 +36,7 @@ coverage groups. The Platform suite is primarily Pest feature coverage under
 - Registration, verification, login, password reset, suspension, and auth rate
   limiting are covered by `BusinessOwnerAuthenticationTest` and
   `PlatformCoverageCompletionTest`.
-- Business creation, branch creation, plan selection, trial creation, and
+- Business creation, branch creation, KernelBridge activation handoff, and
   duplicate prevention are covered by `BusinessOnboardingWizardTest` and
   `BranchManagementTest`.
 - Business isolation, branch isolation, monitoring-user restrictions, and

@@ -38,6 +38,7 @@
             <thead>
               <tr>
                 <th>Branch</th>
+                <th>Operating modes</th>
                 <th>Status</th>
                 <th>Devices</th>
                 <th>Last sync</th>
@@ -58,6 +59,7 @@
                       @endif
                     </p>
                   </td>
+                  <td>{{ collect($branch->operating_modes ?? [])->map(fn ($mode) => ucfirst($mode))->join(', ') ?: 'Not configured' }}</td>
                   <td>
                     <x-app.status-badge :tone="$statusTone[$branch->status->value] ?? 'neutral'">
                       {{ ucfirst($branch->status->value) }}
@@ -132,6 +134,19 @@
                 <input id="branch-lga" wire:model="localGovernmentArea" class="ml-field mt-1 w-full">
               </div>
             </div>
+            <fieldset class="space-y-2">
+              <legend class="text-sm font-medium">Operating modes</legend>
+              <div class="flex flex-wrap gap-x-4 gap-y-2">
+                @foreach ($operatingModeOptions as $mode)
+                  <label class="flex items-center gap-2 text-sm">
+                    <input type="checkbox" wire:model="operatingModes" value="{{ $mode->value }}" class="rounded border-border">
+                    {{ $mode->displayName() }}
+                  </label>
+                @endforeach
+              </div>
+              @error('operatingModes') <p class="text-xs text-danger">{{ $message }}</p> @enderror
+              @error('operatingModes.*') <p class="text-xs text-danger">{{ $message }}</p> @enderror
+            </fieldset>
             <label class="flex items-center gap-2 text-sm">
               <input type="checkbox" wire:model="isHeadOffice" class="rounded border-border">
               Head office

@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/repositories/mock_monitoring_repository.dart';
+import '../../data/repositories/platform_monitoring_repository.dart';
+import '../features/monitoring_feature.dart';
 import '../widgets/summary_card.dart';
 import '../widgets/sync_status_banner.dart';
 
 final featureSummaryProvider = FutureProvider.family((ref, String featureId) {
-  return ref.watch(monitoringRepositoryProvider).getFeatureSummary(featureId);
+  return ref.watch(monitoringRepositoryProvider).getFeatureSummary(
+        featureId,
+        branch: ref.watch(selectedMonitoringBranchProvider),
+      );
 });
 
 class FeaturePlaceholderScreen extends ConsumerWidget {
@@ -19,6 +23,14 @@ class FeaturePlaceholderScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final selectedBranch = ref.watch(selectedMonitoringBranchProvider);
+    final feature = monitoringFeatures.firstWhere((item) => item.id == featureId);
+    final requiredModes = feature.requiredOperatingModes;
+    if (requiredModes != null &&
+        (selectedBranch == null || !requiredModes.any(selectedBranch.operatingModes.contains))) {
+      return const Center(child: Text('This feature is not configured for the selected branch.'));
+    }
+
     final summary = ref.watch(featureSummaryProvider(featureId));
 
     return summary.when(

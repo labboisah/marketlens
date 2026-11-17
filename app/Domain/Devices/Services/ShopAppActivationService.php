@@ -7,8 +7,11 @@ use App\Domain\Billing\Models\PlanFeature;
 use App\Domain\Billing\Services\SubscriptionManagementService;
 use App\Domain\Devices\Models\Device;
 use App\Domain\Devices\Models\DeviceActivation;
-use App\Domain\Modules\Services\ModuleAccessService;
 use App\Domain\Devices\Models\DeviceHeartbeatLog;
+use App\Domain\Licensing\Models\BusinessLicenseAssociation;
+use App\Domain\Licensing\Services\BusinessLicenseEntitlementService;
+use App\Domain\Licensing\Services\KernelBridgeLicenseSyncService;
+use App\Domain\Modules\Services\ModuleAccessService;
 use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Models\Business;
 use App\Domain\Versions\Models\ApplicationVersion;
@@ -18,6 +21,7 @@ use App\Enums\BusinessModule;
 use App\Enums\BusinessStatus;
 use App\Enums\DeviceStatus;
 use App\Models\User;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -27,6 +31,8 @@ class ShopAppActivationService
     public function __construct(
         private readonly SubscriptionManagementService $subscriptions,
         private readonly ModuleAccessService $moduleAccess,
+        private readonly BusinessLicenseEntitlementService $licenseEntitlements,
+        private readonly KernelBridgeLicenseSyncService $kernelBridge,
     ) {}
 
     /**
@@ -35,9 +41,17 @@ class ShopAppActivationService
      */
     public function createActivation(Business $business, Branch $branch, User $actor, array $data): array
     {
-        $this->assertBusinessCanActivate($business);
+        $deviceType = (string) $data['device_type'];
+        $requiresKernelBridgeGrant = $this->requiresKernelBridgeGrant($deviceType);
+        $usesKernelBridgeLicense = $requiresKernelBridgeGrant
+            || ($deviceType === 'client_app' && $this->licenseEntitlements->license($business) !== null);
+        $this->assertBusinessCanActivate($business, ! $usesKernelBridgeLicense);
         $this->assertBranchCanActivate($branch);
-        $this->assertDeviceLimit($business, (string) $data['device_type']);
+        if ($requiresKernelBridgeGrant) {
+            $this->assertServerInstallationCapacity($business);
+        } else {
+            $this->assertDeviceLimit($business, (string) $data['device_type']);
+        }
 
         $version = $this->resolveAllowedVersion($data['application_version_id'] ?? null);
         $code = $this->generateCode();
@@ -85,14 +99,44 @@ class ShopAppActivationService
         }
 
         $device = $activation->device;
+        $expectedDeviceType = $payload['expected_device_type'] ?? null;
+        if ($expectedDeviceType !== null && $device->type !== $expectedDeviceType) {
+            throw ValidationException::withMessages([
+                'activation_code' => "This activation code is for a {$device->type} device, not a {$expectedDeviceType} device. Generate a code for the Business Server.",
+            ]);
+        }
+
+        $requiresKernelBridgeGrant = $this->requiresKernelBridgeGrant($device->type);
+        if ($expectedDeviceType === 'shop_app' && ! $requiresKernelBridgeGrant) {
+            throw ValidationException::withMessages([
+                'activation_code' => 'KernelBridge grant enforcement is disabled on the Platform. Enable it before activating a Business Server.',
+            ]);
+        }
+
+        if ($activation->used_at || $activation->activated_at) {
+            return $this->retryActivation($activation, $device, $payload);
+        }
+
         $branch = Branch::query()->findOrFail($device->branch_id);
         $business = Business::query()->with('currentSubscription')->findOrFail($device->business_id);
+        $installationUuid = trim((string) ($payload['installation_uuid'] ?? ''));
 
         try {
             $this->assertActivationUsable($activation);
-            $this->assertBusinessCanActivate($business);
+            $usesKernelBridgeLicense = $requiresKernelBridgeGrant
+                || ($device->type === 'client_app' && $this->licenseEntitlements->license($business) !== null);
+            $this->assertBusinessCanActivate($business, ! $usesKernelBridgeLicense);
             $this->assertBranchCanActivate($branch);
-            $this->assertDeviceLimit($business, $device->type, $device);
+            if ($requiresKernelBridgeGrant) {
+                if (! Str::isUuid($installationUuid)) {
+                    throw ValidationException::withMessages([
+                        'installation_uuid' => 'A stable Business Server installation UUID is required.',
+                    ]);
+                }
+                $this->assertServerInstallationCapacity($business, $device);
+            } else {
+                $this->assertDeviceLimit($business, $device->type, $device);
+            }
             $this->assertApplicationVersionAllowed($activation, (string) $payload['app_version']);
         } catch (ValidationException $exception) {
             $activation->increment('failed_attempts');
@@ -105,12 +149,51 @@ class ShopAppActivationService
             throw $exception;
         }
 
+        $license = $requiresKernelBridgeGrant ? $this->activeKernelBridgeLicense($business) : null;
+        $kernelBridgeCode = $license
+            ? $this->kernelBridge->issueInstallationActivationCode($business, $license, $installationUuid, $device->name)
+            : null;
         $credential = 'ml_device_'.Str::random(64);
+        $response = [
+            'device_uuid' => $device->uuid,
+            'device_type' => $device->type,
+            'credential' => $credential,
+            'credential_preview' => substr($credential, 0, 14).'...',
+            'expires_at' => null,
+            'business_uuid' => $business->uuid,
+            'branch_uuid' => $branch->uuid,
+            'business_name' => $business->name,
+            'branch_name' => $branch->name,
+            'subscription_state' => $license?->status ?? $business->currentSubscription?->status->value ?? 'unknown',
+            'plan_features' => $this->planFeatures($business),
+            'enabled_modules' => $this->enabledModules($business, $branch),
+            'branch_settings' => [
+                'business_modules' => $business->module_settings ?? [],
+                'branch_modules' => $branch->module_settings ?? [],
+                'operating_modes' => $branch->operating_modes ?? ['sales'],
+                'branch_code' => $branch->code,
+                'timezone' => $business->timezone,
+                'currency' => $business->default_currency,
+            ],
+            ...($kernelBridgeCode ? [
+                'kernelbridge_api_url' => $kernelBridgeCode['api_url'],
+                'kernelbridge_installation_code' => [
+                    'link_uuid' => $kernelBridgeCode['link_uuid'],
+                    'license_uuid' => $license?->license_uuid,
+                    'installation_uuid' => $kernelBridgeCode['installation_uuid'],
+                    'activation_code' => $kernelBridgeCode['activation_code'],
+                    'expires_at' => $kernelBridgeCode['expires_at'],
+                ],
+            ] : []),
+            'sync_protocol_version' => '1.0',
+        ];
+        $encryptedResponse = Crypt::encryptString(json_encode($response, JSON_THROW_ON_ERROR));
 
-        DB::transaction(function () use ($activation, $device, $payload, $credential): void {
+        DB::transaction(function () use ($activation, $device, $payload, $credential, $license, $installationUuid, $kernelBridgeCode, $encryptedResponse): void {
             $activation->forceFill([
                 'activated_at' => now(),
                 'used_at' => now(),
+                'response_encrypted' => $encryptedResponse,
             ])->save();
 
             $device->forceFill([
@@ -118,6 +201,10 @@ class ShopAppActivationService
                 'credential_hash' => $this->hashSecret($credential),
                 'credential_preview' => substr($credential, 0, 14).'...',
                 'identity_hash' => $this->hashSecret((string) $payload['device_identity']),
+                'kernelbridge_license_uuid' => $license?->license_uuid,
+                'kernelbridge_installation_uuid' => $device->type === 'shop_app' ? $installationUuid : null,
+                'kernelbridge_installation_grant_uuid' => null,
+                'kernelbridge_grant_status' => $kernelBridgeCode ? 'activation_code_issued' : null,
                 'app_version' => $payload['app_version'],
                 'operating_system' => $payload['operating_system'] ?? [],
                 'activated_at' => now(),
@@ -130,31 +217,15 @@ class ShopAppActivationService
                 'action' => 'device.activated',
                 'subject_type' => Device::class,
                 'subject_id' => $device->id,
-                'metadata' => ['device_uuid' => $device->uuid],
+                'metadata' => [
+                    'device_uuid' => $device->uuid,
+                    'kernelbridge_license_uuid' => $license?->license_uuid,
+                    'kernelbridge_installation_uuid' => $kernelBridgeCode['installation_uuid'] ?? null,
+                ],
             ]);
         });
 
-        return [
-            'device_uuid' => $device->uuid,
-            'credential' => $credential,
-            'credential_preview' => substr($credential, 0, 14).'...',
-            'expires_at' => null,
-            'business_uuid' => $business->uuid,
-            'branch_uuid' => $branch->uuid,
-            'business_name' => $business->name,
-            'branch_name' => $branch->name,
-            'subscription_state' => $business->currentSubscription?->status->value ?? 'unknown',
-            'plan_features' => $this->planFeatures($business),
-            'enabled_modules' => $this->enabledModules($business, $branch),
-            'branch_settings' => [
-                'business_modules' => $business->module_settings ?? [],
-                'branch_modules' => $branch->module_settings ?? [],
-                'branch_code' => $branch->code,
-                'timezone' => $business->timezone,
-                'currency' => $business->default_currency,
-            ],
-            'sync_protocol_version' => '1.0',
-        ];
+        return $response;
     }
 
     /**
@@ -268,7 +339,39 @@ class ShopAppActivationService
         }
     }
 
-    private function assertBusinessCanActivate(Business $business): void
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function retryActivation(DeviceActivation $activation, Device $device, array $payload): array
+    {
+        $identity = (string) ($payload['device_identity'] ?? '');
+        $installationUuid = trim((string) ($payload['installation_uuid'] ?? ''));
+        $sameIdentity = $identity !== ''
+            && is_string($device->identity_hash)
+            && hash_equals($device->identity_hash, $this->hashSecret($identity));
+        $sameInstallation = $device->type !== 'shop_app'
+            || ($installationUuid !== '' && $device->kernelbridge_installation_uuid === $installationUuid);
+
+        if ($device->status !== DeviceStatus::Active
+            || ! $sameIdentity
+            || ! $sameInstallation
+            || ! $activation->used_at?->isAfter(now()->subMinutes(30))
+            || blank($activation->response_encrypted)) {
+            throw ValidationException::withMessages([
+                'activation_code' => 'The activation code is invalid, expired, or has already been used by another installation.',
+            ]);
+        }
+
+        $response = json_decode(Crypt::decryptString($activation->response_encrypted), true, 512, JSON_THROW_ON_ERROR);
+        if (! is_array($response)) {
+            throw new \UnexpectedValueException('The saved activation response is malformed.');
+        }
+
+        return $response;
+    }
+
+    private function assertBusinessCanActivate(Business $business, bool $requireLocalSubscription = true): void
     {
         $business->refresh()->loadMissing('currentSubscription.plan.features');
 
@@ -276,8 +379,54 @@ class ShopAppActivationService
             throw ValidationException::withMessages(['business' => 'Business is not active.']);
         }
 
-        if (! $this->subscriptions->allowsOperationalAccess($business->currentSubscription)) {
+        if ($requireLocalSubscription && ! $this->subscriptions->allowsOperationalAccess($business->currentSubscription)) {
             throw ValidationException::withMessages(['subscription' => 'Subscription is not active.']);
+        }
+    }
+
+    private function requiresKernelBridgeGrant(string $deviceType): bool
+    {
+        return $deviceType === 'shop_app' && (bool) config('kernelbridge.enforce_server_grants', true);
+    }
+
+    private function activeKernelBridgeLicense(Business $business): BusinessLicenseAssociation
+    {
+        $license = $business->kernelbridgeLicense()->first();
+
+        if (! $license
+            || ! in_array(strtolower((string) $license->status), ['active', 'trial'], true)
+            || ($license->expires_at && $license->expires_at->isPast())
+            || ($license->grace_expires_at && $license->grace_expires_at->isPast())) {
+            throw ValidationException::withMessages([
+                'license' => 'An active KernelBridge MarketLens license is required to register a Business Server.',
+            ]);
+        }
+
+        return $license;
+    }
+
+    private function assertServerInstallationCapacity(Business $business, ?Device $currentDevice = null): void
+    {
+        $license = $this->activeKernelBridgeLicense($business);
+        $limit = data_get($license->entitlements, 'max_server_installations');
+
+        if (! is_numeric($limit) || (int) $limit < 1) {
+            throw ValidationException::withMessages([
+                'license' => 'The KernelBridge license has no valid max_server_installations entitlement.',
+            ]);
+        }
+
+        $count = Device::query()
+            ->where('business_id', $business->id)
+            ->where('type', 'shop_app')
+            ->whereIn('status', [DeviceStatus::Pending, DeviceStatus::Active])
+            ->when($currentDevice, fn ($query) => $query->whereKeyNot($currentDevice->id))
+            ->count();
+
+        if ($count >= (int) $limit) {
+            throw ValidationException::withMessages([
+                'license' => 'The Business Server installation limit has been reached for this license.',
+            ]);
         }
     }
 
@@ -297,8 +446,38 @@ class ShopAppActivationService
             ->when($currentDevice, fn ($query) => $query->whereKeyNot($currentDevice->id))
             ->count();
 
-        if ($activeCount >= $this->subscriptions->maxDevices($business, $deviceType)) {
-            throw ValidationException::withMessages(['device' => 'The current subscription does not allow another Business Server device.']);
+        $license = $deviceType === 'client_app' ? $this->licenseEntitlements->license($business) : null;
+        $usesKernelBridgeLimit = $license !== null;
+
+        if ($license && ! $this->licenseEntitlements->isActive($license)) {
+            throw ValidationException::withMessages([
+                'license' => 'The linked KernelBridge MarketLens license is not active.',
+            ]);
+        }
+
+        $licenseLimit = $usesKernelBridgeLimit
+            ? $this->licenseEntitlements->limit($business, 'max_client_app_devices')
+            : null;
+
+        if ($licenseLimit === 'unlimited') {
+            return;
+        }
+
+        if ($usesKernelBridgeLimit && (! is_numeric($licenseLimit) || (int) $licenseLimit < 0)) {
+            throw ValidationException::withMessages([
+                'license' => 'The active KernelBridge license has no valid max_client_app_devices entitlement. Refresh its entitlements or configure the plan limit.',
+            ]);
+        }
+
+        $limit = $licenseLimit !== null
+            ? (int) $licenseLimit
+            : $this->subscriptions->maxDevices($business, $deviceType);
+
+        if ($activeCount >= $limit) {
+            $message = $usesKernelBridgeLimit
+                ? 'The Business App device limit has been reached for this license.'
+                : 'The current subscription does not allow another Business App device.';
+            throw ValidationException::withMessages(['device' => $message]);
         }
     }
 
@@ -348,6 +527,9 @@ class ShopAppActivationService
         $branch = Branch::query()->findOrFail($device->branch_id);
         $subscription = $business->currentSubscription;
         $plan = $subscription?->plan;
+        $licenseEntitlements = app(BusinessLicenseEntitlementService::class);
+        $license = $licenseEntitlements->license($business);
+        $providerPlanName = $license ? $licenseEntitlements->planName($license) : null;
         $planFeatures = $this->planFeatures($business);
         $availableFeatures = array_fill_keys($planFeatures, true);
 
@@ -378,24 +560,33 @@ class ShopAppActivationService
             'required_version' => $device->required_version,
             'business_uuid' => $business->uuid,
             'branch_uuid' => $branch->uuid,
-            'subscription_state' => $subscription?->status->value ?? 'unknown',
-            'subscription_plan' => $plan ? [
+            'subscription_state' => $license?->status ?? $subscription?->status->value ?? 'unknown',
+            'subscription_plan' => $license ? [
+                'uuid' => data_get($license->provider_metadata, 'plan_uuid'),
+                'name' => $providerPlanName ?? 'KernelBridge plan',
+                'starts_at' => data_get($license->provider_metadata, 'starts_at'),
+                'ends_at' => $license->expires_at?->toISOString(),
+            ] : ($plan ? [
                 'uuid' => $plan->uuid,
                 'name' => $plan->name,
                 'billing_interval' => $plan->billing_interval,
                 'starts_at' => $subscription?->starts_at?->toISOString(),
                 'ends_at' => $subscription?->ends_at?->toISOString(),
-            ] : null,
+            ] : null),
             'plan_features' => $planFeatures,
             'feature_catalog' => $featureCatalog,
             'enabled_modules' => $this->enabledModules($business, $branch),
             'branch_settings' => [
                 'business_modules' => $business->module_settings ?? [],
                 'branch_modules' => $branch->module_settings ?? [],
+                'operating_modes' => $branch->operating_modes ?? ['sales'],
                 'branch_code' => $branch->code,
                 'timezone' => $business->timezone,
                 'currency' => $business->default_currency,
             ],
+            'kernelbridge_license_uuid' => $device->kernelbridge_license_uuid,
+            'kernelbridge_installation_grant_uuid' => $device->kernelbridge_installation_grant_uuid,
+            'kernelbridge_grant_status' => $device->kernelbridge_grant_status,
         ];
     }
 
@@ -404,6 +595,11 @@ class ShopAppActivationService
      */
     private function planFeatures(Business $business): array
     {
+        $licensedFeatures = app(BusinessLicenseEntitlementService::class)->featureNames($business);
+        if ($licensedFeatures !== null) {
+            return $licensedFeatures;
+        }
+
         $business->loadMissing('currentSubscription.plan.features');
 
         return $business->currentSubscription?->plan?->features
@@ -452,9 +648,3 @@ class ShopAppActivationService
         ]);
     }
 }
-
-
-
-
-
-

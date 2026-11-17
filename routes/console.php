@@ -10,6 +10,8 @@ Artisan::command('inspire', function () {
 
 Schedule::command('horizon:snapshot')->everyFiveMinutes();
 
+Schedule::command('kernelbridge:reconcile-licenses')->hourly()->withoutOverlapping();
+
 Schedule::call(fn () => cache()->put((string) config('observability.scheduler_heartbeat_key'), now()->toIso8601String(), now()->addMinutes(30)))
     ->name('observability.scheduler-heartbeat')
     ->everyMinute();

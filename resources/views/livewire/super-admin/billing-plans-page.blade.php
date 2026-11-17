@@ -32,7 +32,7 @@
             <td class="font-medium">{{ str($plan->billing_interval)->title() }}</td>
             <td class="font-medium">{{ $plan->display_price }}</td>
             <td class="font-medium">{{ $plan->is_active ? 'Active' : 'Inactive' }}</td>
-            <td class="text-xs text-muted">{{ $plan->features_count }} features</td>
+            <td class="text-xs text-muted">{{ $plan->features_count }} features<x-plan-production-feature :plan="$plan" /></td>
             <td class="flex flex-wrap gap-2">
               <button
                 type="button"

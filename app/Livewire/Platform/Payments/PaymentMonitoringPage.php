@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Platform\Payments;
 
+use App\Domain\Licensing\Services\BusinessLicenseEntitlementService;
 use App\Domain\Payments\Services\PaymentMonitoringService;
 use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Services\BranchContext;
@@ -164,16 +165,8 @@ class PaymentMonitoringPage extends Component
 
     private function canViewPayments(int $businessId): bool
     {
-        $business = auth()->user()?->ownedBusinesses()
-            ->with('currentSubscription.plan.features')
-            ->whereKey($businessId)
-            ->first();
+        $business = auth()->user()?->ownedBusinesses()->whereKey($businessId)->first();
 
-        $features = $business?->currentSubscription?->plan?->features
-            ->pluck('name')
-            ->map(fn (string $name): string => strtolower($name))
-            ->all() ?? [];
-
-        return collect($features)->contains(fn (string $feature): bool => str_contains($feature, 'sales') || str_contains($feature, 'cashier settlement'));
+        return $business !== null && app(BusinessLicenseEntitlementService::class)->allowsAny($business, ['sales', 'cashier settlement']);
     }
 }

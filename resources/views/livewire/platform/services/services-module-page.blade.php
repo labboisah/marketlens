@@ -25,6 +25,7 @@
     @endforeach
   </section>
 
+  <span id="catalogue"></span>
   <x-app.card title="Service catalogue" description="Current service products synchronized from the selected branch.">
     <x-app.table density="compact">
       <thead><tr><th>Service</th><th>SKU</th><th>Retail price</th><th>Status</th><th>Last sync</th></tr></thead>
@@ -44,6 +45,7 @@
     </x-app.table>
   </x-app.card>
 
+  <span id="orders"></span>
   <x-app.card title="Recent service orders" description="Read-only operational service activity from the selected branch.">
     <x-app.table density="compact">
       <thead><tr><th>Order</th><th>Work</th><th>Status</th><th>Total</th><th>Paid</th><th>Created</th></tr></thead>
@@ -64,6 +66,7 @@
     </x-app.table>
   </x-app.card>
 
+  <span id="revenue"></span>
   <x-app.card title="Revenue allocations" description="Approved business, staff, and shareholder allocations from completed service work.">
     <x-app.table density="compact">
       <thead><tr><th>Order UUID</th><th>Recipient</th><th>Status</th><th>Amount</th><th>Created</th></tr></thead>

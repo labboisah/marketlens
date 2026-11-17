@@ -69,4 +69,18 @@ abstract class SyncEntityProcessor
 
         return new SyncRecordResult('accepted', $record);
     }
+    /** Older retries remain acknowledged without replacing a newer monitoring projection. */
+    protected function hasNewerVersion(SyncBatch $batch, array $record): bool
+    {
+        return SyncRecord::query()
+            ->withoutGlobalScopes()
+            ->where('business_id', $batch->business_id)
+            ->where('branch_id', $batch->branch_id)
+            ->where('entity', $record['entity'])
+            ->where('record_uuid', $record['record_uuid'])
+            ->where('status', 'accepted')
+            ->where('version', '>', $record['version'])
+            ->exists();
+    }
+
 }

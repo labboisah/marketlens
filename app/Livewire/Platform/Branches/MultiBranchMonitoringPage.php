@@ -3,6 +3,7 @@
 namespace App\Livewire\Platform\Branches;
 
 use App\Domain\Branches\Services\MultiBranchMonitoringService;
+use App\Domain\Licensing\Services\BusinessLicenseEntitlementService;
 use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Services\BusinessContext;
 use Illuminate\Contracts\View\View;
@@ -95,16 +96,8 @@ class MultiBranchMonitoringPage extends Component
 
     private function canViewBranchMonitoring(int $businessId): bool
     {
-        $business = auth()->user()?->ownedBusinesses()
-            ->with('currentSubscription.plan.features')
-            ->whereKey($businessId)
-            ->first();
+        $business = auth()->user()?->ownedBusinesses()->whereKey($businessId)->first();
 
-        $features = $business?->currentSubscription?->plan?->features
-            ->pluck('name')
-            ->map(fn (string $name): string => strtolower($name))
-            ->all() ?? [];
-
-        return collect($features)->contains(fn (string $feature): bool => str_contains($feature, 'multiple branches') || str_contains($feature, 'remote dashboard') || str_contains($feature, 'reports'));
+        return $business !== null && app(BusinessLicenseEntitlementService::class)->allowsAny($business, ['multiple branches', 'remote dashboard', 'reports']);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Livewire\Platform\Inventory;
 
 use App\Domain\Inventory\Models\ReplicatedInventoryStock;
 use App\Domain\Inventory\Services\InventoryMonitoringService;
+use App\Domain\Licensing\Services\BusinessLicenseEntitlementService;
 use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Services\BranchContext;
 use App\Domain\Tenancy\Services\BusinessContext;
@@ -147,9 +148,8 @@ class InventoryMonitoringPage extends Component
 
     private function canViewInventory(int $businessId): bool
     {
-        $business = auth()->user()?->ownedBusinesses()->with('currentSubscription.plan.features')->whereKey($businessId)->first();
-        $features = $business?->currentSubscription?->plan?->features->pluck('name')->map(fn (string $name): string => strtolower($name))->all() ?? [];
+        $business = auth()->user()?->ownedBusinesses()->whereKey($businessId)->first();
 
-        return collect($features)->contains(fn (string $feature): bool => str_contains($feature, 'inventory') || str_contains($feature, 'stock'));
+        return $business !== null && app(BusinessLicenseEntitlementService::class)->allowsAny($business, ['inventory', 'stock']);
     }
 }

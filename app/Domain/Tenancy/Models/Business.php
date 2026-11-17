@@ -8,6 +8,7 @@ use App\Domain\Billing\Models\BillingProfile;
 use App\Domain\Billing\Models\Subscription;
 use App\Domain\Billing\Models\SubscriptionChangeRequest;
 use App\Domain\Devices\Models\Device;
+use App\Domain\Licensing\Models\BusinessLicenseAssociation;
 use App\Domain\Settings\Models\BusinessDataExport;
 use App\Domain\Settings\Models\BusinessTrustedDevice;
 use App\Enums\BusinessStatus;
@@ -109,6 +110,19 @@ class Business extends Model
     public function subscriptionChangeRequests(): HasMany
     {
         return $this->hasMany(SubscriptionChangeRequest::class)->latest();
+    }
+
+    public function licenseAssociations(): HasMany
+    {
+        return $this->hasMany(BusinessLicenseAssociation::class)->latest('updated_at');
+    }
+
+    public function kernelbridgeLicense(): HasOne
+    {
+        return $this->hasOne(BusinessLicenseAssociation::class)
+            ->where('provider', 'kernelbridge')
+            ->where('product_code', 'MARKETLENS')
+            ->latestOfMany();
     }
 
     public function dataExports(): HasMany

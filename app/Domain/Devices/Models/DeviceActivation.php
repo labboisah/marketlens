@@ -17,6 +17,7 @@ class DeviceActivation extends Model
         'application_version_id',
         'uuid',
         'activation_code_hash',
+        'response_encrypted',
         'activated_at',
         'used_at',
         'revoked_at',

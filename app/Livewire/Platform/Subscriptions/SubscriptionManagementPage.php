@@ -7,10 +7,14 @@ use App\Domain\Billing\Models\Invoice;
 use App\Domain\Billing\Models\SubscriptionChangeRequest;
 use App\Domain\Billing\Models\SubscriptionPayment;
 use App\Domain\Billing\Services\SubscriptionManagementService;
+use App\Domain\Licensing\Services\BusinessLicenseEntitlementService;
+use App\Domain\Licensing\Services\KernelBridgeLicenseSyncService;
+use App\Domain\Modules\Services\ModuleAccessService;
 use App\Domain\Tenancy\Models\Business;
 use App\Domain\Tenancy\Services\BusinessContext;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -48,17 +52,39 @@ class SubscriptionManagementPage extends Component
         $this->currency = $profile?->currency ?? $business->default_currency ?? (string) config('marketlens.currency.default', 'NGN');
     }
 
-    public function render(BusinessContext $businessContext, SubscriptionManagementService $subscriptions): View
-    {
+    public function render(
+        BusinessContext $businessContext,
+        SubscriptionManagementService $subscriptions,
+        BusinessLicenseEntitlementService $licenseEntitlements,
+    ): View {
         $business = $this->currentBusiness($businessContext);
         $this->authorize('view', $business);
 
         $overview = $subscriptions->overview($business);
         $plans = $subscriptions->availablePlans();
         $selectedPlan = $this->selectedPlanId ? $plans->firstWhere('id', $this->selectedPlanId) : null;
+        $kernelBridgeLicense = $licenseEntitlements->license($business);
+        $licenseFeatureNames = $kernelBridgeLicense ? $licenseEntitlements->featureNames($business) : null;
+        $effectiveFeatures = $licenseFeatureNames !== null
+            ? collect($licenseFeatureNames)->map(fn (string $name): object => (object) ['name' => str($name)->replace('_', ' ')->title()])
+            : ($overview['features'] ?? collect());
+        $effectivePlanName = $kernelBridgeLicense
+            ? ($licenseEntitlements->planName($kernelBridgeLicense) ?? 'KernelBridge plan')
+            : ($overview['plan']?->name ?? 'No plan');
+        $effectiveStatus = $kernelBridgeLicense?->status ?? $overview['subscription']?->status?->value ?? 'none';
+        $effectiveOperationalAccess = $kernelBridgeLicense
+            ? $licenseEntitlements->isActive($kernelBridgeLicense)
+            : $overview['operationalAccess'];
+        $effectiveExpiration = $kernelBridgeLicense?->expires_at ?? $overview['expiration']['date'];
 
         return view('livewire.platform.subscriptions.subscription-management-page', [
             'business' => $business,
+            'kernelBridgeLicense' => $kernelBridgeLicense,
+            'effectiveFeatures' => $effectiveFeatures,
+            'effectivePlanName' => $effectivePlanName,
+            'effectiveStatus' => $effectiveStatus,
+            'effectiveOperationalAccess' => $effectiveOperationalAccess,
+            'effectiveExpiration' => $effectiveExpiration,
             'overview' => $overview,
             'plans' => $plans,
             'selectedPlan' => $selectedPlan,
@@ -138,6 +164,23 @@ class SubscriptionManagementPage extends Component
         $this->cancellationReason = '';
 
         $this->dispatch('notify', tone: 'warning', title: 'Cancellation requested', message: 'Access is not removed immediately; retention and grace policies still apply.');
+    }
+
+    public function refreshKernelBridgeEntitlements(
+        BusinessContext $businessContext,
+        KernelBridgeLicenseSyncService $licenses,
+    ): void {
+        $business = $this->currentBusiness($businessContext);
+        $this->authorize('manageSubscription', $business);
+
+        try {
+            $licenses->refreshEntitlements($business);
+            app(ModuleAccessService::class)->forget($business);
+            $this->dispatch('notify', tone: 'success', title: 'License refreshed', message: 'KernelBridge entitlements were refreshed.');
+        } catch (ValidationException $exception) {
+            $message = collect($exception->errors())->flatten()->first() ?? 'KernelBridge entitlements could not be refreshed.';
+            $this->dispatch('notify', tone: 'danger', title: 'License refresh failed', message: (string) $message);
+        }
     }
 
     private function currentBusiness(BusinessContext $businessContext): Business

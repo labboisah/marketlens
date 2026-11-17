@@ -65,14 +65,50 @@ paths:
     post:
       tags: [Devices]
       summary: Activate a Business Server device.
+      description: The Business Server sends its stable installation_uuid and expected_device_type=shop_app. A matching shop_app activation returns a short-lived kernelbridge_installation_code bound to that installation. The Business Server exchanges that code with KernelBridge for an installation credential, which it stores encrypted in the main process. The Platform permits a short retry of the same activation code from the same device identity and installation to recover a response lost during this exchange. The response branch_settings object includes the branch operating_modes array (sales, production, services).
       operationId: deviceActivate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [activation_code, device_identity, app_version]
+              properties:
+                activation_code: { type: string, maxLength: 128 }
+                device_identity: { type: string, maxLength: 255 }
+                expected_device_type: { type: string, enum: [shop_app, client_app], description: Optional expected device type. A mismatch is rejected without consuming the activation code. }
+                installation_uuid: { type: string, format: uuid, description: Stable UUID from the Business Server's trusted local installation record; required for shop_app activation. }
+                app_version: { type: string, maxLength: 80 }
+                operating_system: { type: object, additionalProperties: true }
       responses:
         "200":
-          description: Device activation accepted.
+          description: Device activation accepted. A successful shop_app activation under KernelBridge enforcement also returns a short-lived KernelBridge installation activation code bound to the installation UUID.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse"
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          device_type:
+                            type: string
+                            enum: [shop_app, client_app]
+                          kernelbridge_installation_code:
+                            type: object
+                            required: [link_uuid, license_uuid, installation_uuid, activation_code, expires_at]
+                            properties:
+                              link_uuid: { type: string, format: uuid }
+                              license_uuid: { type: string, format: uuid }
+                              installation_uuid: { type: string, format: uuid }
+                              activation_code: { type: string, writeOnly: true }
+                              expires_at: { type: string, format: date-time }
+                          kernelbridge_api_url:
+                            type: string
+                            format: uri
         "422":
           $ref: "#/components/responses/ValidationError"
   /device/versions:
@@ -168,6 +204,7 @@ paths:
     get:
       tags: [Monitoring]
       summary: List branches visible to the authenticated monitoring user.
+      description: Each branch item includes its configured operating_modes; only branches authorized for the user are returned.
       operationId: monitoringBranches
       security:
         - bearerAuth: []

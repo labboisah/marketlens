@@ -10,6 +10,8 @@
       'bell-ring' => '<path d="M10.3 21a2 2 0 0 0 3.4 0" /><path d="M4 8a8 8 0 0 1 16 0c0 7 3 9 3 9H1s3-2 3-9" /><path d="M22 4 18 2" /><path d="M2 4l4-2" />',
       'building-2' => '<path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18" /><path d="M6 12H4a2 2 0 0 0-2 2v8" /><path d="M18 9h2a2 2 0 0 1 2 2v11" /><path d="M10 6h4" /><path d="M10 10h4" /><path d="M10 14h4" /><path d="M10 18h4" />',
       'check-circle' => '<path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" />',
+      'chevron-down' => '<path d="m6 9 6 6 6-6" />',
+      'download' => '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5 5 5-5" /><path d="M12 15V3" />',
       'circle' => '<circle cx="12" cy="12" r="10" />',
       'credit-card' => '<rect width="20" height="14" x="2" y="5" rx="2" /><path d="M2 10h20" />',
       'info' => '<circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" />',

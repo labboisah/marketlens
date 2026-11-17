@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Platform\Staff;
 
+use App\Domain\Licensing\Services\BusinessLicenseEntitlementService;
 use App\Domain\Staff\Services\StaffPerformanceMonitoringService;
 use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Services\BranchContext;
@@ -155,16 +156,8 @@ class StaffPerformanceMonitoringPage extends Component
 
     private function canViewStaffPerformance(int $businessId): bool
     {
-        $business = auth()->user()?->ownedBusinesses()
-            ->with('currentSubscription.plan.features')
-            ->whereKey($businessId)
-            ->first();
+        $business = auth()->user()?->ownedBusinesses()->whereKey($businessId)->first();
 
-        $features = $business?->currentSubscription?->plan?->features
-            ->pluck('name')
-            ->map(fn (string $name): string => strtolower($name))
-            ->all() ?? [];
-
-        return collect($features)->contains(fn (string $feature): bool => str_contains($feature, 'cashier shifts') || str_contains($feature, 'reports') || str_contains($feature, 'staff accountability'));
+        return $business !== null && app(BusinessLicenseEntitlementService::class)->allowsAny($business, ['cashier shifts', 'reports', 'staff accountability']);
     }
 }

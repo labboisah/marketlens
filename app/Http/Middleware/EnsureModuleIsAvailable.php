@@ -8,7 +8,9 @@ use App\Domain\Tenancy\Models\Business;
 use App\Domain\Tenancy\Services\BranchContext;
 use App\Domain\Tenancy\Services\BusinessContext;
 use App\Enums\BusinessModule;
+use App\Enums\BranchOperatingMode;
 use App\Exceptions\ModuleUnavailableException;
+use App\Exceptions\OperatingModeUnavailableException;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -46,6 +48,16 @@ class EnsureModuleIsAvailable
 
         if (! $result->available) {
             throw new ModuleUnavailableException($result);
+        }
+
+        $requiredMode = match ($module) {
+            BusinessModule::Production => BranchOperatingMode::Production,
+            BusinessModule::Services => BranchOperatingMode::Services,
+            default => null,
+        };
+
+        if ($requiredMode && (! $branch || ! in_array($requiredMode->value, $branch->operating_modes ?? [], true))) {
+            throw new OperatingModeUnavailableException($requiredMode);
         }
 
         return $next($request);

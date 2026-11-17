@@ -18,6 +18,7 @@ use App\Livewire\Legal\LegalAcceptancePage;
 use App\Livewire\Legal\LegalDocumentPage;
 use App\Livewire\Legal\LegalIndexPage;
 use App\Livewire\Onboarding\BusinessOnboardingWizard;
+use App\Livewire\Platform\AccountLicenseActivationPage;
 use App\Livewire\Platform\Administration\Dashboard;
 use App\Livewire\Platform\Branches\BranchManagementPage;
 use App\Livewire\Platform\Branches\MultiBranchMonitoringPage;
@@ -99,6 +100,19 @@ Route::get('/application-versions/{version}/download', ApplicationVersionDownloa
 Route::middleware(['auth', 'verified', 'account.active', 'legal.accepted'])->group(function (): void {
     Route::get('/onboarding', BusinessOnboardingWizard::class)->name('onboarding.wizard');
     Route::get('/onboarding/completed', OnboardingCompletedController::class)->name('onboarding.completed');
+    Route::get('/account/license-activation', AccountLicenseActivationPage::class)->name('platform.account-license-activation');
+    Route::post('/account/license-activation/link', [\App\Http\Controllers\AccountLicenseActivationController::class, 'begin'])
+        ->middleware('throttle:10,1')
+        ->name('platform.account-license-activation.link');
+    Route::get('/account/license-activation/link/{linkUuid}', [\App\Http\Controllers\AccountLicenseActivationController::class, 'status'])
+        ->middleware('throttle:30,1')
+        ->name('platform.account-license-activation.link.status');
+    Route::post('/account/license-activation/link/{linkUuid}/complete', [\App\Http\Controllers\AccountLicenseActivationController::class, 'complete'])
+        ->middleware('throttle:10,1')
+        ->name('platform.account-license-activation.link.complete');
+    Route::delete('/account/license-activation/link/{linkUuid}', [\App\Http\Controllers\AccountLicenseActivationController::class, 'unlink'])
+        ->middleware('throttle:10,1')
+        ->name('platform.account-license-activation.link.unlink');
 });
 
 
@@ -116,20 +130,20 @@ Route::middleware(['auth', 'verified', 'account.active', 'legal.accepted', 'supe
     });
 Route::middleware(['auth', 'verified', 'account.active', 'legal.accepted', 'onboarding.complete', 'platform.context'])->group(function (): void {
     Route::get('/admin/dashboard', Dashboard::class)->name('platform.dashboard');
-    Route::get('/sales', SalesMonitoringPage::class)->name('platform.sales');
-    Route::get('/payments', PaymentMonitoringPage::class)->name('platform.payments');
-    Route::get('/inventory', InventoryMonitoringPage::class)->name('platform.inventory');
-    Route::get('/expenses', ExpenseMonitoringPage::class)->name('platform.expenses');
-    Route::get('/customers/debts', CustomerDebtMonitoringPage::class)->name('platform.customer-debts');
-    Route::get('/purchases', PurchaseMonitoringPage::class)->name('platform.purchases');
-    Route::get('/staff/performance', StaffPerformanceMonitoringPage::class)->name('platform.staff-performance');
+    Route::get('/sales', SalesMonitoringPage::class)->middleware('feature.available:sales')->name('platform.sales');
+    Route::get('/payments', PaymentMonitoringPage::class)->middleware('feature.available:sales,cashier settlement')->name('platform.payments');
+    Route::get('/inventory', InventoryMonitoringPage::class)->middleware('feature.available:inventory,stock')->name('platform.inventory');
+    Route::get('/expenses', ExpenseMonitoringPage::class)->middleware('feature.available:expenses,reports')->name('platform.expenses');
+    Route::get('/customers/debts', CustomerDebtMonitoringPage::class)->middleware('feature.available:customer debts,reports')->name('platform.customer-debts');
+    Route::get('/purchases', PurchaseMonitoringPage::class)->middleware('feature.available:purchases,suppliers,reports')->name('platform.purchases');
+    Route::get('/staff/performance', StaffPerformanceMonitoringPage::class)->middleware('feature.available:cashier shifts,reports,staff accountability')->name('platform.staff-performance');
     Route::get('/branches/monitoring', MultiBranchMonitoringPage::class)->name('platform.branch-monitoring');
     Route::get('/branches', BranchManagementPage::class)->name('platform.branches');
     Route::get('/restore-points', \App\Livewire\Platform\Backups\RestorePointManagementPage::class)->name('platform.restore-points');
     Route::get('/devices', DeviceActivationPage::class)->name('platform.devices');
     Route::get('/synchronization', SynchronizationMonitoringPage::class)->name('platform.synchronization');
     Route::get('/alerts', NotificationCentrePage::class)->name('platform.notifications');
-    Route::get('/reports', ReportCentrePage::class)->name('platform.reports');
+    Route::get('/reports', ReportCentrePage::class)->middleware('feature.available:reports')->name('platform.reports');
     Route::get('/production/export', \App\Http\Controllers\Platform\ProductionExportController::class)->middleware('module.available:production')->name('platform.production.export');
     Route::get('/production', \App\Livewire\Platform\Production\ProductionPage::class)->middleware('module.available:production')->name('platform.production');
     Route::get('/services', ServicesModulePage::class)->middleware('module.available:services')->name('platform.services');

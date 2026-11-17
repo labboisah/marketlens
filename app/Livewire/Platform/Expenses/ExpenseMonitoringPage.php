@@ -4,6 +4,7 @@ namespace App\Livewire\Platform\Expenses;
 
 use App\Domain\Expenses\Models\ReplicatedExpense;
 use App\Domain\Expenses\Services\ExpenseMonitoringService;
+use App\Domain\Licensing\Services\BusinessLicenseEntitlementService;
 use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Services\BranchContext;
 use App\Domain\Tenancy\Services\BusinessContext;
@@ -192,16 +193,8 @@ class ExpenseMonitoringPage extends Component
 
     private function canViewExpenses(int $businessId): bool
     {
-        $business = auth()->user()?->ownedBusinesses()
-            ->with('currentSubscription.plan.features')
-            ->whereKey($businessId)
-            ->first();
+        $business = auth()->user()?->ownedBusinesses()->whereKey($businessId)->first();
 
-        $features = $business?->currentSubscription?->plan?->features
-            ->pluck('name')
-            ->map(fn (string $name): string => strtolower($name))
-            ->all() ?? [];
-
-        return collect($features)->contains(fn (string $feature): bool => str_contains($feature, 'expenses') || str_contains($feature, 'reports'));
+        return $business !== null && app(BusinessLicenseEntitlementService::class)->allowsAny($business, ['expenses', 'reports']);
     }
 }

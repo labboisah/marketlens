@@ -64,3 +64,20 @@ it('does not allow a non-administrator to change plan production entitlement', f
     $user = User::factory()->create(['is_super_admin' => false]);
     Livewire::actingAs($user)->test(BillingPlansPage::class)->assertForbidden();
 });
+
+it('shows Production inclusion and capabilities directly on plan cards and the billing list', function () {
+    $this->seed(PlanSeeder::class);
+    $professional = Plan::where('slug', 'professional')->where('billing_interval', 'monthly')->firstOrFail();
+    $basic = Plan::where('slug', 'basic')->where('billing_interval', 'monthly')->firstOrFail();
+    $this->get('/pricing')->assertOk()
+        ->assertSee('data-production-plan="'.$professional->id.'" data-production-included="true"', false)
+        ->assertSee('data-production-plan="'.$basic->id.'" data-production-included="false"', false)
+        ->assertSee('Production module: Included')
+        ->assertSee('Production module: Not included')
+        ->assertSee('machines and staff');
+    $admin = User::factory()->create(['is_super_admin' => true]);
+    Livewire::actingAs($admin)->test(BillingPlansPage::class)
+        ->assertSeeHtml('data-production-plan="'.$professional->id.'" data-production-included="true"')
+        ->assertSeeHtml('data-production-plan="'.$basic->id.'" data-production-included="false"')
+        ->assertSee('owner-configured machine and staff profit shares');
+});

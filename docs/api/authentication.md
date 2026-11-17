@@ -44,6 +44,7 @@ Requirements:
 
 - Tokens must be stored in secure storage.
 - Business and branch access follows Platform authorization.
+- Branch responses include configured operating modes; feature summaries must be limited to the selected branch's modes.
 - Sensitive screens may require biometric re-authentication.
 - Monitoring APIs return synchronized summaries, not direct Business Server data.
 

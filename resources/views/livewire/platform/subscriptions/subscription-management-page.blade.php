@@ -8,22 +8,28 @@
     </x-slot:actions>
   </x-app.page-header>
 
-  <section class="grid gap-4 xl:grid-cols-3">
+  <section class="grid gap-4 xl:grid-cols-4">
     <x-app.card title="Current plan" description="Billing access stays available even when premium features are restricted.">
       <div class="space-y-3">
         <div>
           <p class="text-sm text-muted">Plan</p>
-          <p class="text-xl font-semibold">{{ $overview['plan']?->name ?? 'No plan' }}</p>
-          <p class="text-sm text-muted">{{ $overview['plan']?->display_price ?? 'Manual billing' }} / {{ $overview['plan']?->billing_label ?? 'None' }}</p>
+          <p class="text-xl font-semibold">{{ $effectivePlanName }}</p>
+          @if ($kernelBridgeLicense)
+            <p class="text-sm text-muted">Plan and features supplied by KernelBridge.</p>
+          @else
+            <p class="text-sm text-muted">{{ $overview['plan']?->display_price ?? 'Manual billing' }} / {{ $overview['plan']?->billing_label ?? 'None' }}</p>
+          @endif
         </div>
         <div class="flex flex-wrap gap-2">
-          <x-app.status-badge tone="{{ $overview['operationalAccess'] ? 'success' : 'warning' }}">
-            {{ $overview['operationalAccess'] ? 'Operational access allowed' : 'Premium access restricted' }}
+          <x-app.status-badge tone="{{ $effectiveOperationalAccess ? 'success' : 'warning' }}">
+            {{ $effectiveOperationalAccess ? 'Operational access allowed' : 'Premium access restricted' }}
           </x-app.status-badge>
-          <x-app.status-badge>{{ ucfirst($overview['subscription']?->status?->value ?? 'none') }}</x-app.status-badge>
+          <x-app.status-badge>{{ ucfirst($effectiveStatus) }}</x-app.status-badge>
         </div>
-        <p class="text-sm text-muted">Expiration: {{ $overview['expiration']['date']?->format('M j, Y') ?? 'Not scheduled' }}</p>
-        <p class="text-sm text-muted">Grace period: {{ $overview['graceDays'] }} days. Retention policy: {{ $overview['retentionDays'] }} days.</p>
+        <p class="text-sm text-muted">Expiration: {{ $effectiveExpiration?->format('M j, Y') ?? 'Not scheduled' }}</p>
+        @unless ($kernelBridgeLicense)
+          <p class="text-sm text-muted">Grace period: {{ $overview['graceDays'] }} days. Retention policy: {{ $overview['retentionDays'] }} days.</p>
+        @endunless
       </div>
     </x-app.card>
 
@@ -40,9 +46,30 @@
       </div>
     </x-app.card>
 
+    <x-app.card title="KernelBridge license" description="Refresh the current subscription entitlements from KernelBridge.">
+      @if ($kernelBridgeLicense)
+        <div class="space-y-3">
+          <x-app.status-badge>{{ ucfirst($kernelBridgeLicense->status) }}</x-app.status-badge>
+          <p class="text-sm text-muted">Server installations: {{ data_get($kernelBridgeLicense->entitlements, 'max_server_installations', 'Not set') }}</p>
+          <p class="text-sm text-muted">Last checked: {{ $kernelBridgeLicense->last_verified_at?->format('M j, Y H:i') ?? 'Never' }}</p>
+          @if (data_get($kernelBridgeLicense->provider_metadata, 'last_reconcile_error'))
+            <p class="text-xs text-warning">Automatic sync failed; the plan shown may be out of date. Try Refresh entitlements.</p>
+          @endif
+          @can('manageSubscription', $business)
+            <button type="button" wire:click="refreshKernelBridgeEntitlements" wire:loading.attr="disabled" class="rounded-md border border-primary/40 px-3 py-2 text-sm font-semibold text-primary disabled:opacity-50">
+              Refresh entitlements
+            </button>
+          @endcan
+          <p class="text-xs text-muted">This refreshes the linked subscription snapshot; it does not change the plan in KernelBridge.</p>
+        </div>
+      @else
+        <p class="text-sm text-muted">No KernelBridge license is linked to this business.</p>
+      @endif
+    </x-app.card>
+
     <x-app.card title="Plan features" description="Features control premium Platform modules and report access.">
       <div class="flex flex-wrap gap-2">
-        @forelse ($overview['features'] as $feature)
+        @forelse ($effectiveFeatures as $feature)
           <span class="rounded-md border border-border px-2 py-1 text-xs font-medium">{{ $feature->name }}</span>
         @empty
           <span class="text-sm text-muted">No features are attached to this plan.</span>
@@ -52,21 +79,43 @@
   </section>
 
   <section class="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-    <x-app.card title="Usage against limits" description="Downgrades warn when current usage exceeds the target plan.">
-      <x-app.table density="compact">
-        <thead><tr><th>Limit</th><th>Used</th><th>Plan limit</th><th>Status</th></tr></thead>
-        <tbody>
-          @foreach ($overview['usageRows'] as $row)
+    @if ($kernelBridgeLicense)
+      <x-app.card title="Licensed limits" description="Limits from the linked KernelBridge subscription.">
+        <x-app.table density="compact">
+          <thead><tr><th>Limit</th><th>Used</th><th>Licensed</th></tr></thead>
+          <tbody>
             <tr>
-              <td>{{ $row['label'] }}</td>
-              <td class="font-mono">{{ number_format($row['used']) }}</td>
-              <td class="font-mono">{{ $row['limit'] === PHP_INT_MAX ? 'Unlimited' : number_format($row['limit']) }}</td>
-              <td><x-app.status-badge tone="{{ $row['exceeded'] ? 'warning' : 'success' }}">{{ $row['exceeded'] ? 'Exceeded' : 'Within limit' }}</x-app.status-badge></td>
+              <td>Business Server installations</td>
+              <td class="font-mono">{{ number_format($overview['usage']['shop_app_devices']) }}</td>
+              <td class="font-mono">{{ data_get($kernelBridgeLicense->entitlements, 'max_server_installations', 'Not set') }}</td>
             </tr>
-          @endforeach
-        </tbody>
-      </x-app.table>
-    </x-app.card>
+            @if (data_get($kernelBridgeLicense->entitlements, 'max_branches') !== null)
+              <tr>
+                <td>Branches</td>
+                <td class="font-mono">{{ number_format($overview['usage']['branches']) }}</td>
+                <td class="font-mono">{{ data_get($kernelBridgeLicense->entitlements, 'max_branches') }}</td>
+              </tr>
+            @endif
+          </tbody>
+        </x-app.table>
+      </x-app.card>
+    @else
+      <x-app.card title="Usage against limits" description="Downgrades warn when current usage exceeds the target plan.">
+        <x-app.table density="compact">
+          <thead><tr><th>Limit</th><th>Used</th><th>Plan limit</th><th>Status</th></tr></thead>
+          <tbody>
+            @foreach ($overview['usageRows'] as $row)
+              <tr>
+                <td>{{ $row['label'] }}</td>
+                <td class="font-mono">{{ number_format($row['used']) }}</td>
+                <td class="font-mono">{{ $row['limit'] === PHP_INT_MAX ? 'Unlimited' : number_format($row['limit']) }}</td>
+                <td><x-app.status-badge tone="{{ $row['exceeded'] ? 'warning' : 'success' }}">{{ $row['exceeded'] ? 'Exceeded' : 'Within limit' }}</x-app.status-badge></td>
+              </tr>
+            @endforeach
+          </tbody>
+        </x-app.table>
+      </x-app.card>
+    @endif
 
     <x-app.card title="Billing profile" description="Clean billing data for invoices and payment gateway adapters.">
       <form wire:submit="saveBillingProfile" class="space-y-3">
@@ -107,6 +156,11 @@
   </section>
 
   <section class="grid gap-4 xl:grid-cols-[1fr_1fr]">
+    @if ($kernelBridgeLicense)
+      <x-app.card title="Plan changes" description="Your plan is managed by KernelBridge.">
+        <p class="text-sm text-muted">Change or renew the plan in KernelBridge, then use Refresh entitlements above to sync its current subscription snapshot.</p>
+      </x-app.card>
+    @else
     <x-app.card title="Upgrade and downgrade options" description="Requests are recorded first; no provider is hard-coded into this domain.">
       <div class="space-y-3">
         @foreach ($plans as $plan)
@@ -116,6 +170,7 @@
               <div>
                 <p class="font-semibold">{{ $plan->name }}</p>
                 <p class="text-sm text-muted">{{ $plan->display_price }} / {{ $plan->billing_label }}</p>
+                <x-plan-production-feature :plan="$plan" />
               </div>
               <button type="button" wire:click="requestPlanChange({{ $plan->id }})" class="rounded-md border border-primary/40 px-3 py-2 text-sm font-semibold text-primary">
                 Request {{ $overview['plan'] && $plan->getRawOriginal('price_minor') < $overview['plan']->getRawOriginal('price_minor') ? 'downgrade' : 'upgrade' }}
@@ -133,6 +188,7 @@
         @endforeach
       </div>
     </x-app.card>
+    @endif
 
     <x-app.card title="Cancellation request" description="Cancellation does not immediately delete data or synchronized history.">
       <div class="space-y-3">

@@ -95,6 +95,7 @@ it('creates branches with unique codes and records audit logs', function (): voi
         ->test(BranchManagementPage::class)
         ->set('name', 'Lekki Branch')
         ->set('code', 'lekki')
+        ->set('operatingModes', ['sales', 'services'])
         ->set('phone', '+2348000000000')
         ->call('createBranch')
         ->assertHasNoErrors()
@@ -103,6 +104,7 @@ it('creates branches with unique codes and records audit logs', function (): voi
     $branch = Branch::query()->where('code', 'LEKKI')->firstOrFail();
 
     expect($branch->business_id)->toBe($business->id)
+        ->and($branch->operating_modes)->toBe(['sales', 'services'])
         ->and($branch->status)->toBe(BranchStatus::Active)
         ->and(AuditLog::query()->where('action', 'branch.created')->where('branch_id', $branch->id)->exists())->toBeTrue();
 });
@@ -140,6 +142,16 @@ it('enforces branch code uniqueness within a business', function (): void {
         'name' => 'Duplicate Main',
         'code' => 'MAIN',
         'is_head_office' => false,
+    ]);
+})->throws(ValidationException::class);
+
+it('rejects branch creation without a valid operating mode', function (): void {
+    $user = branchManagementUser();
+    $business = branchManagementBusiness($user, branchManagementPlan(['Multiple branches']));
+
+    app(BranchManagement::class)->create($business, $user, [
+        'name' => 'Unconfigured Branch',
+        'operating_modes' => [],
     ]);
 })->throws(ValidationException::class);
 

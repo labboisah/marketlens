@@ -3,10 +3,16 @@
     "private": true,
     "type": "module",
     "scripts": {
+        "prebuild": "npm --prefix ../kernelbridge-license/packages/react run build",
         "build": "vite build",
         "dev": "vite",
         "lint": "echo \"Use composer lint and PHP static analysis for Platform linting.\"",
         "format": "echo \"Run composer format for PHP formatting.\""
+    },
+    "dependencies": {
+        "@kernelbridge/activation-ui-react": "file:../kernelbridge-license/packages/react",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

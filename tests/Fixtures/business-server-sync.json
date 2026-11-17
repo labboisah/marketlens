@@ -1,0 +1,355 @@
+{
+  "batches": [
+    {
+      "protocol_version": "1.0",
+      "batch_uuid": "05cad9f6-a299-4f98-a6fc-2a0cb29f5ac7",
+      "business_uuid": "00000000-0000-4000-8000-000000000001",
+      "branch_uuid": "00000000-0000-4000-8000-000000000001",
+      "device_uuid": "c73e290b-8483-4be3-bb05-ba10a619aa75",
+      "created_at": "2026-09-14T12:13:41.967Z",
+      "records": [
+        {
+          "entity": "product",
+          "record_uuid": "749a947e-707a-4391-b0a7-7d37b5b20560",
+          "operation": "create",
+          "version": 1,
+          "idempotency_key": "outbox:products:749a947e-707a-4391-b0a7-7d37b5b20560",
+          "occurred_at": "2026-09-14T12:13:41.936Z",
+          "payload": {
+            "uuid": "749a947e-707a-4391-b0a7-7d37b5b20560",
+            "sku": "SYNC-001",
+            "name": "Sync fixture product",
+            "description": null,
+            "category_uuid": "cfb97b3d-f404-4fec-94d9-93c09c6007da",
+            "brand_uuid": null,
+            "base_unit_uuid": "b5f87c17-2b8a-4589-950c-cf12c0088a47",
+            "default_purchase_unit_uuid": null,
+            "default_sales_unit_uuid": "b5f87c17-2b8a-4589-950c-cf12c0088a47",
+            "is_service": "0",
+            "is_non_stock": "0",
+            "active": "1",
+            "min_selling_price": null,
+            "reorder_level": null,
+            "max_stock": null,
+            "cost_price": "10",
+            "retail_price": "25",
+            "wholesale_price": null,
+            "created_at": "2026-09-14T12:13:41.936Z",
+            "updated_at": "2026-09-14T12:13:41.936Z"
+          }
+        },
+        {
+          "entity": "inventory_stock",
+          "record_uuid": "b3a6a1fb-9c84-4679-9884-339938562b21",
+          "operation": "create",
+          "version": 1,
+          "idempotency_key": "outbox:stocks:b3a6a1fb-9c84-4679-9884-339938562b21",
+          "occurred_at": "2026-09-14T12:13:41.938Z",
+          "payload": {
+            "uuid": "b3a6a1fb-9c84-4679-9884-339938562b21",
+            "product_uuid": "749a947e-707a-4391-b0a7-7d37b5b20560",
+            "warehouse_uuid": "611143a7-f3f0-404d-a980-7e27d12d8a0f",
+            "unit_uuid": "b5f87c17-2b8a-4589-950c-cf12c0088a47",
+            "quantity": "10",
+            "reserved_quantity": "0",
+            "last_updated_at": "2026-09-14T12:13:41.938Z",
+            "created_at": "2026-09-14T12:13:41.938Z",
+            "updated_at": "2026-09-14T12:13:41.938Z"
+          }
+        },
+        {
+          "entity": "sale",
+          "record_uuid": "952051fd-978f-4e2f-ae75-c48bee78d4ae",
+          "operation": "create",
+          "version": 1,
+          "idempotency_key": "outbox:sales:952051fd-978f-4e2f-ae75-c48bee78d4ae",
+          "occurred_at": "2026-09-14T12:13:41.930Z",
+          "payload": {
+            "sale_number": "SYNC-SALE",
+            "transaction_number": "238d97ba-780f-4a02-8ad0-f693242e997b",
+            "customer_uuid": null,
+            "sale_type": "retail",
+            "status": "completed",
+            "payment_status": "paid",
+            "sold_at": "2026-09-14T12:13:41.930Z",
+            "subtotal_minor": 2500,
+            "discount_minor": 0,
+            "tax_minor": 0,
+            "total_minor": 2500,
+            "cost_minor": 0,
+            "gross_profit_minor": 2500
+          }
+        },
+        {
+          "entity": "customer_debt_summary",
+          "record_uuid": "eb89c8b4-583a-40ad-a29f-bd166c20f4fa",
+          "operation": "update",
+          "version": 1789388021,
+          "idempotency_key": "csv:686bc6a7-8b2a-4508-bea5-ef61480c25cf:customer_debt_summary:eb89c8b4-583a-40ad-a29f-bd166c20f4fa",
+          "occurred_at": "2026-09-14T12:13:41.952Z",
+          "payload": {
+            "customer_uuid": "f8a92c88-ea39-4026-b682-2813dbdbcaf5",
+            "customer_name": "Sync fixture customer",
+            "phone": null,
+            "current_balance_minor": 2000,
+            "debt_status": "current",
+            "overdue_amount_minor": 0
+          }
+        },
+        {
+          "entity": "supplier_balance_summary",
+          "record_uuid": "f87a1a01-690d-44ad-a1bf-49162c0a00a3",
+          "operation": "update",
+          "version": 1789388021,
+          "idempotency_key": "csv:ab2a1a3d-6ea4-4ebe-8b34-1fff64806ce9:supplier_balance_summary:f87a1a01-690d-44ad-a1bf-49162c0a00a3",
+          "occurred_at": "2026-09-14T12:13:41.953Z",
+          "payload": {
+            "supplier_uuid": "16530d4b-cc09-4d4f-9a62-0bdafaba4df8",
+            "supplier_name": "Sync fixture supplier",
+            "phone": null,
+            "current_balance_minor": 3000,
+            "overdue_balance_minor": 0,
+            "status": "active"
+          }
+        },
+        {
+          "entity": "expense",
+          "record_uuid": "f42384b5-43d4-4d50-b0f1-7b8e988de208",
+          "operation": "update",
+          "version": 1789388021,
+          "idempotency_key": "csv:2d8f469f-77c3-493f-9829-f4c4c325214b:expense:f42384b5-43d4-4d50-b0f1-7b8e988de208",
+          "occurred_at": "2026-09-14T12:13:41.930Z",
+          "payload": {
+            "expense_number": "f42384b5-43d4-4d50-b0f1-7b8e988de208",
+            "category_uuid": "8b000a03-5886-4387-9d08-17eac77487f6",
+            "category_name": "Sync fixture category",
+            "description": "Sync fixture expense",
+            "amount_minor": 1250,
+            "payment_method": "cash",
+            "creator_uuid": null,
+            "creator_name": null,
+            "approver_uuid": null,
+            "status": "pending",
+            "expense_date": "2026-09-14T12:13:41.930Z"
+          }
+        },
+        {
+          "entity": "stock_movement",
+          "record_uuid": "d4bacb15-2c0f-414b-8656-6444e640debf",
+          "operation": "update",
+          "version": 1789388021,
+          "idempotency_key": "csv:ee7c6a36-e433-4e50-a521-470663aef234:stock_movement:d4bacb15-2c0f-414b-8656-6444e640debf",
+          "occurred_at": "2026-09-14T12:13:41.930Z",
+          "payload": {
+            "product_uuid": "749a947e-707a-4391-b0a7-7d37b5b20560",
+            "product_name": "Sync fixture product",
+            "sku": "SYNC-001",
+            "warehouse_uuid": "611143a7-f3f0-404d-a980-7e27d12d8a0f",
+            "warehouse_name": "Sync fixture warehouse",
+            "movement_type": "opening_stock",
+            "quantity_delta": 10,
+            "reference": null,
+            "occurred_at": "2026-09-14T12:13:41.930Z"
+          }
+        },
+        {
+          "entity": "stock_summary",
+          "record_uuid": "b3a6a1fb-9c84-4679-9884-339938562b21",
+          "operation": "update",
+          "version": 1789388021,
+          "idempotency_key": "csv:0bca242f-097f-4db0-a73a-b64b34daa00f:stock_summary:b3a6a1fb-9c84-4679-9884-339938562b21",
+          "occurred_at": "2026-09-14T12:13:41.958Z",
+          "payload": {
+            "product_uuid": "749a947e-707a-4391-b0a7-7d37b5b20560",
+            "product_name": "Sync fixture product",
+            "sku": "SYNC-001",
+            "base_unit": "PCS",
+            "warehouse_uuid": "611143a7-f3f0-404d-a980-7e27d12d8a0f",
+            "warehouse_name": "Sync fixture warehouse",
+            "available_quantity": 10,
+            "reserved_quantity": 0,
+            "stock_value_minor": 10000,
+            "reorder_level": 0,
+            "overstock_level": null,
+            "stock_status": "normal",
+            "last_movement_at": "2026-09-14T12:13:41.938Z"
+          }
+        },
+        {
+          "entity": "product",
+          "record_uuid": "749a947e-707a-4391-b0a7-7d37b5b20560",
+          "operation": "update",
+          "version": 1789388021,
+          "idempotency_key": "csv:977950ac-f565-44d3-80fc-3040e2002d10:product:749a947e-707a-4391-b0a7-7d37b5b20560",
+          "occurred_at": "2026-09-14T12:13:41.936Z",
+          "payload": {
+            "uuid": "749a947e-707a-4391-b0a7-7d37b5b20560",
+            "sku": "SYNC-001",
+            "name": "Sync fixture product",
+            "description": null,
+            "category_uuid": "cfb97b3d-f404-4fec-94d9-93c09c6007da",
+            "brand_uuid": null,
+            "base_unit_uuid": "b5f87c17-2b8a-4589-950c-cf12c0088a47",
+            "default_purchase_unit_uuid": null,
+            "default_sales_unit_uuid": "b5f87c17-2b8a-4589-950c-cf12c0088a47",
+            "is_service": "0",
+            "is_non_stock": "0",
+            "active": "1",
+            "min_selling_price": null,
+            "reorder_level": null,
+            "max_stock": null,
+            "cost_price": "10",
+            "retail_price": "25",
+            "wholesale_price": null,
+            "created_at": "2026-09-14T12:13:41.936Z",
+            "updated_at": "2026-09-14T12:13:41.936Z"
+          }
+        },
+        {
+          "entity": "service_category",
+          "record_uuid": "625459ee-6a53-4464-8695-3e7a99e3d86d",
+          "operation": "update",
+          "version": 1789388021,
+          "idempotency_key": "csv:84e06690-e6c4-4862-8fd7-57379af3f83d:service_category:625459ee-6a53-4464-8695-3e7a99e3d86d",
+          "occurred_at": "2026-09-14T12:13:41.930Z",
+          "payload": {
+            "uuid": "625459ee-6a53-4464-8695-3e7a99e3d86d",
+            "name": "Sync fixture services",
+            "active": "1",
+            "created_at": "2026-09-14T12:13:41.930Z",
+            "updated_at": "2026-09-14T12:13:41.930Z"
+          }
+        },
+        {
+          "entity": "service",
+          "record_uuid": "e6b76919-6806-47e8-8ead-443092f95cfc",
+          "operation": "update",
+          "version": 1789388021,
+          "idempotency_key": "csv:feabbd71-fdd7-47c3-996c-a0016497a551:service:e6b76919-6806-47e8-8ead-443092f95cfc",
+          "occurred_at": "2026-09-14T12:13:41.930Z",
+          "payload": {
+            "uuid": "e6b76919-6806-47e8-8ead-443092f95cfc",
+            "category_uuid": "625459ee-6a53-4464-8695-3e7a99e3d86d",
+            "code": "SYNC-SVC",
+            "name": "Initial service",
+            "active": "1",
+            "created_at": "2026-09-14T12:13:41.930Z",
+            "updated_at": "2026-09-14T12:13:41.930Z"
+          }
+        },
+        {
+          "entity": "inventory_stock",
+          "record_uuid": "b3a6a1fb-9c84-4679-9884-339938562b21",
+          "operation": "update",
+          "version": 1789388021,
+          "idempotency_key": "csv:95896870-feb4-4d21-9fef-8010cc358876:inventory_stock:b3a6a1fb-9c84-4679-9884-339938562b21",
+          "occurred_at": "2026-09-14T12:13:41.938Z",
+          "payload": {
+            "uuid": "b3a6a1fb-9c84-4679-9884-339938562b21",
+            "product_uuid": "749a947e-707a-4391-b0a7-7d37b5b20560",
+            "warehouse_uuid": "611143a7-f3f0-404d-a980-7e27d12d8a0f",
+            "unit_uuid": "b5f87c17-2b8a-4589-950c-cf12c0088a47",
+            "quantity": "10",
+            "reserved_quantity": "0",
+            "last_updated_at": "2026-09-14T12:13:41.938Z",
+            "created_at": "2026-09-14T12:13:41.938Z",
+            "updated_at": "2026-09-14T12:13:41.938Z"
+          }
+        },
+        {
+          "entity": "supplier",
+          "record_uuid": "16530d4b-cc09-4d4f-9a62-0bdafaba4df8",
+          "operation": "update",
+          "version": 1789388021,
+          "idempotency_key": "csv:8aebb0cb-8e00-4669-a25a-2acb415cf3b1:supplier:16530d4b-cc09-4d4f-9a62-0bdafaba4df8",
+          "occurred_at": "2026-09-14T12:13:41.930Z",
+          "payload": {
+            "uuid": "16530d4b-cc09-4d4f-9a62-0bdafaba4df8",
+            "code": "SYNC-S",
+            "name": "Sync fixture supplier",
+            "contact_name": null,
+            "contact_phone": null,
+            "contact_email": null,
+            "address": null,
+            "preferred": "0",
+            "tax_number": null,
+            "payment_terms": null,
+            "created_at": "2026-09-14T12:13:41.930Z",
+            "updated_at": "2026-09-14T12:13:41.930Z"
+          }
+        },
+        {
+          "entity": "sale",
+          "record_uuid": "952051fd-978f-4e2f-ae75-c48bee78d4ae",
+          "operation": "update",
+          "version": 1789388021,
+          "idempotency_key": "csv:e1a5ad9b-4d2e-46a7-a541-b33f3bc8fca4:sale:952051fd-978f-4e2f-ae75-c48bee78d4ae",
+          "occurred_at": "2026-09-14T12:13:41.930Z",
+          "payload": {
+            "sale_number": "SYNC-SALE",
+            "transaction_number": "238d97ba-780f-4a02-8ad0-f693242e997b",
+            "customer_uuid": null,
+            "sale_type": "retail",
+            "status": "completed",
+            "payment_status": "paid",
+            "sold_at": "2026-09-14T12:13:41.930Z",
+            "subtotal_minor": 2500,
+            "discount_minor": 0,
+            "tax_minor": 0,
+            "total_minor": 2500,
+            "cost_minor": 0,
+            "gross_profit_minor": 2500
+          }
+        }
+      ]
+    },
+    {
+      "protocol_version": "1.0",
+      "batch_uuid": "6d99abe1-64b1-4f5d-8584-8c2fd6a04938",
+      "business_uuid": "00000000-0000-4000-8000-000000000001",
+      "branch_uuid": "00000000-0000-4000-8000-000000000001",
+      "device_uuid": "c73e290b-8483-4be3-bb05-ba10a619aa75",
+      "created_at": "2026-09-14T12:13:42.024Z",
+      "records": [
+        {
+          "entity": "expense",
+          "record_uuid": "f42384b5-43d4-4d50-b0f1-7b8e988de208",
+          "operation": "update",
+          "version": 1789388022,
+          "idempotency_key": "csv:526faea4-9a45-4505-a882-0e56be4c7f9a:expense:f42384b5-43d4-4d50-b0f1-7b8e988de208",
+          "occurred_at": "2026-09-14T12:13:41.930Z",
+          "payload": {
+            "expense_number": "f42384b5-43d4-4d50-b0f1-7b8e988de208",
+            "category_uuid": "8b000a03-5886-4387-9d08-17eac77487f6",
+            "category_name": "Sync fixture category",
+            "description": "Sync fixture expense",
+            "amount_minor": 1250,
+            "payment_method": "cash",
+            "creator_uuid": null,
+            "creator_name": null,
+            "approver_uuid": null,
+            "status": "approved",
+            "expense_date": "2026-09-14T12:13:41.930Z"
+          }
+        },
+        {
+          "entity": "service",
+          "record_uuid": "e6b76919-6806-47e8-8ead-443092f95cfc",
+          "operation": "update",
+          "version": 1789388022,
+          "idempotency_key": "csv:b7db81cd-2392-4225-92fc-15203c7d4e34:service:e6b76919-6806-47e8-8ead-443092f95cfc",
+          "occurred_at": "2026-09-14T12:13:41.930Z",
+          "payload": {
+            "uuid": "e6b76919-6806-47e8-8ead-443092f95cfc",
+            "category_uuid": "625459ee-6a53-4464-8695-3e7a99e3d86d",
+            "code": "SYNC-SVC",
+            "name": "Updated service",
+            "active": "1",
+            "created_at": "2026-09-14T12:13:41.930Z",
+            "updated_at": "2026-09-14T12:13:41.930Z"
+          }
+        }
+      ]
+    }
+  ]
+}

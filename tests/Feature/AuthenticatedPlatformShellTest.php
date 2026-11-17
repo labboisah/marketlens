@@ -2,6 +2,7 @@
 
 use App\Domain\Billing\Models\Plan;
 use App\Domain\Billing\Models\Subscription;
+use App\Domain\Licensing\Models\BusinessLicenseAssociation;
 use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Models\Business;
 use App\Enums\AccountStatus;
@@ -61,6 +62,22 @@ function platformShellBusiness(User $user, string $name, Plan $plan): array
         'status' => SubscriptionStatus::Trialing,
         'starts_at' => now(),
         'ends_at' => now()->addDays(14),
+    ]);
+
+    $featureNames = collect($plan->features()->pluck('name'))->map(fn (string $name): string => strtolower($name));
+    BusinessLicenseAssociation::query()->create([
+        'business_id' => $business->id,
+        'provider' => 'kernelbridge',
+        'product_code' => 'MARKETLENS',
+        'license_uuid' => 'lic_shell_'.$business->uuid,
+        'subscription_uuid' => 'sub_shell_'.$business->uuid,
+        'status' => 'active',
+        'entitlements' => [
+            'mode_sales' => $featureNames->contains(fn (string $name): bool => str_contains($name, 'sales')),
+            'mode_production' => $featureNames->contains(fn (string $name): bool => str_contains($name, 'production')),
+            'mode_services' => $featureNames->contains(fn (string $name): bool => str_contains($name, 'services')),
+            'module_shareholders' => $featureNames->contains(fn (string $name): bool => str_contains($name, 'shareholder')),
+        ],
     ]);
 
     return [$business, $branch];
@@ -134,6 +151,45 @@ it('shows only subscription-allowed sidebar modules', function (): void {
         ->assertDontSee('Alerts');
 });
 
+it('shows the KernelBridge plan and modules instead of the legacy local plan', function (): void {
+    $owner = platformShellUser();
+    $legacyPlan = platformShellPlan('Professional', ['Production', 'Services', 'Shareholders']);
+    [$business] = platformShellBusiness($owner, 'KernelBridge Stores', $legacyPlan);
+    $business->kernelbridgeLicense()->firstOrFail()->forceFill([
+        'license_uuid' => 'lic_shell_sales',
+        'subscription_uuid' => 'sub_shell_sales',
+        'status' => 'active',
+        'entitlements' => [
+            'mode_sales' => true,
+            'mode_production' => false,
+            'mode_services' => false,
+            'module_shareholders' => false,
+        ],
+        'provider_metadata' => ['plan_name' => 'MarketLens Sales'],
+    ])->save();
+
+    $this->actingAs($owner)
+        ->get(route('platform.dashboard'))
+        ->assertOk()
+        ->assertSee('MarketLens Sales')
+        ->assertDontSee('Professional')
+        ->assertSee('href="'.route('platform.sales').'"', false)
+        ->assertDontSee('href="'.route('platform.production').'"', false)
+        ->assertDontSee('href="'.route('platform.services').'#catalogue', false)
+        ->assertDontSee('href="'.route('platform.shareholders').'"', false);
+});
+
+it('blocks direct navigation to a feature excluded by the linked KernelBridge plan', function (): void {
+    $owner = platformShellUser();
+    $plan = platformShellPlan('Sales only', ['Sales', 'Remote dashboard']);
+    [$business, $branch] = platformShellBusiness($owner, 'Sales Stores', $plan);
+
+    $this->actingAs($owner)
+        ->withSession(['platform.business_id' => $business->id, 'platform.branch_id' => $branch->id])
+        ->get(route('platform.services'))
+        ->assertRedirect(route('platform.permission-denied'));
+});
+
 it('renders the permission denied state inside the platform shell', function (): void {
     $owner = platformShellUser();
     $plan = platformShellPlan('Basic', ['Sales', 'Remote dashboard']);
@@ -165,4 +221,21 @@ it('renders shared notifications and loading feedback in the authenticated shell
         ->assertSee('Loading MarketLens')
         ->assertSee('Working')
         ->assertSee('Saved successfully');
+});
+
+it('links remote monitoring to a real screen and shows the selected branch sync time', function (): void {
+    $owner = platformShellUser();
+    $plan = platformShellPlan('Sidebar', ['Sales', 'Remote dashboard']);
+    [, $branch] = platformShellBusiness($owner, 'Sidebar Stores', $plan);
+    $branch->update(['last_synchronized_at' => now()->subMinute()]);
+
+    $this->actingAs($owner)->get(route('platform.dashboard'))
+        ->assertOk()
+        ->assertSee('uppercase tracking-wide', false)
+        ->assertSee('href="'.route('platform.branch-monitoring').'"', false)
+        ->assertDontSee('href="#monitoring"', false)
+        ->assertSee('Last sync: 1 minute ago');
+
+    $branch->update(['last_synchronized_at' => null]);
+    $this->get(route('platform.dashboard'))->assertOk()->assertSee('Awaiting first sync');
 });

@@ -4,6 +4,7 @@ namespace App\Support\Platform;
 
 use App\Domain\Billing\Models\Subscription;
 use App\Domain\Billing\Services\SubscriptionManagementService;
+use App\Domain\Licensing\Services\BusinessLicenseEntitlementService;
 use App\Domain\Modules\Services\ModuleAccessService;
 use App\Domain\Notifications\Models\PlatformNotification;
 use App\Domain\Tenancy\Models\Branch;
@@ -21,6 +22,7 @@ class PlatformShell
         private readonly BranchContext $branchContext,
         private readonly SubscriptionManagementService $subscriptions,
         private readonly ModuleAccessService $moduleAccess,
+        private readonly BusinessLicenseEntitlementService $licenseEntitlements,
     ) {}
 
     /**
@@ -30,6 +32,7 @@ class PlatformShell
      *     business: ?Business,
      *     branch: ?Branch,
      *     subscription: ?Subscription,
+     *     planName: ?string,
      *     navigation: array<int, NavigationItem>,
      *     featureNames: array<int, string>,
      *     unreadNotifications: int,
@@ -44,6 +47,7 @@ class PlatformShell
                 'business' => null,
                 'branch' => null,
                 'subscription' => null,
+                'planName' => null,
                 'navigation' => [],
                 'featureNames' => [],
                 'unreadNotifications' => 0,
@@ -69,7 +73,14 @@ class PlatformShell
 
         $branch = $branches->firstWhere('id', $this->branchContext->id()) ?? $branches->first();
         $subscription = $business?->currentSubscription;
-        $featureNames = $subscription?->plan?->features->pluck('name')->map(fn (string $name): string => strtolower($name))->all() ?? [];
+        $license = $business ? $this->licenseEntitlements->license($business) : null;
+        $featureNames = $business
+            ? ($this->licenseEntitlements->featureNames($business)
+                ?? ($subscription?->plan?->features->pluck('name')->map(fn (string $name): string => strtolower($name))->all() ?? []))
+            : [];
+        $operationalAccess = $license
+            ? $this->licenseEntitlements->isActive($license)
+            : $this->subscriptions->allowsOperationalAccess($subscription);
 
         return [
             'businesses' => $businesses,
@@ -77,7 +88,10 @@ class PlatformShell
             'business' => $business,
             'branch' => $branch,
             'subscription' => $subscription,
-            'navigation' => $this->navigation($user, $business, $branch, $featureNames, $this->subscriptions->allowsOperationalAccess($subscription)),
+            'planName' => $license
+                ? ($this->licenseEntitlements->planName($license) ?? 'KernelBridge plan')
+                : $subscription?->plan?->name,
+            'navigation' => $this->navigation($user, $business, $branch, $featureNames, $operationalAccess),
             'featureNames' => $featureNames,
             'unreadNotifications' => $business ? $this->unreadNotifications($business->id) : 0,
         ];
@@ -109,14 +123,14 @@ class PlatformShell
     {
         return [
             ['label' => 'Overview', 'href' => route('platform.dashboard'), 'section' => 'Business', 'feature' => 'base', 'icon' => 'layout-dashboard', 'permission' => 'view-dashboard'],
-            ['label' => 'Remote Monitoring', 'href' => '#monitoring', 'section' => 'Business', 'feature' => 'remote dashboard', 'icon' => 'monitor-smartphone', 'permission' => 'view-dashboard'],
-            ['label' => 'Sales', 'href' => route('platform.sales'), 'section' => 'Monitoring', 'feature' => 'sales', 'icon' => 'receipt', 'permission' => 'view-sales'],
-            ['label' => 'Payments', 'href' => route('platform.payments'), 'section' => 'Monitoring', 'feature' => 'sales', 'icon' => 'credit-card', 'permission' => 'view-sales'],
-            ['label' => 'Inventory', 'href' => route('platform.inventory'), 'section' => 'Monitoring', 'feature' => 'inventory', 'icon' => 'package-check', 'permission' => 'view-inventory'],
-            ['label' => 'Expenses', 'href' => route('platform.expenses'), 'section' => 'Monitoring', 'feature' => 'expenses', 'icon' => 'wallet-cards', 'permission' => 'view-expenses'],
-            ['label' => 'Customers', 'href' => route('platform.customer-debts'), 'section' => 'Monitoring', 'feature' => 'customer debts', 'icon' => 'users', 'permission' => 'view-customer-debts'],
-            ['label' => 'Purchase & Supplier', 'href' => route('platform.purchases'), 'section' => 'Monitoring', 'feature' => 'base', 'icon' => 'truck', 'permission' => 'view-suppliers'],
-            ['label' => 'Cashier & Staff', 'href' => route('platform.staff-performance'), 'section' => 'Monitoring', 'feature' => 'base', 'icon' => 'user-check', 'permission' => 'view-cashiers'],
+            ['label' => 'Remote Monitoring', 'href' => route('platform.branch-monitoring'), 'section' => 'Business', 'feature' => 'remote dashboard', 'icon' => 'monitor-smartphone', 'permission' => 'view-branches'],
+            ['label' => 'Sales', 'href' => route('platform.sales'), 'section' => 'Sales', 'feature' => 'sales', 'icon' => 'receipt', 'permission' => 'view-sales'],
+            ['label' => 'Payments', 'href' => route('platform.payments'), 'section' => 'Sales', 'feature' => 'sales', 'icon' => 'credit-card', 'permission' => 'view-sales'],
+            ['label' => 'Inventory', 'href' => route('platform.inventory'), 'section' => 'Sales', 'feature' => 'inventory', 'icon' => 'package-check', 'permission' => 'view-inventory'],
+            ['label' => 'Expenses', 'href' => route('platform.expenses'), 'section' => 'Sales', 'feature' => 'expenses', 'icon' => 'wallet-cards', 'permission' => 'view-expenses'],
+            ['label' => 'Customers', 'href' => route('platform.customer-debts'), 'section' => 'Sales', 'feature' => 'customer debts', 'icon' => 'users', 'permission' => 'view-customer-debts'],
+            ['label' => 'Purchase & Supplier', 'href' => route('platform.purchases'), 'section' => 'Sales', 'feature' => 'base', 'icon' => 'truck', 'permission' => 'view-suppliers'],
+            ['label' => 'Cashier & Staff', 'href' => route('platform.staff-performance'), 'section' => 'Sales', 'feature' => 'base', 'icon' => 'user-check', 'permission' => 'view-cashiers'],
             ['label' => 'Branch Performance', 'href' => route('platform.branch-monitoring'), 'section' => 'Monitoring', 'feature' => 'base', 'icon' => 'bar-chart-3', 'permission' => 'view-branches'],
             ['label' => 'Branches', 'href' => route('platform.branches'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'building-2', 'permission' => 'view-branches'],
             ['label' => 'Backups & Restore', 'href' => route('platform.restore-points'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'database', 'permission' => 'backups.view'],
@@ -124,8 +138,26 @@ class PlatformShell
             ['label' => 'Synchronization', 'href' => route('platform.synchronization'), 'section' => 'Control', 'feature' => 'base', 'icon' => 'refresh-cw', 'permission' => 'view-synchronization'],
             ['label' => 'Alerts', 'href' => route('platform.notifications'), 'section' => 'Control', 'feature' => 'security alerts', 'icon' => 'bell-ring', 'permission' => 'view-alerts'],
             ['label' => 'Reports', 'href' => route('platform.reports'), 'section' => 'Insights', 'feature' => 'reports', 'icon' => 'bar-chart-3', 'permission' => 'export-reports'],
-            ['label' => 'Production', 'href' => route('platform.production'), 'section' => 'Insights', 'feature' => 'module:production', 'icon' => 'package-check', 'permission' => 'view-production'],
-            ['label' => 'Services and Revenue Sharing', 'href' => route('platform.services'), 'section' => 'Insights', 'feature' => 'module:services', 'icon' => 'hand-coins', 'permission' => 'view-sales'],
+            ['label' => 'Production Overview', 'href' => route('platform.production', ['section' => 'all']), 'section' => 'Production', 'feature' => 'module:production', 'icon' => 'clipboard-list', 'permission' => 'view-production'],
+            ['label' => 'Machines', 'href' => route('platform.production', ['section' => 'machines']), 'section' => 'Production', 'feature' => 'module:production', 'icon' => 'package-check', 'permission' => 'view-production'],
+            ['label' => 'Items', 'href' => route('platform.production', ['section' => 'items']), 'section' => 'Production', 'feature' => 'module:production', 'icon' => 'package-check', 'permission' => 'view-production'],
+            ['label' => 'Production', 'href' => route('platform.production', ['section' => 'batches']), 'section' => 'Production', 'feature' => 'module:production', 'icon' => 'package-check', 'permission' => 'view-production'],
+            ['label' => 'Product Performance', 'href' => route('platform.production', ['section' => 'performance']), 'section' => 'Production', 'feature' => 'module:production', 'icon' => 'chart-no-axes-combined', 'permission' => 'view-production'],
+            ['label' => 'Production Costs', 'href' => route('platform.production', ['section' => 'costs']), 'section' => 'Production', 'feature' => 'module:production', 'icon' => 'wallet-cards', 'permission' => 'view-production-finance'],
+            ['label' => 'Items Consumption', 'href' => route('platform.production', ['section' => 'consumption']), 'section' => 'Production', 'feature' => 'module:production', 'icon' => 'list-checks', 'permission' => 'view-production'],
+            ['label' => 'Expense Analysis', 'href' => route('platform.production', ['section' => 'expense-analysis']), 'section' => 'Production', 'feature' => 'module:production', 'icon' => 'chart-pie', 'permission' => 'view-production-finance'],
+            ['label' => 'Machine Utilization', 'href' => route('platform.production', ['section' => 'machine-utilization']), 'section' => 'Production', 'feature' => 'module:production', 'icon' => 'settings-2', 'permission' => 'view-production'],
+            ['label' => 'Store', 'href' => route('platform.production', ['section' => 'store']), 'section' => 'Production', 'feature' => 'module:production', 'icon' => 'package-check', 'permission' => 'view-production'],
+            ['label' => 'Expenses', 'href' => route('platform.production', ['section' => 'expenses']), 'section' => 'Production', 'feature' => 'module:production', 'icon' => 'package-check', 'permission' => 'view-production-finance'],
+            ['label' => 'Benefits', 'href' => route('platform.production', ['section' => 'benefits']), 'section' => 'Production', 'feature' => 'module:production', 'icon' => 'package-check', 'permission' => 'view-production-finance'],
+            ['label' => 'Sharing Rules', 'href' => route('platform.production', ['section' => 'sharing-rules']), 'section' => 'Production', 'feature' => 'module:production', 'icon' => 'package-check', 'permission' => 'view-production'],
+            ['label' => 'Staff Benefits', 'href' => route('platform.production', ['section' => 'staff']), 'section' => 'Production', 'feature' => 'module:production', 'icon' => 'package-check', 'permission' => 'view-production-finance'],
+            ['label' => 'Machine Benefits', 'href' => route('platform.production', ['section' => 'machine-benefits']), 'section' => 'Production', 'feature' => 'module:production', 'icon' => 'cog', 'permission' => 'view-production-finance'],
+            ['label' => 'Business Benefits', 'href' => route('platform.production', ['section' => 'business-benefits']), 'section' => 'Production', 'feature' => 'module:production', 'icon' => 'landmark', 'permission' => 'view-production-finance'],
+            ['label' => 'Production Sync', 'href' => route('platform.production', ['section' => 'sync']), 'section' => 'Production', 'feature' => 'module:production', 'icon' => 'refresh-cw', 'permission' => 'view-production'],
+            ['label' => 'Services', 'href' => route('platform.services').'#catalogue', 'section' => 'Services', 'feature' => 'module:services', 'icon' => 'hand-coins', 'permission' => 'view-sales'],
+            ['label' => 'Service work', 'href' => route('platform.services').'#orders', 'section' => 'Services', 'feature' => 'module:services', 'icon' => 'hand-coins', 'permission' => 'view-sales'],
+            ['label' => 'Revenue and shares', 'href' => route('platform.services').'#revenue', 'section' => 'Services', 'feature' => 'module:services', 'icon' => 'hand-coins', 'permission' => 'view-sales'],
             ['label' => 'Shareholders and Profit Distribution', 'href' => route('platform.shareholders'), 'section' => 'Insights', 'feature' => 'module:shareholders', 'icon' => 'landmark', 'permission' => 'export-reports'],
             ['label' => 'Monitoring Users', 'href' => route('platform.monitoring-users'), 'section' => 'Account', 'feature' => 'base', 'icon' => 'user-plus', 'permission' => 'manage-monitoring-users'],
             ['label' => 'Subscription', 'href' => route('platform.subscription'), 'section' => 'Account', 'feature' => 'base', 'icon' => 'badge-dollar-sign', 'permission' => 'manage-subscription'],

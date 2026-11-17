@@ -4,9 +4,12 @@ namespace App\Domain\Services\Http\Controllers\Platform;
 
 use App\Domain\Modules\Services\ModuleAccessService;
 use App\Domain\Synchronization\Services\SynchronizedOperationalData;
+use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Models\Business;
 use App\Enums\BusinessModule;
+use App\Enums\BranchOperatingMode;
 use App\Exceptions\ModuleUnavailableException;
+use App\Exceptions\OperatingModeUnavailableException;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -99,16 +102,20 @@ class ServiceMonitoringController extends Controller
         return $synchronizedData->services($business->id, $branch?->id);
     }
 
-    private function ensureAvailable(Business $business, mixed $branch, ModuleAccessService $moduleAccess): void
+    private function ensureAvailable(Business $business, ?Branch $branch, ModuleAccessService $moduleAccess): void
     {
         $access = $moduleAccess->resolve($business, BusinessModule::Services, $branch);
 
         if (! $access->available) {
             throw new ModuleUnavailableException($access);
         }
+
+        if ($branch && ! in_array(BranchOperatingMode::Services->value, $branch->operating_modes ?? [], true)) {
+            throw new OperatingModeUnavailableException(BranchOperatingMode::Services);
+        }
     }
 
-    /** @return array{0: Business, 1: mixed} */
+    /** @return array{0: Business, 1: Branch|null} */
     private function businessAndBranch(Request $request): array
     {
         $business = Business::query()
@@ -124,11 +131,13 @@ class ServiceMonitoringController extends Controller
             })
             ->firstOrFail();
 
+        $accessibleBranches = $business->branches
+            ->filter(fn (Branch $candidate): bool => $request->user()->canAccessBranch($business->id, $candidate->id));
         $branch = $request->query('branch_uuid')
-            ? $business->branches->firstWhere('uuid', $request->query('branch_uuid'))
-            : $business->branches->first();
+            ? $accessibleBranches->firstWhere('uuid', $request->query('branch_uuid'))
+            : $accessibleBranches->first();
 
-        abort_if($request->query('branch_uuid') && ! $branch, 404);
+        abort_if(($request->query('branch_uuid') || $business->branches->isNotEmpty()) && ! $branch, 404);
 
         return [$business, $branch];
     }

@@ -16,6 +16,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\Sanctum;
 use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
@@ -45,6 +46,7 @@ function multiBranchMonitoringFixture(array $features = ['Multiple branches', 'R
         'code' => 'MAIN',
         'status' => BranchStatus::Active,
         'last_synchronized_at' => now(),
+        'operating_modes' => ['sales', 'production'],
     ]);
     $eastBranch = Branch::query()->create([
         'business_id' => $business->id,
@@ -52,6 +54,7 @@ function multiBranchMonitoringFixture(array $features = ['Multiple branches', 'R
         'code' => 'EAST',
         'status' => BranchStatus::Active,
         'last_synchronized_at' => now()->subHours(4),
+        'operating_modes' => ['services'],
     ]);
     $user->ownedBusinesses()->attach($business->id, ['role' => 'owner']);
 
@@ -219,4 +222,22 @@ it('enforces branch monitoring permissions', function (): void {
         ->assertOk()
         ->assertSee('Multi-branch monitoring is not available')
         ->assertDontSee('Branch comparison table');
+});
+
+it('returns configured operating modes for authorized monitoring branches', function (): void {
+    [$user, $business, $mainBranch, $eastBranch] = multiBranchMonitoringFixture();
+    Sanctum::actingAs($user);
+
+    $this->getJson(route('api.v1.monitoring.branches', ['business_uuid' => $business->uuid]))
+        ->assertOk()
+        ->assertJsonFragment([
+            'business_uuid' => $business->uuid,
+            'branch_uuid' => $mainBranch->uuid,
+            'operating_modes' => ['sales', 'production'],
+        ])
+        ->assertJsonFragment([
+            'business_uuid' => $business->uuid,
+            'branch_uuid' => $eastBranch->uuid,
+            'operating_modes' => ['services'],
+        ]);
 });

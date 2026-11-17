@@ -11,6 +11,8 @@ void main() {
         'Dashboard',
         'Sales Summary',
         'Payment Summary',
+        'Production Summary',
+        'Services Summary',
         'Expenses',
         'Stock Summary',
         'Low-Stock Alerts',
@@ -22,6 +24,10 @@ void main() {
         'Notifications',
         'Profile',
       ]),
+    );
+    expect(
+      monitoringFeatures.firstWhere((feature) => feature.id == 'sales-summary').requiredOperatingModes,
+      ['sales'],
     );
   });
 

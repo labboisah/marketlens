@@ -90,6 +90,22 @@ remote business information using synchronized Platform data.
 Tenant isolation, branch isolation, strict validation, and role-based
 authorization are required across all boundaries.
 
+## Branch operating modes
+
+Each branch is configured for one or more of `sales`, `production`, and
+`services`. This configuration is distinct from the business industry label,
+subscription entitlements, branch module settings, and user permissions.
+Shareholder management remains an independent supportive capability rather than
+an operating mode. The Platform returns a branch's configured modes during
+device activation and status refresh; the Business Server persists that
+configuration locally and enforces mode-specific operations while offline.
+Business App navigation and Monitoring App branch views use the same mode list,
+but the Server and Platform APIs remain the authorization boundaries.
+Catalog, inventory, and procurement workflows are available for sales or
+production branches; sales, production, and services workflows each require
+their corresponding configured mode. Shareholder access remains independently
+controlled by its module entitlement and user permissions.
+
 
 ## Recovery and desktop release trust
 

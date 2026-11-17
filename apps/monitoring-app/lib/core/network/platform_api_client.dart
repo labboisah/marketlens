@@ -11,7 +11,7 @@ class PlatformApiClient {
   PlatformApiClient({required MonitoringApiConfig config})
       : dio = Dio(
           BaseOptions(
-            baseUrl: config.baseUrl,
+            baseUrl: config.baseUrl.endsWith('/') ? config.baseUrl : '${config.baseUrl}/',
             connectTimeout: config.timeout,
             receiveTimeout: config.timeout,
           ),

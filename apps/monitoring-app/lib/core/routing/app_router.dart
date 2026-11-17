@@ -21,7 +21,9 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/branch-selection',
-      builder: (context, state) => const BranchSelectionScreen(),
+      builder: (context, state) => BranchSelectionScreen(
+        businessUuid: state.uri.queryParameters['business_uuid'] ?? '',
+      ),
     ),
     ShellRoute(
       builder: (context, state, child) => MonitoringScaffold(child: child),

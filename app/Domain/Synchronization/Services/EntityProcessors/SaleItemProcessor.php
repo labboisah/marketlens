@@ -53,7 +53,7 @@ class SaleItemProcessor extends SyncEntityProcessor
         $record['payload'] = $safePayload;
         $result = parent::process($batch, $record);
 
-        if ($result->status !== 'accepted') {
+        if ($result->status !== 'accepted' || $this->hasNewerVersion($batch, $record)) {
             return $result;
         }
 

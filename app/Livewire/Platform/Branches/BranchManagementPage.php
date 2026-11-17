@@ -10,6 +10,7 @@ use App\Domain\Tenancy\Services\BranchManagement;
 use App\Domain\Tenancy\Services\BusinessContext;
 use App\Enums\BranchModuleStatus;
 use App\Enums\BranchStatus;
+use App\Enums\BranchOperatingMode;
 use App\Enums\BusinessModule;
 use App\Enums\SettlementFrequency;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -41,6 +42,9 @@ class BranchManagementPage extends Component
     public string $localGovernmentArea = '';
 
     public bool $isHeadOffice = false;
+
+    /** @var array<int, string> */
+    public array $operatingModes = ['sales'];
     /** @var array<string, mixed> */
     public array $moduleSettings = [];
 
@@ -75,6 +79,7 @@ class BranchManagementPage extends Component
             'businessModules' => BusinessModule::cases(),
             'branchModuleStatuses' => BranchModuleStatus::cases(),
             'settlementFrequencies' => SettlementFrequency::cases(),
+            'operatingModeOptions' => BranchOperatingMode::cases(),
         ]);
     }
 
@@ -113,6 +118,7 @@ class BranchManagementPage extends Component
         $this->state = (string) $branch->state;
         $this->localGovernmentArea = (string) $branch->local_government_area;
         $this->isHeadOffice = (bool) $branch->is_head_office;
+        $this->operatingModes = $branch->operating_modes ?? ['sales'];
         $this->moduleSettings = $this->defaultModuleSettings($branch);
     }
 
@@ -211,6 +217,8 @@ class BranchManagementPage extends Component
             'state' => ['nullable', 'string', 'max:120'],
             'localGovernmentArea' => ['nullable', 'string', 'max:120'],
             'isHeadOffice' => ['boolean'],
+            'operatingModes' => ['required', 'array', 'min:1'],
+            'operatingModes.*' => ['required', 'string', 'distinct', Rule::enum(BranchOperatingMode::class)],
         ]);
 
         return [
@@ -222,6 +230,7 @@ class BranchManagementPage extends Component
             'state' => $validated['state'] ?: null,
             'local_government_area' => $validated['localGovernmentArea'] ?: null,
             'is_head_office' => (bool) $validated['isHeadOffice'],
+            'operating_modes' => array_values($validated['operatingModes']),
         ];
     }
 
@@ -258,6 +267,7 @@ class BranchManagementPage extends Component
         $this->state = '';
         $this->localGovernmentArea = '';
         $this->isHeadOffice = false;
+        $this->operatingModes = ['sales'];
         $this->resetValidation();
     }
 

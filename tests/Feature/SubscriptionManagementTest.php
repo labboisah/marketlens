@@ -7,16 +7,19 @@ use App\Domain\Billing\Models\SubscriptionChangeRequest;
 use App\Domain\Billing\Services\SubscriptionManagementService;
 use App\Domain\Devices\Models\Device;
 use App\Domain\Devices\Services\ShopAppActivationService;
+use App\Domain\Licensing\Models\BusinessLicenseAssociation;
 use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Models\Business;
 use App\Enums\AccountStatus;
 use App\Enums\BranchStatus;
 use App\Enums\BusinessStatus;
 use App\Enums\DeviceStatus;
+use App\Enums\PaymentStatus;
 use App\Enums\SubscriptionStatus;
 use App\Livewire\Platform\Subscriptions\SubscriptionManagementPage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
@@ -87,7 +90,7 @@ it('renders owner subscription management with plan usage history options and bi
     $subscription->payments()->create([
         'amount_minor' => 25000,
         'currency' => 'NGN',
-        'status' => \App\Enums\PaymentStatus::Paid,
+        'status' => PaymentStatus::Paid,
         'paid_at' => now(),
     ]);
 
@@ -110,6 +113,55 @@ it('renders owner subscription management with plan usage history options and bi
         ->get(route('platform.dashboard'))
         ->assertOk()
         ->assertSee(route('platform.subscription'));
+});
+
+it('lets subscription managers refresh the linked KernelBridge entitlements', function (): void {
+    config(['kernelbridge.api_token' => 'test-api-credential']);
+    Http::fake([
+        '*/subscriptions/status*' => Http::response([
+            'success' => true,
+            'data' => [
+                'uuid' => 'sub_subscription_page',
+                'status' => 'active',
+                'plan' => ['name' => 'MarketLens Sales'],
+                'ends_at' => now()->addYear()->toISOString(),
+            ],
+        ]),
+        '*/entitlements*' => Http::response([
+            'success' => true,
+            'data' => [
+                'subscription_uuid' => 'sub_subscription_page',
+                'status' => 'active',
+                'entitlements' => [
+                    ['key' => 'max_server_installations', 'enabled' => true, 'limit' => 2],
+                ],
+            ],
+        ]),
+    ]);
+
+    $owner = subscriptionOwner();
+    $plan = subscriptionPlan('Licensed Growth', 25000, ['Sales']);
+    [$business, $branch] = subscriptionBusiness($owner, $plan);
+    $license = BusinessLicenseAssociation::query()->create([
+        'business_id' => $business->id,
+        'provider' => 'kernelbridge',
+        'product_code' => 'MARKETLENS',
+        'license_uuid' => 'lic_subscription_page',
+        'subscription_uuid' => 'sub_subscription_page',
+        'status' => 'active',
+        'entitlements' => [],
+    ]);
+
+    Livewire::actingAs($owner)
+        ->test(SubscriptionManagementPage::class)
+        ->assertSee('KernelBridge license')
+        ->assertSee('Refresh entitlements')
+        ->call('refreshKernelBridgeEntitlements')
+        ->assertSee('MarketLens Sales')
+        ->assertDispatched('notify');
+
+    expect($license->fresh()->entitlements)->toBe(['max_server_installations' => 2])
+        ->and($license->fresh()->provider_metadata['plan_name'])->toBe('MarketLens Sales');
 });
 
 it('saves billing profiles and records cancellation requests without deleting business data', function (): void {
@@ -201,7 +253,6 @@ it('uses plan limits for device activation', function (): void {
         'application_version_id' => null,
     ]);
 })->throws(ValidationException::class);
-
 
 it('allows device activation during the configured past-due grace period', function (): void {
     config(['marketlens.billing.grace_days' => 3]);

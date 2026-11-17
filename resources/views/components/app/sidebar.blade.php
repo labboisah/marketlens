@@ -2,6 +2,18 @@
 
 @php
   $items = collect($shell['navigation'])->filter->allowed->groupBy('section');
+  $lastSync = $shell['branch']?->last_synchronized_at;
+  $syncState = ! $lastSync ? 'offline' : ($lastSync->gte(now()->subMinutes((int) config('synchronization.monitoring.recent_sync_minutes'))) ? 'synced' : 'delayed');
+  $sectionIcons = [
+      'Business' => 'building-2',
+      'Sales' => 'receipt',
+      'Monitoring' => 'monitor-smartphone',
+      'Control' => 'settings',
+      'Insights' => 'bar-chart-3',
+      'Production' => 'package-check',
+      'Services' => 'life-buoy',
+      'Account' => 'users',
+  ];
 @endphp
 
 <div x-cloak x-show="sidebarOpen" class="fixed inset-0 z-40 bg-slate-950/40 lg:hidden" x-on:click="sidebarOpen = false"></div>
@@ -21,10 +33,8 @@
     </button>
   </div>
 
-  <nav class="flex flex-1 flex-col gap-5 overflow-y-auto px-3 py-4" aria-label="Primary">
-    <div>
-      <p class="px-3 text-xs font-semibold uppercase tracking-wide text-muted">Downloads</p>
-      <div class="mt-2 flex flex-col gap-1">
+  <nav class="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4" aria-label="Primary">
+    <x-app.sidebar-group label="Downloads" icon="download">
         <a href="{{ route('public.desktop-download', ['application' => 'business-server']) }}" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted hover:bg-surface-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary" title="Download Business Server for Windows (x64)">
           <x-app.icon name="monitor" class="h-4 w-4 shrink-0" />
           <span>Business Server</span>
@@ -33,33 +43,26 @@
           <x-app.icon name="monitor-smartphone" class="h-4 w-4 shrink-0" />
           <span>Business App</span>
         </a>
-        <a href="{{ route('public.client-setup-kit') }}" class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted hover:bg-surface-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary" title="CSV templates and installation/upgrade guides">
-          <x-app.icon name="monitor" class="h-4 w-4 shrink-0" />
-          <span>Setup templates (ZIP)</span>
-        </a>
-        <a href="{{ route('public.deployment') }}" class="rounded-md px-3 py-2 text-sm font-medium text-muted hover:bg-surface-muted hover:text-foreground">Deployment guide</a>
-        <a href="{{ route('public.setup-kits') }}" class="rounded-md px-3 py-2 text-sm font-medium text-muted hover:bg-surface-muted hover:text-foreground">Browse setup kits</a>
-      </div>
-    </div>
+    </x-app.sidebar-group>
     @foreach ($items as $section => $sectionItems)
-      <div>
-        <p class="px-3 text-xs font-semibold uppercase tracking-wide text-muted">{{ $section }}</p>
-        <div class="mt-2 flex flex-col gap-1">
+      @php
+        $sectionOpen = $sectionItems->contains(fn ($item) => request()->url() === explode('?', explode('#', $item->href)[0])[0]);
+      @endphp
+      <x-app.sidebar-group :label="$section" :icon="$sectionIcons[$section] ?? 'menu'" :open="$sectionOpen">
           @foreach ($sectionItems as $item)
             <a
-              class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium {{ request()->url() === $item->href ? 'bg-primary text-white' : 'text-muted hover:bg-surface-muted hover:text-foreground' }} focus:outline-none focus:ring-2 focus:ring-primary"
+              class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium {{ request()->fullUrl() === $item->href ? 'bg-primary text-white' : 'text-muted hover:bg-surface-muted hover:text-foreground' }} focus:outline-none focus:ring-2 focus:ring-primary"
               href="{{ $item->href }}"
             >
               <x-app.icon :name="$item->icon" class="h-4 w-4 shrink-0" />
               <span class="truncate">{{ $item->label }}</span>
             </a>
           @endforeach
-        </div>
-      </div>
+      </x-app.sidebar-group>
     @endforeach
   </nav>
 
   <div class="border-t border-border p-4">
-    <x-app.sync-indicator state="delayed" last-synced-at="Awaiting first sync" />
+    <x-app.sync-indicator :state="$syncState" :last-synced-at="$lastSync?->diffForHumans() ?? 'Awaiting first sync'" />
   </div>
 </aside>

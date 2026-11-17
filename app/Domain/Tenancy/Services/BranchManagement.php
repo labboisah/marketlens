@@ -3,9 +3,11 @@
 namespace App\Domain\Tenancy\Services;
 
 use App\Domain\Audit\Models\AuditLog;
+use App\Domain\Licensing\Services\BusinessLicenseEntitlementService;
 use App\Domain\Modules\Services\ModuleAccessService;
 use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Models\Business;
+use App\Enums\BranchOperatingMode;
 use App\Enums\BranchStatus;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -20,8 +22,9 @@ class BranchManagement
     {
         $this->enforceBranchLimit($business);
         $this->enforceUniqueCode($business, (string) ($data['code'] ?? ''));
+        $operatingModes = $this->normalizeOperatingModes($data['operating_modes'] ?? ['sales']);
 
-        return DB::transaction(function () use ($business, $actor, $data): Branch {
+        return DB::transaction(function () use ($business, $actor, $data, $operatingModes): Branch {
             $isHeadOffice = (bool) ($data['is_head_office'] ?? false);
 
             if (! $business->branches()->exists()) {
@@ -34,6 +37,7 @@ class BranchManagement
 
             $branch = $business->branches()->create([
                 ...$data,
+                'operating_modes' => $operatingModes,
                 'is_head_office' => $isHeadOffice,
                 'status' => BranchStatus::Active,
             ]);
@@ -51,8 +55,9 @@ class BranchManagement
     public function update(Branch $branch, User $actor, array $data): Branch
     {
         $this->enforceUniqueCode($branch->business, (string) ($data['code'] ?? ''), $branch);
+        $operatingModes = $this->normalizeOperatingModes($data['operating_modes'] ?? $branch->operating_modes ?? ['sales']);
 
-        return DB::transaction(function () use ($branch, $actor, $data): Branch {
+        return DB::transaction(function () use ($branch, $actor, $data, $operatingModes): Branch {
             $isHeadOffice = (bool) ($data['is_head_office'] ?? false);
 
             if ($isHeadOffice) {
@@ -65,6 +70,7 @@ class BranchManagement
 
             $branch->forceFill([
                 ...$data,
+                'operating_modes' => $operatingModes,
                 'is_head_office' => $isHeadOffice,
             ])->save();
 
@@ -145,9 +151,8 @@ class BranchManagement
         });
     }
 
-
     /**
-     * @param array<string, mixed> $settings
+     * @param  array<string, mixed>  $settings
      */
     public function updateModuleSettings(Branch $branch, User $actor, array $settings): Branch
     {
@@ -159,8 +164,15 @@ class BranchManagement
 
         return $branch->refresh();
     }
+
     public function maxBranches(Business $business): int
     {
+        $licensedLimit = app(BusinessLicenseEntitlementService::class)->limit($business, 'max_branches');
+
+        if ($licensedLimit !== null) {
+            return $licensedLimit === 'unlimited' ? PHP_INT_MAX : (int) $licensedLimit;
+        }
+
         $featureNames = $business->currentSubscription?->plan?->features()
             ->pluck('name')
             ->map(fn (string $name): string => strtolower($name))
@@ -204,6 +216,29 @@ class BranchManagement
         }
     }
 
+    /** @param mixed $modes @return array<int, string> */
+    private function normalizeOperatingModes(mixed $modes): array
+    {
+        if (! is_array($modes) || $modes === []) {
+            throw ValidationException::withMessages([
+                'operatingModes' => 'Select at least one operating mode for this branch.',
+            ]);
+        }
+
+        $normalized = [];
+        foreach ($modes as $mode) {
+            $operatingMode = is_string($mode) ? BranchOperatingMode::tryFrom($mode) : null;
+            if (! $operatingMode) {
+                throw ValidationException::withMessages([
+                    'operatingModes' => 'The selected branch operating mode is invalid.',
+                ]);
+            }
+            $normalized[] = $operatingMode->value;
+        }
+
+        return array_values(array_unique($normalized));
+    }
+
     private function clearHeadOffice(Business $business): void
     {
         $business->branches()->update(['is_head_office' => false]);
@@ -236,6 +271,7 @@ class BranchManagement
                 'branch_uuid' => $branch->uuid,
                 'branch_code' => $branch->code,
                 'status' => $branch->status?->value,
+                'operating_modes' => $branch->operating_modes ?? [],
             ],
         ]);
     }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Domain\Audit\Models\AuditLog;
 use App\Domain\Owners\Models\BusinessOwner;
+use App\Enums\AccountStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\User;
@@ -62,6 +63,10 @@ class AuthenticatedSessionController extends Controller
         }
 
         if (! $user->hasActiveAccount()) {
+            if ($user->account_status === AccountStatus::PendingVerification) {
+                return redirect()->route('verification.notice');
+            }
+
             return redirect()->route('account.disabled');
         }
 

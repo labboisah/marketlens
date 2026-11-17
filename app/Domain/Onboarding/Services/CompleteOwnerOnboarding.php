@@ -4,8 +4,6 @@ namespace App\Domain\Onboarding\Services;
 
 use App\Domain\Audit\Models\AuditLog;
 use App\Domain\Billing\Models\BillingProfile;
-use App\Domain\Billing\Models\Plan;
-use App\Domain\Billing\Models\Subscription;
 use App\Domain\Billing\Services\BillingInvoiceService;
 use App\Domain\Onboarding\Models\OwnerOnboardingDraft;
 use App\Domain\Owners\Models\BusinessOwner;
@@ -13,7 +11,6 @@ use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Models\Business;
 use App\Enums\BranchStatus;
 use App\Enums\BusinessStatus;
-use App\Enums\SubscriptionStatus;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -30,17 +27,6 @@ class CompleteOwnerOnboarding
             if (BusinessOwner::query()->where('user_id', $user->id)->exists()) {
                 throw ValidationException::withMessages([
                     'business' => 'This account already owns a business.',
-                ]);
-            }
-
-            $plan = Plan::query()
-                ->active()
-                ->whereKey(data_get($data, 'plan.plan_id'))
-                ->first();
-
-            if (! $plan) {
-                throw ValidationException::withMessages([
-                    'plan.plan_id' => 'Select an active plan before creating the business.',
                 ]);
             }
 
@@ -81,6 +67,7 @@ class CompleteOwnerOnboarding
                 'address' => data_get($data, 'branch.address'),
                 'state' => data_get($data, 'branch.state'),
                 'local_government_area' => data_get($data, 'branch.local_government_area'),
+                'operating_modes' => data_get($data, 'branch.operating_modes', ['sales']),
                 'is_head_office' => true,
                 'status' => BranchStatus::Active,
             ]);
@@ -97,20 +84,10 @@ class CompleteOwnerOnboarding
                 'currency' => data_get($data, 'business.default_currency', 'NGN'),
             ]);
 
-            $subscription = $this->billingInvoiceService->createPendingSubscription($business, $plan);
-
             $this->billingInvoiceService->ensureBillingAccount($business);
 
-            $this->billingInvoiceService->createInvoiceForSubscription($business, $subscription, 'Initial invoice for subscription activation', [
-                [
-                    'description' => sprintf('Subscription plan %s (%s)', $plan->name, $plan->billing_label),
-                    'quantity' => 1,
-                    'unit_price_minor' => (int) $plan->getRawOriginal('price_minor'),
-                ],
-            ]);
-
             $draft->forceFill([
-                'current_step' => 5,
+                'current_step' => 4,
                 'completed_at' => now(),
             ])->save();
 
@@ -120,7 +97,7 @@ class CompleteOwnerOnboarding
                 'action' => 'business_owner.onboarding_completed',
                 'subject_type' => Business::class,
                 'subject_id' => $business->id,
-                'metadata' => ['plan_id' => $plan->id],
+                'metadata' => ['licensing_authority' => 'kernelbridge'],
             ]);
 
             return $business;

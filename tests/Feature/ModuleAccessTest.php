@@ -147,6 +147,20 @@ it('returns standard module unavailable responses for monitoring api access', fu
         ->assertJsonPath('meta.module_access.module', 'services');
 });
 
+it('does not expose service monitoring when the branch operating mode is not configured', function (): void {
+    [$user, $business, $branch] = moduleAccessFixture();
+    $branch->forceFill(['operating_modes' => ['sales']])->save();
+    Sanctum::actingAs($user);
+
+    $this->getJson(route('api.v1.monitoring.services', [
+        'business_uuid' => $business->uuid,
+        'branch_uuid' => $branch->uuid,
+    ]))
+        ->assertForbidden()
+        ->assertJsonPath('code', 'OPERATING_MODE_UNAVAILABLE')
+        ->assertJsonPath('meta.operating_mode', 'services');
+});
+
 it('saves branch module inheritance settings when gates allow it', function (): void {
     [$user, $business, $branch] = moduleAccessFixture();
 

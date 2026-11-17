@@ -1,11 +1,11 @@
 <div>
   <div class="mb-6 text-center">
     <h1 class="text-2xl font-bold">Business onboarding</h1>
-    <p class="mt-2 text-sm text-muted">Step {{ $step }} of 5. Your progress is saved safely to your account.</p>
+    <p class="mt-2 text-sm text-muted">Step {{ $step }} of 4. Your progress is saved safely to your account.</p>
   </div>
 
-  <ol class="mb-6 grid grid-cols-5 gap-2 text-center text-xs font-semibold">
-    @foreach ([1 => 'Business', 2 => 'Branch', 3 => 'Plan', 4 => 'Monitoring', 5 => 'Review'] as $number => $label)
+  <ol class="mb-6 grid grid-cols-4 gap-2 text-center text-xs font-semibold">
+    @foreach ([1 => 'Business', 2 => 'Branch', 3 => 'Monitoring', 4 => 'Review'] as $number => $label)
       <li class="rounded-md border px-2 py-2 {{ $step === $number ? 'border-accent bg-accent/10 text-accent' : 'border-border text-muted' }}">
         {{ $label }}
       </li>
@@ -18,7 +18,7 @@
     </div>
   @endif
 
-  <form wire:submit.prevent="{{ $step === 5 ? 'complete' : 'nextStep' }}" class="grid gap-5">
+  <form wire:submit.prevent="{{ $step === 4 ? 'complete' : 'nextStep' }}" class="grid gap-5">
     @if ($step === 1)
       <section class="grid gap-4">
         <label class="grid gap-2 text-sm font-medium">Business name <input wire:model.defer="business.name" class="ml-field"> @error('business.name') <span class="text-xs text-danger">{{ $message }}</span> @enderror</label>
@@ -67,24 +67,23 @@
           <label class="grid gap-2 text-sm font-medium">State <input wire:model.defer="branch.state" class="ml-field"> @error('branch.state') <span class="text-xs text-danger">{{ $message }}</span> @enderror</label>
           <label class="grid gap-2 text-sm font-medium">Local government area <input wire:model.defer="branch.local_government_area" class="ml-field"> @error('branch.local_government_area') <span class="text-xs text-danger">{{ $message }}</span> @enderror</label>
         </div>
+        <fieldset class="space-y-2">
+          <legend class="text-sm font-medium">Branch operating modes</legend>
+          <div class="flex flex-wrap gap-x-4 gap-y-2">
+            @foreach ($branchOperatingModes as $mode)
+              <label class="flex items-center gap-2 text-sm" wire:key="operating-mode-{{ $mode->value }}">
+                <input type="checkbox" wire:model.live="branch.operating_modes" value="{{ $mode->value }}" class="rounded border-border">
+                {{ $mode->displayName() }}
+              </label>
+            @endforeach
+          </div>
+          @error('branch.operating_modes') <span class="text-xs text-danger">{{ $message }}</span> @enderror
+          @error('branch.operating_modes.*') <span class="text-xs text-danger">{{ $message }}</span> @enderror
+        </fieldset>
       </section>
     @endif
 
     @if ($step === 3)
-      <section class="grid gap-4">
-        @foreach ($plans as $activePlan)
-          <label class="rounded-lg border border-border bg-background p-4">
-            <input type="radio" wire:model.defer="plan.plan_id" value="{{ $activePlan->id }}" class="mr-2">
-            <span class="font-semibold">{{ $activePlan->name }} {{ $activePlan->billing_label }}</span>
-            <span class="block text-sm text-muted">{{ $activePlan->description }} {{ $activePlan->display_price }}</span>
-            <span class="mt-2 block text-xs text-muted">{{ $activePlan->features->pluck('name')->take(5)->join(', ') }}</span>
-          </label>
-        @endforeach
-        @error('plan.plan_id') <span class="text-xs text-danger">{{ $message }}</span> @enderror
-      </section>
-    @endif
-
-    @if ($step === 4)
       <section class="grid gap-4">
         <label class="grid gap-2 text-sm font-medium">Daily report preference
           <select wire:model.defer="monitoring.daily_report_preference" class="ml-field">
@@ -108,7 +107,7 @@
       </section>
     @endif
 
-    @if ($step === 5)
+    @if ($step === 4)
       <section class="grid gap-4 text-sm">
         <div class="rounded-lg border border-border bg-background p-4">
           <h2 class="font-semibold">Business information</h2>
@@ -119,12 +118,12 @@
           <p class="mt-2 text-muted">{{ $branch['name'] }} &middot; {{ $branch['code'] }} &middot; {{ $branch['state'] }}</p>
         </div>
         <div class="rounded-lg border border-border bg-background p-4">
-          <h2 class="font-semibold">Selected plan</h2>
-          <p class="mt-2 text-muted">{{ optional($plans->firstWhere('id', (int) $plan['plan_id']))->name ?? 'No plan selected' }}</p>
-        </div>
-        <div class="rounded-lg border border-border bg-background p-4">
           <h2 class="font-semibold">Monitoring preferences</h2>
           <p class="mt-2 text-muted">Daily reports: {{ $monitoring['daily_report_preference'] }}. Email notifications: {{ $monitoring['email_notifications'] ? 'enabled' : 'disabled' }}.</p>
+        </div>
+        <div class="rounded-lg border border-border bg-background p-4">
+          <h2 class="font-semibold">Product license</h2>
+          <p class="mt-2 text-muted">Connect your MarketLens license after creating the business. KernelBridge manages the plan and entitlements.</p>
         </div>
       </section>
     @endif
@@ -136,7 +135,7 @@
         <span></span>
       @endif
       <button type="submit" class="inline-flex h-10 items-center justify-center rounded-md bg-accent px-4 text-sm font-semibold text-white">
-        {{ $step === 5 ? 'Create business' : 'Continue' }}
+        {{ $step === 4 ? 'Create business' : 'Continue' }}
       </button>
     </div>
   </form>

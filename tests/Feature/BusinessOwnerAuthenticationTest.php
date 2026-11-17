@@ -109,6 +109,17 @@ it('uses generic login failure messages', function (): void {
     ])->assertSessionHasErrors(['email' => 'These credentials do not match our records.']);
 });
 
+it('redirects pending verification users to the activation screen', function (): void {
+    $user = User::factory()->create([
+        'account_status' => AccountStatus::PendingVerification,
+        'email_verified_at' => now(),
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('platform.dashboard'))
+        ->assertRedirect(route('verification.notice'));
+});
+
 it('prevents suspended users from business records', function (): void {
     $user = User::factory()->create([
         'account_status' => AccountStatus::Suspended,

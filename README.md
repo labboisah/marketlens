@@ -213,6 +213,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
 ## Documentation
 
 - [System Overview](docs/architecture/system-overview.md)
+- [KernelBridge Licensing Integration](docs/platform/kernelbridge-licensing-integration.md)
+- [KernelBridge MarketLens Catalog Setup](docs/platform/kernelbridge-marketlens-catalog-setup.md)
+- [KernelBridge MarketLens Plan Guide](docs/platform/kernelbridge-marketlens-plans.md)
+- [KernelBridge MarketLens Feature Guide](docs/platform/kernelbridge-marketlens-features.md)
 - [Architecture Decision Record Template](docs/architecture/adr-template.md)
 - [Database Documentation](docs/database/README.md)
 - [API Documentation](docs/api/README.md)

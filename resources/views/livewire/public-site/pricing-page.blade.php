@@ -64,6 +64,10 @@
               @endif
             </div>
 
+            <x-plan-production-feature :plan="$displayPlan" />
+            @if ($monthlyPlan && $annualPlan && $monthlyPlan->features->pluck('key')->contains('module:production') !== $annualPlan->features->pluck('key')->contains('module:production'))
+              <p class="mt-2 text-sm text-muted">Annual plan:</p><x-plan-production-feature :plan="$annualPlan" />
+            @endif
             <ul class="mt-6 grid gap-3 text-sm">
               @foreach ($displayPlan->features as $feature)
                 <li class="flex items-start gap-2">

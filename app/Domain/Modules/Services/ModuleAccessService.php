@@ -2,6 +2,8 @@
 
 namespace App\Domain\Modules\Services;
 
+use App\Domain\Billing\Services\SubscriptionManagementService;
+use App\Domain\Licensing\Services\BusinessLicenseEntitlementService;
 use App\Domain\Modules\Data\ModuleAccessResult;
 use App\Domain\Tenancy\Models\Branch;
 use App\Domain\Tenancy\Models\Business;
@@ -41,6 +43,7 @@ class ModuleAccessService
         // Fallback: if cache contains an unexpected value, recompute and store array
         $result = $this->uncachedResolve($business, $module, $branch);
         Cache::put($key, $result->toArray(), now()->addMinutes(10));
+
         return $result;
     }
 
@@ -152,9 +155,15 @@ class ModuleAccessService
 
     private function planAllows(Business $business, BusinessModule $module): bool
     {
+        $licensedMode = app(BusinessLicenseEntitlementService::class)->allowsMode($business, $module);
+
+        if ($licensedMode !== null) {
+            return $licensedMode;
+        }
+
         $subscription = $business->currentSubscription;
 
-        if (! $subscription || ! app(\App\Domain\Billing\Services\SubscriptionManagementService::class)->allowsOperationalAccess($subscription)) {
+        if (! $subscription || ! app(SubscriptionManagementService::class)->allowsOperationalAccess($subscription)) {
             return false;
         }
 

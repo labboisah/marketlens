@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "25cd812ca3074c506fcf855e5d76c155",
+    "content-hash": "acf0b30d2d11968eb1d4499f037e529f",
     "packages": [
         {
             "name": "brick/math",
@@ -1233,6 +1233,53 @@
                 }
             ],
             "time": "2026-07-17T13:53:03+00:00"
+        },
+        {
+            "name": "kernelbridge/licensing-client-laravel",
+            "version": "1.2.3",
+            "dist": {
+                "type": "path",
+                "url": "../kernelbridge-license/packages/laravel",
+                "reference": "06afa7d0203526efadb0ec5f1c0dfc0b95623143"
+            },
+            "require": {
+                "laravel/framework": "^12.0 || ^13.0",
+                "php": "^8.3"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^10.0 || ^11.0",
+                "phpunit/phpunit": "^11.0 || ^12.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "KernelBridge\\LicensingClient\\KernelBridgeLicensingServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "KernelBridge\\LicensingClient\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "KernelBridge\\LicensingClient\\Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "test": [
+                    "phpunit"
+                ]
+            },
+            "license": [
+                "proprietary"
+            ],
+            "description": "Reusable Laravel client for KernelBridge licensing, subscriptions and entitlements.",
+            "transport-options": {
+                "relative": true
+            }
         },
         {
             "name": "laravel/framework",

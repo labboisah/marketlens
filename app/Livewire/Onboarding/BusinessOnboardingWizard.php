@@ -2,10 +2,10 @@
 
 namespace App\Livewire\Onboarding;
 
-use App\Domain\Billing\Models\Plan;
 use App\Domain\Onboarding\Models\OwnerOnboardingDraft;
 use App\Domain\Onboarding\Services\CompleteOwnerOnboarding;
 use App\Domain\Owners\Models\BusinessOwner;
+use App\Enums\BranchOperatingMode;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
@@ -31,6 +31,7 @@ class BusinessOnboardingWizard extends Component
         'address' => '',
         'state' => '',
         'local_government_area' => '',
+        'operating_modes' => ['sales'],
         'default_currency' => 'NGN',
         'timezone' => 'Africa/Lagos',
         'preferred_language' => 'en',
@@ -45,10 +46,7 @@ class BusinessOnboardingWizard extends Component
         'address' => '',
         'state' => '',
         'local_government_area' => '',
-    ];
-
-    public array $plan = [
-        'plan_id' => null,
+        'operating_modes' => ['sales'],
     ];
 
     public array $monitoring = [
@@ -82,17 +80,23 @@ class BusinessOnboardingWizard extends Component
         $draft = $this->draft();
         $data = $draft->data ?? [];
 
-        $this->step = $draft->current_step;
+        $this->step = match ($draft->current_step) {
+            1, 2 => $draft->current_step,
+            3, 4 => 3,
+            default => 4,
+        };
         $this->business = array_replace($this->business, $data['business'] ?? []);
         $this->branch = array_replace($this->branch, $data['branch'] ?? []);
-        $this->plan = array_replace($this->plan, $data['plan'] ?? []);
+        $this->branch['operating_modes'] = is_array($this->branch['operating_modes'] ?? null)
+            ? array_values($this->branch['operating_modes'])
+            : ['sales'];
         $this->monitoring = array_replace($this->monitoring, $data['monitoring'] ?? []);
     }
 
     public function nextStep(): void
     {
         $this->validate($this->rulesForStep($this->step));
-        $this->step = min(5, $this->step + 1);
+        $this->step = min(4, $this->step + 1);
         $this->saveDraft();
     }
 
@@ -112,7 +116,7 @@ class BusinessOnboardingWizard extends Component
 
     public function complete(CompleteOwnerOnboarding $onboarding): void
     {
-        foreach (range(1, 4) as $step) {
+        foreach (range(1, 3) as $step) {
             $this->validate($this->rulesForStep($step));
         }
 
@@ -125,7 +129,6 @@ class BusinessOnboardingWizard extends Component
     public function render(): View
     {
         return view('livewire.onboarding.business-onboarding-wizard', [
-            'plans' => Plan::query()->with('features')->active()->orderBy('sort_order')->get(),
             'businessTypes' => [
                 'supermarket' => 'Supermarket',
                 'provision_shop' => 'Provision business',
@@ -138,6 +141,7 @@ class BusinessOnboardingWizard extends Component
                 'spare_parts' => 'Spare parts',
                 'bookshop_stationery' => 'Bookshop and stationery',
             ],
+            'branchOperatingModes' => BranchOperatingMode::cases(),
         ]);
     }
 
@@ -154,7 +158,6 @@ class BusinessOnboardingWizard extends Component
         return [
             'business' => $this->business,
             'branch' => $this->branch,
-            'plan' => $this->plan,
             'monitoring' => $this->monitoring,
         ];
     }
@@ -187,11 +190,10 @@ class BusinessOnboardingWizard extends Component
                 'branch.address' => ['required', 'string', 'max:500'],
                 'branch.state' => ['required', 'string', 'max:120'],
                 'branch.local_government_area' => ['required', 'string', 'max:120'],
+                'branch.operating_modes' => ['required', 'array', 'min:1'],
+                'branch.operating_modes.*' => ['required', 'string', 'distinct', Rule::enum(BranchOperatingMode::class)],
             ],
             3 => [
-                'plan.plan_id' => ['required', 'integer', Rule::exists('plans', 'id')->where('is_active', true)],
-            ],
-            4 => [
                 'monitoring.daily_report_preference' => ['required', Rule::in(['daily', 'weekly', 'none'])],
                 'monitoring.low_stock_alerts' => ['boolean'],
                 'monitoring.cashier_shortage_alerts' => ['boolean'],

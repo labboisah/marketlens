@@ -27,6 +27,7 @@
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value=":memory:"/>
         <env name="DB_URL" value=""/>
+        <env name="KERNELBRIDGE_ENFORCE_SERVER_GRANTS" value="false"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="LOG_CHANNEL" value="null"/>
         <env name="QUEUE_CONNECTION" value="sync"/>

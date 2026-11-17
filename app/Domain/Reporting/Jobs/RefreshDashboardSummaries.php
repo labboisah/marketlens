@@ -124,11 +124,10 @@ class RefreshDashboardSummaries implements ShouldQueue
             'summarized_at' => now(),
         ];
 
-        BusinessDashboardDailySummary::query()->updateOrCreate(
+        BusinessDashboardDailySummary::query()->whereDate('summary_date', $day->toDateString())->updateOrCreate(
             [
                 'business_id' => $this->businessId,
                 'branch_id' => $this->branchId,
-                'summary_date' => $day->toDateString(),
             ],
             [
                 ...$shared,
@@ -141,11 +140,10 @@ class RefreshDashboardSummaries implements ShouldQueue
             ],
         );
 
-        DashboardBranchSummary::query()->updateOrCreate(
+        DashboardBranchSummary::query()->whereDate('summary_date', $day->toDateString())->updateOrCreate(
             [
                 'business_id' => $this->businessId,
                 'branch_id' => $this->branchId,
-                'summary_date' => $day->toDateString(),
             ],
             [
                 ...$shared,

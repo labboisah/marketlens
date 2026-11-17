@@ -18,6 +18,10 @@ class Branch extends Model
     use HasUuid;
     use SoftDeletes;
 
+    protected $attributes = [
+        'operating_modes' => '["sales"]',
+    ];
+
     protected $fillable = [
         'business_id',
         'uuid',
@@ -30,6 +34,7 @@ class Branch extends Model
         'local_government_area',
         'is_head_office',
         'module_settings',
+        'operating_modes',
         'last_synchronized_at',
         'archived_at',
         'status',
@@ -41,6 +46,7 @@ class Branch extends Model
             'status' => BranchStatus::class,
             'is_head_office' => 'boolean',
             'module_settings' => 'array',
+            'operating_modes' => 'array',
             'last_synchronized_at' => 'datetime',
             'archived_at' => 'datetime',
         ];

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\AccountStatus;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -12,7 +13,11 @@ class EnsureAccountIsActive
     {
         $user = $request->user();
 
-        if (! $user || ! $user->hasActiveAccount()) {
+        if (! $user) {
+            return redirect()->route('login');
+        }
+
+        if (! $user->hasActiveAccount()) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
@@ -21,6 +26,10 @@ class EnsureAccountIsActive
                     'errors' => [],
                     'trace_id' => (string) str()->uuid(),
                 ], 403);
+            }
+
+            if ($user->account_status === AccountStatus::PendingVerification) {
+                return redirect()->route('verification.notice');
             }
 
             return redirect()->route('account.disabled');

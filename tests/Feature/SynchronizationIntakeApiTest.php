@@ -541,3 +541,32 @@ it('projects synchronized service and ownership records into owner monitoring da
         ->and($projection->shareholders($business->id, $branch->id)['summary']['shareholders_count'])->toBe(1)
         ->and($projection->shareholders($business->id, $branch->id)['summary']['units_held'])->toBe(25.0);
 });
+
+it('projects actual Business Server worker payloads into the linked monitoring screens', function (): void {
+    [$business, $branch, $device, $credential] = syncIntakeFixture();
+    $fixture = json_decode(file_get_contents(base_path('tests/Fixtures/business-server-sync.json')), true, flags: JSON_THROW_ON_ERROR);
+
+    foreach ([...$fixture['batches'], $fixture['batches'][0]] as $batch) {
+        $body = json_encode(syncEnvelope($business, $branch, $device, $batch['records']), JSON_THROW_ON_ERROR);
+        $response = signedSyncRequest($this, 'POST', '/api/v1/sync/batches', $credential, $body);
+        $response->assertOk()->assertJsonPath('data.rejected', [])->assertJsonPath('data.conflicts', []);
+        expect($response->json('data.accepted'))->toHaveCount(count($batch['records']));
+        $receipt = $response->json('data');
+        signedSyncRequest($this, 'POST', '/api/v1/sync/acknowledgements', $credential, json_encode([
+            'batch_uuid' => $receipt['batch_uuid'],
+            'accepted' => $receipt['accepted'],
+        ], JSON_THROW_ON_ERROR))->assertOk();
+    }
+
+    $this->assertDatabaseHas('replicated_expenses', ['business_id' => $business->id, 'description' => 'Sync fixture expense', 'status' => 'approved', 'amount_minor' => 1250]);
+    $this->assertDatabaseHas('replicated_inventory_stocks', ['business_id' => $business->id, 'product_name' => 'Sync fixture product', 'available_quantity' => 10]);
+    $this->assertDatabaseHas('replicated_customer_debt_summaries', ['business_id' => $business->id, 'customer_name' => 'Sync fixture customer', 'current_balance_minor' => 2000]);
+    $this->assertDatabaseHas('replicated_supplier_balances', ['business_id' => $business->id, 'supplier_name' => 'Sync fixture supplier', 'current_balance_minor' => 3000]);
+    $this->assertDatabaseHas('replicated_sales', ['business_id' => $business->id, 'sale_number' => 'SYNC-SALE', 'total_minor' => 2500]);
+    $data = app(SynchronizedOperationalData::class)->services($business->id, $branch->id);
+    expect($data['services']->pluck('name')->all())->toContain('Updated service')->not->toContain('Initial service');
+
+    signedSyncRequest($this, 'GET', '/api/v1/sync/checkpoint', $credential)
+        ->assertOk()->assertJsonPath('data.business_uuid', $business->uuid)->assertJsonPath('data.branch_uuid', $branch->uuid);
+    expect($branch->refresh()->last_synchronized_at)->not->toBeNull();
+});

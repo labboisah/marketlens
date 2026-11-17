@@ -1,9 +1,11 @@
 <?php
 
 use App\Exceptions\ModuleUnavailableException;
+use App\Exceptions\OperatingModeUnavailableException;
 use App\Http\Middleware\AttachTraceId;
 use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\EnsureApiVersion;
+use App\Http\Middleware\EnsureFeatureIsAvailable;
 use App\Http\Middleware\EnsureLegalDocumentsAreAccepted;
 use App\Http\Middleware\EnsureModuleIsAvailable;
 use App\Http\Middleware\EnsureOnboardingIsCompleted;
@@ -29,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'api.version' => EnsureApiVersion::class,
             'account.active' => EnsureAccountIsActive::class,
+            'feature.available' => EnsureFeatureIsAvailable::class,
             'onboarding.complete' => EnsureOnboardingIsCompleted::class,
             'legal.accepted' => EnsureLegalDocumentsAreAccepted::class,
             'super.admin' => EnsureUserIsSuperAdmin::class,
@@ -52,6 +55,20 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return redirect()->route('platform.permission-denied')->with('module_unavailable', $e->getMessage());
         });
+        $exceptions->render(function (OperatingModeUnavailableException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                    'code' => 'OPERATING_MODE_UNAVAILABLE',
+                    'errors' => [],
+                    'trace_id' => $request->attributes->get('trace_id') ?: (string) Str::uuid(),
+                    'meta' => ['operating_mode' => $e->operatingMode->value],
+                ], 403);
+            }
+
+            return redirect()->route('platform.permission-denied')->with('operating_mode_unavailable', $e->getMessage());
+        });
         $exceptions->report(function (Throwable $e): void {
             $request = request();
 
@@ -66,7 +83,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->respond(function ($response, Throwable $e, $request) {
-            if ($e instanceof ModuleUnavailableException) {
+            if ($e instanceof ModuleUnavailableException || $e instanceof OperatingModeUnavailableException) {
                 return $response;
             }
 
@@ -78,7 +95,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 'success' => false,
                 'message' => $response->exception?->getMessage() ?: 'The request could not be completed.',
                 'code' => str($e::class)->classBasename()->snake()->upper()->toString(),
-                'errors' => [],
+                'errors' => $e instanceof \Illuminate\Validation\ValidationException ? $e->errors() : [],
                 'trace_id' => $request->attributes->get('trace_id') ?: (string) Str::uuid(),
             ], $response->getStatusCode());
         });

@@ -9,6 +9,7 @@ use App\Domain\Billing\Models\Plan;
 use App\Domain\Billing\Models\Subscription;
 use App\Domain\Billing\Models\SubscriptionChangeRequest;
 use App\Domain\Devices\Models\Device;
+use App\Domain\Licensing\Services\BusinessLicenseEntitlementService;
 use App\Domain\Reporting\Models\ReportExport;
 use App\Domain\Tenancy\Models\Business;
 use App\Enums\DeviceStatus;
@@ -68,6 +69,12 @@ class SubscriptionManagementService
 
     public function canUseFeature(Business $business, string $feature): bool
     {
+        $licensedFeatures = app(BusinessLicenseEntitlementService::class)->featureNames($business);
+
+        if ($licensedFeatures !== null) {
+            return app(BusinessLicenseEntitlementService::class)->allowsAny($business, [$feature]);
+        }
+
         $business->loadMissing('currentSubscription.plan.features');
 
         if (! $this->allowsOperationalAccess($business->currentSubscription)) {

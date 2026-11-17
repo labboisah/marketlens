@@ -4,6 +4,7 @@ use App\Domain\Services\Http\Controllers\Platform\ServiceMonitoringController;
 use App\Domain\Services\Http\Controllers\Platform\StaffEarningsController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DeviceController;
+use App\Http\Controllers\Api\V1\KernelBridgeWebhookController;
 use App\Http\Controllers\Api\V1\MonitoringController;
 use App\Http\Controllers\Api\V1\ReleaseManifestController;
 use App\Http\Controllers\Api\V1\SyncController;
@@ -13,6 +14,10 @@ Route::get('/v1/releases/{application}/manifest', ReleaseManifestController::cla
     ->whereIn('application', ['business-server', 'business-app'])
     ->middleware('throttle:60,1')
     ->name('api.v1.releases.manifest');
+
+Route::post('/v1/webhooks/kernelbridge', KernelBridgeWebhookController::class)
+    ->middleware('throttle:60,1')
+    ->name('api.v1.webhooks.kernelbridge');
 
 Route::prefix('v1/device/restore-points')->middleware('throttle:60,1')->group(function (): void {
     Route::post('/rotate-credential', [\App\Http\Controllers\Api\V1\RestorePointController::class, 'rotateCredential']);

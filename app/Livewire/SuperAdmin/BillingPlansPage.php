@@ -62,7 +62,7 @@ class BillingPlansPage extends Component
         abort_unless(auth()->user()?->isSuperAdmin(), 403);
 
         return view('livewire.super-admin.billing-plans-page', [
-            'plans' => Plan::query()->withCount('features')->orderBy('sort_order')->get(),
+            'plans' => Plan::query()->with('features')->withCount('features')->orderBy('sort_order')->get(),
         ])->title('Billing plans');
     }
 

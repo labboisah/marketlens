@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Platform\Purchases;
 
+use App\Domain\Licensing\Services\BusinessLicenseEntitlementService;
 use App\Domain\Purchases\Models\ReplicatedPurchase;
 use App\Domain\Purchases\Services\PurchaseMonitoringService;
 use App\Domain\Tenancy\Models\Branch;
@@ -157,9 +158,8 @@ class PurchaseMonitoringPage extends Component
 
     private function canViewPurchases(int $businessId): bool
     {
-        $business = auth()->user()?->ownedBusinesses()->with('currentSubscription.plan.features')->whereKey($businessId)->first();
-        $features = $business?->currentSubscription?->plan?->features->pluck('name')->map(fn (string $name): string => strtolower($name))->all() ?? [];
+        $business = auth()->user()?->ownedBusinesses()->whereKey($businessId)->first();
 
-        return collect($features)->contains(fn (string $feature): bool => str_contains($feature, 'purchases') || str_contains($feature, 'suppliers') || str_contains($feature, 'reports'));
+        return $business !== null && app(BusinessLicenseEntitlementService::class)->allowsAny($business, ['purchases', 'suppliers', 'reports']);
     }
 }
