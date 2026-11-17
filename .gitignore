@@ -30,7 +30,6 @@ pnpm-debug.log*
 # Node and desktop
 node_modules/
 dist/
-build/
 out/
 .vite/
 coverage/

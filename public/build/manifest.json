@@ -1,0 +1,33 @@
+{
+  "../kernelbridge-license/packages/react/src/kernelbridge-logo.png": {
+    "file": "assets/kernelbridge-logo-Bm1eZ0lb.png",
+    "src": "../kernelbridge-license/packages/react/src/kernelbridge-logo.png"
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-B79PQAw_.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/js/account-license-activation.js": {
+    "file": "assets/account-license-activation-BrYWa0bv.js",
+    "name": "account-license-activation",
+    "src": "resources/js/account-license-activation.js",
+    "isEntry": true,
+    "css": [
+      "assets/account-license-activation-DiKuKZRo.css"
+    ],
+    "assets": [
+      "assets/kernelbridge-logo-Bm1eZ0lb.png"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-C58LLgUp.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true
+  }
+}
