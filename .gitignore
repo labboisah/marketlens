@@ -61,8 +61,6 @@ data/
 tmp/
 temp/
 .cache/
-
-/public/build
 /public/hot
 /public/storage
 /storage/pail
