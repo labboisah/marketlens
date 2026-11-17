@@ -7,7 +7,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
-        "kernelbridge/licensing-client-laravel": "^1.2.2",
+        "kernelbridge/licensing-client-laravel": "dev-laravel-package",
         "laravel/framework": "^13.0",
         "laravel/horizon": "^5.48",
         "laravel/reverb": "^1.11",
@@ -101,10 +101,10 @@
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
-    "repositories": {
-        "kernelbridge": {
-            "type": "path",
-            "url": "../kernelbridge-license/packages/laravel"
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/labboisah/kernelbridge-license.git"
         }
-    }
+    ]
 }
