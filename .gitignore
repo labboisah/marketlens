@@ -47,7 +47,6 @@ bootstrap/cache/*.php
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
-build/
 
 # Databases and local runtime data
 *.sqlite
